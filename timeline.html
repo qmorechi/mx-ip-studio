@@ -435,6 +435,10 @@ ul.card-list li strong{color:var(--text);font-weight:500;}
 </div>
 
 <script>
+function showCityDetail() {
+  const d = document.getElementById('city-detail');
+  d.style.display = d.style.display === 'none' ? 'block' : 'none';
+}
 function showLagDetail() {
   const d = document.getElementById('lag-detail');
   d.style.display = d.style.display === 'none' ? 'block' : 'none';
