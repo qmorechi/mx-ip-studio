@@ -55,18 +55,36 @@ header.top .meta .auto-tag{background:rgba(197,164,107,.15);color:var(--accent-1
 .intro{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent-1);border-radius:10px;padding:18px 22px;margin-bottom:28px;font-size:13px;color:var(--muted);line-height:1.7;}
 .intro strong{color:var(--text);font-weight:500;}
 .intro .pipe{color:var(--accent-1);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.05em;display:block;margin-top:8px;}
+
+.ip{cursor:pointer;transition:transform .15s, border-color .15s;text-decoration:none;color:inherit;display:flex;}
+.ip:hover{transform:translateY(-2px);border-color:var(--c);}
+
+/* 單 IP 詳細視圖 */
+.single-wrap{max-width:880px;margin:0 auto;}
+.single-wrap .ip{display:block;padding:32px 36px;border-top-width:4px;}
+.single-wrap .ip .head{margin-bottom:16px;}
+.single-wrap .ip .name{font-size:24px;}
+.single-wrap .ip .lead{font-size:14px;margin-bottom:8px;}
+.single-wrap .ip .section{margin-top:18px;}
+.single-wrap .ip .section-title{font-size:12px;}
+.single-wrap .ip .section-content{font-size:14px;}
+
+.back-link{display:inline-flex;align-items:center;gap:8px;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:18px;transition:color .15s;}
+.back-link:hover{color:var(--accent-1);}
+
+.other-ips{margin-top:32px;padding-top:24px;border-top:1px dashed var(--border);}
+.other-ips-title{font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.other-ips-list{display:flex;gap:10px;flex-wrap:wrap;}
+.other-ips-list a{font-size:12px;padding:6px 13px;background:var(--surface);border:1px solid var(--border);border-radius:999px;color:var(--muted);text-decoration:none;transition:.15s;}
+.other-ips-list a:hover{border-color:var(--accent-1);color:var(--accent-1);}
 </style>
 </head>
 <body>
-<nav class="breadcrumb">
-  <a href="index.html">SIPAI.STUDIO</a>
-  <span class="sep">›</span>
-  <span class="current">六大 IP 進度總表</span>
-</nav>
+<nav class="breadcrumb" id="breadcrumb"></nav>
 
 <header class="top">
-  <h1>六大 IP <span>進度</span> 總表</h1>
-  <p>本週進度 · 待解問題 · 下週重點 — 每週日從 Slack 對話與檔案自動整理</p>
+  <h1 id="topTitle">六大 IP <span>進度</span> 總表</h1>
+  <p id="topSub">本週進度 · 待解問題 · 下週重點 — 每週日從 Slack 對話與檔案自動整理</p>
   <div class="meta">
     <span>本週區間 2026 / 05 / 18 – 05 / 24</span>
     <span class="auto-tag">⏳ AI 自動整理(規劃中)</span>
@@ -75,147 +93,176 @@ header.top .meta .auto-tag{background:rgba(197,164,107,.15);color:var(--accent-1
 </header>
 
 <div class="wrap">
-  <div class="intro">
+  <div class="intro" id="intro">
     <strong>這個頁面的設計目的:</strong>把每週「分散在 Slack 各頻道」的對話、檔案、決議,自動整理成每個 IP 的進度卡。讓全員不用爬訊息就知道「這週發生了什麼 / 卡在哪裡 / 下週要做什麼」。
     <span class="pipe">PIPELINE — Slack channels → n8n / Edge Function → Claude AI → 寫入 progress.html → 通知 #mx-ip-notify</span>
   </div>
 
-  <div class="ip-grid">
-
-    <div class="ip" style="--c:var(--accent-1)">
-      <div class="head">
-        <span class="name">SIPAI 生意興龍</span>
-        <span class="codename">SIPAI · S+</span>
-        <span class="status-pill active">★ 主線</span>
-      </div>
-      <div class="lead">失敗不算什麼,我們繼續走。六角色互動,內容說不完(Ray)</div>
-
-      <div class="section">
-        <div class="section-title"><span class="icon">📈</span>本週進度</div>
-        <div class="section-content"><p class="empty">等 AI 從 #mx-ip-sipai-* 5 個子頻道整理</p></div>
-      </div>
-      <div class="section">
-        <div class="section-title"><span class="icon">⚠</span>待解問題</div>
-        <div class="section-content"><p class="empty">—</p></div>
-      </div>
-      <div class="section">
-        <div class="section-title"><span class="icon">🎯</span>下週重點</div>
-        <div class="section-content"><p class="empty">—</p></div>
-      </div>
-      <div class="footer-meta">
-        <span>監測頻道 — #mx-ip-sipai-{brand,character,story,storyboard,meetings}</span>
-        <span>本週訊息 0</span>
-      </div>
-    </div>
-
-    <div class="ip" style="--c:var(--accent-2)">
-      <div class="head">
-        <span class="name">City Monsters 阿灰</span>
-        <span class="codename">CityMonsters · A-</span>
-        <span class="status-pill active">第二主線</span>
-      </div>
-      <div class="lead">在最擠的地方,找最舒服的姿勢。夾縫中的生存智慧(Kevin · Ray)</div>
-
-      <div class="section">
-        <div class="section-title"><span class="icon">📈</span>本週進度</div>
-        <div class="section-content"><p class="empty">等 AI 從 #mx-ip-提案 / 通知 整理</p></div>
-      </div>
-      <div class="section">
-        <div class="section-title"><span class="icon">⚠</span>待解問題</div>
-        <div class="section-content"><p class="empty">—</p></div>
-      </div>
-      <div class="section">
-        <div class="section-title"><span class="icon">🎯</span>下週重點</div>
-        <div class="section-content"><p class="empty">—</p></div>
-      </div>
-      <div class="footer-meta">
-        <span>監測頻道 — TBD(待加 sipai 以外的 city 子頻道)</span>
-        <span>本週訊息 0</span>
-      </div>
-    </div>
-
-    <div class="ip" style="--c:var(--accent-4)">
-      <div class="head">
-        <span class="name">全知療癒貓 / 不倒翁</span>
-        <span class="codename">HealingCat · B+</span>
-        <span class="status-pill active">物件型 IP</span>
-      </div>
-      <div class="lead">祂什麼都知道,但祂選擇陪你假裝不知道(Alice · 不倒翁概念試做 Maruo)</div>
-
-      <div class="section">
-        <div class="section-title"><span class="icon">📈</span>本週進度</div>
-        <div class="section-content"><p class="empty">等 AI 從 #mx-ip-提案 整理</p></div>
-      </div>
-      <div class="section">
-        <div class="section-title"><span class="icon">⚠</span>待解問題</div>
-        <div class="section-content"><p class="empty">—</p></div>
-      </div>
-      <div class="section">
-        <div class="section-title"><span class="icon">🎯</span>下週重點</div>
-        <div class="section-content"><p class="empty">—</p></div>
-      </div>
-      <div class="footer-meta">
-        <span>監測頻道 — TBD</span>
-        <span>本週訊息 0</span>
-      </div>
-    </div>
-
-    <div class="ip" style="--c:var(--accent-1);opacity:.7">
-      <div class="head">
-        <span class="name">偷瞄的X</span>
-        <span class="codename">PeekingX · 概念</span>
-        <span class="status-pill temp">temp · 觀察</span>
-      </div>
-      <div class="lead">不確定也很好。靠頻率而非聲量取勝(qmore)</div>
-
-      <div class="section">
-        <div class="section-title"><span class="icon">📈</span>本週進度</div>
-        <div class="section-content"><p class="empty">概念階段,未深入發展</p></div>
-      </div>
-      <div class="footer-meta">
-        <span>狀態 — 埋伏線,等其他 IP 起來後再獨立登場</span>
-        <span>—</span>
-      </div>
-    </div>
-
-    <div class="ip" style="--c:var(--accent-2);opacity:.7">
-      <div class="head">
-        <span class="name">早知道 Ctrl+Z</span>
-        <span class="codename">CtrlZ · 概念</span>
-        <span class="status-pill temp">temp · 觀察</span>
-      </div>
-      <div class="lead">按下去重來一次。情緒共感強,出口待定(Maruo)</div>
-
-      <div class="section">
-        <div class="section-title"><span class="icon">📈</span>本週進度</div>
-        <div class="section-content"><p class="empty">概念階段,缺正向出口設定</p></div>
-      </div>
-      <div class="footer-meta">
-        <span>狀態 — 待釐清「後悔重新框架」</span>
-        <span>—</span>
-      </div>
-    </div>
-
-    <div class="ip" style="--c:var(--accent-3);opacity:.7">
-      <div class="head">
-        <span class="name">閣樓小精靈 A-Hu</span>
-        <span class="codename">AHu · 概念</span>
-        <span class="status-pill temp">temp · 觀察</span>
-      </div>
-      <div class="lead">失敗也很了不起。用小魔法棒為自己放煙火(Ray)</div>
-
-      <div class="section">
-        <div class="section-title"><span class="icon">📈</span>本週進度</div>
-        <div class="section-content"><p class="empty">概念階段,世界觀已具體,等視覺草稿</p></div>
-      </div>
-      <div class="footer-meta">
-        <span>狀態 — Ray 開始 A-Hu 視覺草稿</span>
-        <span>—</span>
-      </div>
-    </div>
-
-  </div>
+  <div id="content"></div>
 </div>
 
+<script>
+const IPS = [
+  {
+    id: 'sipai',
+    name: 'SIPAI 生意興龍',
+    codename: 'SIPAI · S+',
+    tier: '★ 主線',
+    tierClass: 'active',
+    color: 'var(--accent-1)',
+    lead: '失敗不算什麼,我們繼續走。六角色互動,內容說不完(Ray)',
+    active: true,
+    channels: '#mx-ip-sipai-{brand,character,story,storyboard,meetings}',
+  },
+  {
+    id: 'citymonsters',
+    name: 'City Monsters 阿灰',
+    codename: 'CityMonsters · A-',
+    tier: '第二主線',
+    tierClass: 'active',
+    color: 'var(--accent-2)',
+    lead: '在最擠的地方,找最舒服的姿勢。夾縫中的生存智慧(Kevin · Ray)',
+    active: true,
+    channels: 'TBD(待加 sipai 以外的 city 子頻道)',
+  },
+  {
+    id: 'myao',
+    name: '全知療癒貓 / 不倒翁',
+    codename: 'HealingCat · B+',
+    tier: '物件型 IP',
+    tierClass: 'active',
+    color: 'var(--accent-4)',
+    lead: '祂什麼都知道,但祂選擇陪你假裝不知道(Alice · 不倒翁概念試做 Maruo)',
+    active: true,
+    channels: 'TBD',
+  },
+  {
+    id: 'peekingx',
+    name: '偷瞄的X',
+    codename: 'PeekingX · 概念',
+    tier: 'temp · 觀察',
+    tierClass: 'temp',
+    color: 'var(--accent-1)',
+    lead: '不確定也很好。靠頻率而非聲量取勝(qmore)',
+    active: false,
+    status: '埋伏線,等其他 IP 起來後再獨立登場',
+    progress: '概念階段,未深入發展',
+  },
+  {
+    id: 'ctrlz',
+    name: '早知道 Ctrl+Z',
+    codename: 'CtrlZ · 概念',
+    tier: 'temp · 觀察',
+    tierClass: 'temp',
+    color: 'var(--accent-2)',
+    lead: '按下去重來一次。情緒共感強,出口待定(Maruo)',
+    active: false,
+    status: '待釐清「後悔重新框架」',
+    progress: '概念階段,缺正向出口設定',
+  },
+  {
+    id: 'ahu',
+    name: '閣樓小精靈 A-Hu',
+    codename: 'AHu · 概念',
+    tier: 'temp · 觀察',
+    tierClass: 'temp',
+    color: 'var(--accent-3)',
+    lead: '失敗也很了不起。用小魔法棒為自己放煙火(Ray)',
+    active: false,
+    status: 'Ray 開始 A-Hu 視覺草稿',
+    progress: '概念階段,世界觀已具體,等視覺草稿',
+  },
+];
+
+const params = new URLSearchParams(location.search);
+const filterIp = params.get('ip')?.toLowerCase();
+const focused = filterIp ? IPS.find(i => i.id === filterIp) : null;
+
+// ── Breadcrumb ──
+function renderBreadcrumb() {
+  const el = document.getElementById('breadcrumb');
+  if (focused) {
+    el.innerHTML = `<a href="index.html">SIPAI.STUDIO</a><span class="sep">›</span><a href="progress.html">進度總表</a><span class="sep">›</span><span class="current">${focused.name}</span>`;
+  } else {
+    el.innerHTML = `<a href="index.html">SIPAI.STUDIO</a><span class="sep">›</span><span class="current">六大 IP 進度總表</span>`;
+  }
+}
+
+// ── Header 標題 ──
+function renderHeader() {
+  if (focused) {
+    document.getElementById('topTitle').innerHTML = `<span>${focused.name}</span> 進度`;
+    document.getElementById('topSub').textContent = focused.lead;
+    document.getElementById('intro').style.display = 'none';
+  }
+}
+
+// ── 渲染單張 IP 卡(detail = true 時更大更詳細) ──
+function ipCardHTML(ip, detail=false) {
+  const opacity = (!detail && !ip.active) ? ';opacity:.7' : '';
+  const link = `progress.html?ip=${ip.id}`;
+  const tag = detail ? 'div' : 'a';
+  const href = detail ? '' : `href="${link}"`;
+
+  const fullSections = `
+    <div class="section">
+      <div class="section-title"><span class="icon">📈</span>本週進度</div>
+      <div class="section-content"><p class="empty">${ip.active ? '等 AI 從 ' + ip.channels + ' 整理' : ip.progress}</p></div>
+    </div>
+    ${ip.active ? `
+    <div class="section">
+      <div class="section-title"><span class="icon">⚠</span>待解問題</div>
+      <div class="section-content"><p class="empty">—</p></div>
+    </div>
+    <div class="section">
+      <div class="section-title"><span class="icon">🎯</span>下週重點</div>
+      <div class="section-content"><p class="empty">—</p></div>
+    </div>` : ''}
+  `;
+
+  const footer = ip.active
+    ? `<div class="footer-meta"><span>監測頻道 — ${ip.channels}</span><span>本週訊息 0</span></div>`
+    : `<div class="footer-meta"><span>狀態 — ${ip.status || '—'}</span><span>—</span></div>`;
+
+  return `<${tag} class="ip" ${href} style="--c:${ip.color}${opacity}">
+    <div class="head">
+      <span class="name">${ip.name}</span>
+      <span class="codename">${ip.codename}</span>
+      <span class="status-pill ${ip.tierClass}">${ip.tier}</span>
+    </div>
+    <div class="lead">${ip.lead}</div>
+    ${fullSections}
+    ${footer}
+  </${tag}>`;
+}
+
+// ── 渲染主要內容 ──
+function renderContent() {
+  const el = document.getElementById('content');
+  if (focused) {
+    // 單 IP 詳細視圖
+    const others = IPS.filter(i => i.id !== focused.id);
+    el.innerHTML = `
+      <div class="single-wrap">
+        <a href="progress.html" class="back-link">← 回 6 IP 總覽</a>
+        ${ipCardHTML(focused, true)}
+        <div class="other-ips">
+          <div class="other-ips-title">其他 IP</div>
+          <div class="other-ips-list">
+            ${others.map(o => `<a href="progress.html?ip=${o.id}">${o.name}</a>`).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  } else {
+    // 6 IP grid 總覽
+    el.innerHTML = `<div class="ip-grid">${IPS.map(ip => ipCardHTML(ip, false)).join('')}</div>`;
+  }
+}
+
+renderBreadcrumb();
+renderHeader();
+renderContent();
+</script>
 </body>
 </html>
