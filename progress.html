@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>六大 IP 進度總表｜SIPAI.STUDIO</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0d0d0f;--surface:#161618;--surface2:#1e1e22;--border:#2a2a30;
+  --text:#e8e6e0;--muted:#7a7870;
+  --accent-1:#c5a46b;--accent-2:#5ba89e;--accent-3:#c96b5a;--accent-4:#8b7ec8;
+}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;font-weight:300;min-height:100vh;line-height:1.55;}
+
+.breadcrumb{display:flex;align-items:center;gap:10px;padding:14px 60px;font-size:12px;font-family:'DM Mono',monospace;letter-spacing:.05em;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02);}
+.breadcrumb a{color:var(--accent-1);text-decoration:none;font-weight:500;transition:opacity .15s;}
+.breadcrumb a:hover{opacity:.7;}
+.breadcrumb .sep{color:var(--muted);font-size:14px;}
+.breadcrumb .current{color:var(--text);}
+
+header.top{padding:48px 60px 32px;border-bottom:1px solid var(--border);position:relative;}
+header.top::after{content:'';position:absolute;bottom:-1px;left:60px;width:60px;height:2px;background:var(--accent-1);}
+header.top h1{font-family:'DM Mono',monospace;font-size:clamp(20px,3vw,30px);font-weight:500;letter-spacing:.04em;line-height:1.2;}
+header.top h1 span{color:var(--accent-1);}
+header.top p{margin-top:8px;font-size:13px;color:var(--muted);letter-spacing:.04em;}
+header.top .meta{margin-top:14px;display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;}
+header.top .meta .auto-tag{background:rgba(197,164,107,.15);color:var(--accent-1);padding:3px 10px;border-radius:4px;letter-spacing:.05em;font-weight:500;}
+
+.wrap{padding:36px 60px 80px;max-width:1400px;margin:0 auto;}
+
+.ip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:22px;}
+.ip{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;display:flex;flex-direction:column;gap:14px;position:relative;border-top:3px solid var(--c);}
+.ip .head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+.ip .name{font-size:18px;font-weight:700;}
+.ip .codename{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.1em;}
+.ip .status-pill{font-size:10px;font-weight:900;padding:2px 8px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase;margin-left:auto;}
+.ip .status-pill.active{background:rgba(107,196,122,.15);color:#6bc47a;}
+.ip .status-pill.temp{background:rgba(248,214,109,.15);color:#f8d66d;}
+.ip .status-pill.paused{background:rgba(156,163,175,.15);color:#cbd5e0;}
+.ip .lead{font-size:12px;color:var(--muted);line-height:1.5;}
+
+.section{margin-top:4px;}
+.section-title{font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.section-title .icon{font-size:14px;}
+.section-content{font-size:13px;line-height:1.6;color:var(--text);}
+.section-content ul{list-style:none;padding:0;margin:0;}
+.section-content li{padding:4px 0 4px 18px;position:relative;}
+.section-content li::before{content:'•';position:absolute;left:6px;color:var(--c);font-weight:700;}
+.section-content .empty{color:#5a5a60;font-style:italic;font-size:12px;padding:4px 0;}
+
+.footer-meta{margin-top:auto;padding-top:14px;border-top:1px dashed var(--border);font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+
+.intro{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent-1);border-radius:10px;padding:18px 22px;margin-bottom:28px;font-size:13px;color:var(--muted);line-height:1.7;}
+.intro strong{color:var(--text);font-weight:500;}
+.intro .pipe{color:var(--accent-1);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.05em;display:block;margin-top:8px;}
+</style>
+</head>
+<body>
+<nav class="breadcrumb">
+  <a href="index.html">SIPAI.STUDIO</a>
+  <span class="sep">›</span>
+  <span class="current">六大 IP 進度總表</span>
+</nav>
+
+<header class="top">
+  <h1>六大 IP <span>進度</span> 總表</h1>
+  <p>本週進度 · 待解問題 · 下週重點 — 每週日從 Slack 對話與檔案自動整理</p>
+  <div class="meta">
+    <span>本週區間 2026 / 05 / 18 – 05 / 24</span>
+    <span class="auto-tag">⏳ AI 自動整理(規劃中)</span>
+    <span>最後更新 — 待 AI pipeline 上線</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="intro">
+    <strong>這個頁面的設計目的:</strong>把每週「分散在 Slack 各頻道」的對話、檔案、決議,自動整理成每個 IP 的進度卡。讓全員不用爬訊息就知道「這週發生了什麼 / 卡在哪裡 / 下週要做什麼」。
+    <span class="pipe">PIPELINE — Slack channels → n8n / Edge Function → Claude AI → 寫入 progress.html → 通知 #mx-ip-notify</span>
+  </div>
+
+  <div class="ip-grid">
+
+    <div class="ip" style="--c:var(--accent-1)">
+      <div class="head">
+        <span class="name">SIPAI 生意興龍</span>
+        <span class="codename">SIPAI · S+</span>
+        <span class="status-pill active">★ 主線</span>
+      </div>
+      <div class="lead">失敗不算什麼,我們繼續走。六角色互動,內容說不完(Ray)</div>
+
+      <div class="section">
+        <div class="section-title"><span class="icon">📈</span>本週進度</div>
+        <div class="section-content"><p class="empty">等 AI 從 #mx-ip-sipai-* 5 個子頻道整理</p></div>
+      </div>
+      <div class="section">
+        <div class="section-title"><span class="icon">⚠</span>待解問題</div>
+        <div class="section-content"><p class="empty">—</p></div>
+      </div>
+      <div class="section">
+        <div class="section-title"><span class="icon">🎯</span>下週重點</div>
+        <div class="section-content"><p class="empty">—</p></div>
+      </div>
+      <div class="footer-meta">
+        <span>監測頻道 — #mx-ip-sipai-{brand,character,story,storyboard,meetings}</span>
+        <span>本週訊息 0</span>
+      </div>
+    </div>
+
+    <div class="ip" style="--c:var(--accent-2)">
+      <div class="head">
+        <span class="name">City Monsters 阿灰</span>
+        <span class="codename">CityMonsters · A-</span>
+        <span class="status-pill active">第二主線</span>
+      </div>
+      <div class="lead">在最擠的地方,找最舒服的姿勢。夾縫中的生存智慧(Kevin · Ray)</div>
+
+      <div class="section">
+        <div class="section-title"><span class="icon">📈</span>本週進度</div>
+        <div class="section-content"><p class="empty">等 AI 從 #mx-ip-提案 / 通知 整理</p></div>
+      </div>
+      <div class="section">
+        <div class="section-title"><span class="icon">⚠</span>待解問題</div>
+        <div class="section-content"><p class="empty">—</p></div>
+      </div>
+      <div class="section">
+        <div class="section-title"><span class="icon">🎯</span>下週重點</div>
+        <div class="section-content"><p class="empty">—</p></div>
+      </div>
+      <div class="footer-meta">
+        <span>監測頻道 — TBD(待加 sipai 以外的 city 子頻道)</span>
+        <span>本週訊息 0</span>
+      </div>
+    </div>
+
+    <div class="ip" style="--c:var(--accent-4)">
+      <div class="head">
+        <span class="name">全知療癒貓 / 不倒翁</span>
+        <span class="codename">HealingCat · B+</span>
+        <span class="status-pill active">物件型 IP</span>
+      </div>
+      <div class="lead">祂什麼都知道,但祂選擇陪你假裝不知道(Alice · 不倒翁概念試做 Maruo)</div>
+
+      <div class="section">
+        <div class="section-title"><span class="icon">📈</span>本週進度</div>
+        <div class="section-content"><p class="empty">等 AI 從 #mx-ip-提案 整理</p></div>
+      </div>
+      <div class="section">
+        <div class="section-title"><span class="icon">⚠</span>待解問題</div>
+        <div class="section-content"><p class="empty">—</p></div>
+      </div>
+      <div class="section">
+        <div class="section-title"><span class="icon">🎯</span>下週重點</div>
+        <div class="section-content"><p class="empty">—</p></div>
+      </div>
+      <div class="footer-meta">
+        <span>監測頻道 — TBD</span>
+        <span>本週訊息 0</span>
+      </div>
+    </div>
+
+    <div class="ip" style="--c:var(--accent-1);opacity:.7">
+      <div class="head">
+        <span class="name">偷瞄的X</span>
+        <span class="codename">PeekingX · 概念</span>
+        <span class="status-pill temp">temp · 觀察</span>
+      </div>
+      <div class="lead">不確定也很好。靠頻率而非聲量取勝(qmore)</div>
+
+      <div class="section">
+        <div class="section-title"><span class="icon">📈</span>本週進度</div>
+        <div class="section-content"><p class="empty">概念階段,未深入發展</p></div>
+      </div>
+      <div class="footer-meta">
+        <span>狀態 — 埋伏線,等其他 IP 起來後再獨立登場</span>
+        <span>—</span>
+      </div>
+    </div>
+
+    <div class="ip" style="--c:var(--accent-2);opacity:.7">
+      <div class="head">
+        <span class="name">早知道 Ctrl+Z</span>
+        <span class="codename">CtrlZ · 概念</span>
+        <span class="status-pill temp">temp · 觀察</span>
+      </div>
+      <div class="lead">按下去重來一次。情緒共感強,出口待定(Maruo)</div>
+
+      <div class="section">
+        <div class="section-title"><span class="icon">📈</span>本週進度</div>
+        <div class="section-content"><p class="empty">概念階段,缺正向出口設定</p></div>
+      </div>
+      <div class="footer-meta">
+        <span>狀態 — 待釐清「後悔重新框架」</span>
+        <span>—</span>
+      </div>
+    </div>
+
+    <div class="ip" style="--c:var(--accent-3);opacity:.7">
+      <div class="head">
+        <span class="name">閣樓小精靈 A-Hu</span>
+        <span class="codename">AHu · 概念</span>
+        <span class="status-pill temp">temp · 觀察</span>
+      </div>
+      <div class="lead">失敗也很了不起。用小魔法棒為自己放煙火(Ray)</div>
+
+      <div class="section">
+        <div class="section-title"><span class="icon">📈</span>本週進度</div>
+        <div class="section-content"><p class="empty">概念階段,世界觀已具體,等視覺草稿</p></div>
+      </div>
+      <div class="footer-meta">
+        <span>狀態 — Ray 開始 A-Hu 視覺草稿</span>
+        <span>—</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
