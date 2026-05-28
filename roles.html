@@ -69,6 +69,30 @@ li{margin:.35em 0}
 .identity-ip{color:#cfc7bb;font-weight:700;padding-left:14px;border-left:1px solid rgba(255,255,255,.15)}
 .identity-hint{color:#9ba7b5;font-weight:600;font-size:12px;line-height:1.4;padding-left:14px;border-left:1px solid rgba(255,255,255,.15)}
 
+/* ── 我的快速設定（個人模式才出現）── */
+.my-panel{margin-top:16px;border:1px solid rgba(255,255,255,.12);background:#161a21;border-radius:14px;padding:14px 16px}
+.mp-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#9ba7b5;font-weight:900;margin-bottom:9px}
+.mp-templates{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.tpl-btn{appearance:none;font-family:inherit;background:#20242c;border:1px solid rgba(255,255,255,.14);border-radius:8px;color:#fff4e3;padding:8px 12px;font-size:13px;font-weight:800;cursor:pointer;transition:.15s transform,.15s border,.15s background}
+.tpl-btn:hover{transform:translateY(-1px);border-color:#f2b35e;background:#262b35}
+.tpl-btn .tpl-emoji{margin-right:5px}
+.tpl-btn .tpl-count{margin-left:6px;font-size:11px;color:#9ba7b5;font-weight:700}
+.tpl-btn.tpl-clear{border-style:dashed;color:#9ba7b5}
+.tpl-btn.tpl-clear:hover{border-color:#ff8b73;color:#ffd8cf}
+/* 過載指標列 */
+.mp-overload{display:flex;flex-wrap:wrap;align-items:center;gap:16px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}
+.ov-stat{display:flex;align-items:baseline;gap:4px;font-size:13px;color:#9ba7b5;font-weight:700}
+.ov-stat .ov-num{font-size:21px;font-weight:950;color:#fff4e3}
+.ov-stat .ov-of{font-size:12px;color:#5a6270;font-weight:700}
+.warn-pill{padding:6px 12px;border-radius:16px;font-size:12px;font-weight:900;white-space:nowrap}
+.warn-empty{background:#242a34;color:#9ba7b5}
+.warn-ok{background:rgba(74,222,128,.16);color:#86efac}
+.warn-mid{background:rgba(242,179,94,.20);color:#f2b35e}
+.warn-high{background:rgba(255,139,115,.20);color:#ff8b73}
+.ov-channels{display:flex;flex-wrap:wrap;gap:5px;flex:1;min-width:160px}
+.ov-chan{display:inline-flex;align-items:center;gap:5px;background:#20242c;border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:800;color:#d8d2c8}
+.ov-chan::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--cc,#9ba7b5)}
+
 /* ── 載入狀態 ── */
 .sync-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#4ade80;margin-left:6px;vertical-align:middle;transition:background .3s}
 .sync-dot.syncing{background:#f2b35e;animation:pulse .8s infinite}
@@ -100,6 +124,7 @@ li{margin:.35em 0}
         <p class="lead">四大流程從品牌核心、角色聖經、故事企劃到分鏡輸出；社群與商業角色會在企劃與輸出階段介入。點擊任一節點可查看該角色的專業權責。</p>
         <div class="legend" id="legend"></div>
         <div id="identity"></div>
+        <div id="myPanel"></div>
       </div>
     </header>
     <section class="flow" id="flow"></section>
@@ -127,6 +152,13 @@ const DATA = ROLE_DATA;
 const roleById   = new Map(DATA.roles.map(r=>[r.id,r]));
 const phaseColor = phase => DATA.phaseMeta[phase]?.color || '#9ba7b5';
 const memberById = new Map(MEMBERS.map(m=>[m.id,m]));
+
+// ── 5 主頻道對應（過載指標看「橫跨幾個主頻道」，定義在 roles-data.js）──
+const CHANNELS     = DATA.channels || [];
+const TEMPLATES    = DATA.templates || [];
+const channelByKey = new Map(CHANNELS.map(c=>[c.key,c]));
+const roleChannel  = new Map();
+CHANNELS.forEach(c => c.ids.forEach(id => roleChannel.set(id, c.key)));
 
 // ── URL 參數:?u= 個人身份, ?ip= 目前看的 IP ──
 const urlParams = new URLSearchParams(location.search);
@@ -260,6 +292,7 @@ function bindWrapHandlers(wrap) {
       rerenderNodeWrap(roleId);
       const activeBtn = document.querySelector('.node-btn.active');
       if (activeBtn && Number(activeBtn.dataset.id) === roleId) updateSideMembers(roleId);
+      renderMyPanel();
     });
   }
 }
@@ -370,6 +403,85 @@ function selectRole(id) {
     <p class="hint">提示：這張圖以「四大流程」呈現，但社群與商業角色會依需求在故事企劃、分鏡、輸出階段交叉介入。</p>`;
 }
 
+// ── 我的角色（個人模式）→ 過載指標 + 職能模板 ──
+function myRoleIds() {
+  if (!myUser) return [];
+  return DATA.roles.filter(r => getAssigned(r.id).includes(myUser.id)).map(r => r.id);
+}
+
+function computeMyOverload() {
+  const ids = myRoleIds();
+  const keys = new Set();
+  ids.forEach(id => { const k = roleChannel.get(id); if (k) keys.add(k); });
+  return { roleCount: ids.length, channelKeys: [...keys] };
+}
+
+function renderMyPanel() {
+  const el = document.getElementById('myPanel');
+  if (!el) return;
+  if (!myUser) { el.innerHTML = ''; return; }   // 唯讀模式不顯示
+
+  const tplBtns = TEMPLATES.map(t =>
+    `<button class="tpl-btn" data-tpl="${t.key}">
+      <span class="tpl-emoji">${t.emoji}</span>${t.label}<span class="tpl-count">${t.ids.length} 角色</span>
+    </button>`).join('');
+
+  const { roleCount, channelKeys } = computeMyOverload();
+  const ch = channelKeys.length;
+  let pillCls = 'warn-empty', pillTxt = '⚪ 尚未選擇';
+  if (ch >= 4)       { pillCls = 'warn-high'; pillTxt = `🛑 強提醒 · 跨 ${ch} 個主頻道`; }
+  else if (ch === 3) { pillCls = 'warn-mid';  pillTxt = '⚠️ 輕提醒 · 跨 3 個主頻道'; }
+  else if (ch >= 1)  { pillCls = 'warn-ok';   pillTxt = '🟢 正常'; }
+
+  const chanChips = channelKeys
+    .map(k => channelByKey.get(k))
+    .filter(Boolean)
+    .map(c => `<span class="ov-chan" style="--cc:${c.color}">${c.zh}</span>`)
+    .join('');
+
+  el.innerHTML = `
+    <div class="mp-label">快速套用職能模板（點一下換成這組角色，可再微調）</div>
+    <div class="mp-templates">
+      ${tplBtns}
+      <button class="tpl-btn tpl-clear" data-tpl="__clear__">⟲ 清空我的角色</button>
+    </div>
+    <div class="mp-overload">
+      <div class="ov-stat"><span class="ov-num">${roleCount}</span> 角色<span class="ov-of">/22</span></div>
+      <div class="ov-stat"><span class="ov-num">${ch}</span><span class="ov-of">/5</span> 主頻道</div>
+      <span class="warn-pill ${pillCls}">${pillTxt}</span>
+      <div class="ov-channels">${chanChips}</div>
+    </div>`;
+
+  el.querySelectorAll('.tpl-btn').forEach(b =>
+    b.addEventListener('click', () => applyTemplate(b.dataset.tpl)));
+}
+
+// 套用模板：把「我」的角色換成模板那組（diff 寫入，只動自己）。清空＝移除全部。
+async function applyTemplate(key) {
+  if (!myUser) return;
+  const target    = key === '__clear__' ? [] : (TEMPLATES.find(t => t.key === key)?.ids || []);
+  const current   = myRoleIds();
+  const targetSet = new Set(target);
+  const toAdd     = target.filter(id => !current.includes(id));
+  const toRemove  = current.filter(id => !targetSet.has(id));
+  if (toAdd.length === 0 && toRemove.length === 0) return;
+
+  if (toRemove.length > 0) {
+    const label = key === '__clear__' ? '清空我的角色' : TEMPLATES.find(t => t.key === key)?.label;
+    const ok = confirm(`套用「${label}」會把你目前的 ${current.length} 個角色換成 ${target.length} 個（移除 ${toRemove.length}、新增 ${toAdd.length}）。確定？`);
+    if (!ok) return;
+  }
+
+  for (const id of toRemove) await removeMember(id, myUser.id);
+  for (const id of toAdd)    await addMember(id, myUser.id);
+
+  const activeBtn = document.querySelector('.node-btn.active');
+  const keep = activeBtn ? Number(activeBtn.dataset.id) : null;
+  renderFlow();
+  renderMyPanel();
+  if (keep != null) selectRole(keep);
+}
+
 // ── 全域 remove 事件委派 ──
 document.addEventListener('click', async e => {
   if (e.target.classList.contains('remove-btn')) {
@@ -382,6 +494,7 @@ document.addEventListener('click', async e => {
     else refreshNode(roleId);
     const activeBtn = document.querySelector('.node-btn.active');
     if (activeBtn && Number(activeBtn.dataset.id) === roleId) updateSideMembers(roleId);
+    renderMyPanel();
   }
 });
 
@@ -389,8 +502,9 @@ document.addEventListener('click', async e => {
 renderLegend();
 renderIdentityBadge();
 renderFlow();
+renderMyPanel();
 selectRole(1);
-loadAllAssignments().then(() => { renderFlow(); selectRole(1); });
+loadAllAssignments().then(() => { renderFlow(); renderMyPanel(); selectRole(1); });
 </script>
 </body>
 </html>

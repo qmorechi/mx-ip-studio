@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MX IP STUDIO 後台 — 發布新版本</title>
+<style>
+  :root{
+    --bg:#0A0E14; --panel:#131923; --panel-2:#1A2231; --panel-3:#0F1620;
+    --text:#E6EDF3; --text-dim:#8B949E; --text-mute:#6B7280; --line:#30363D;
+    --success:#3FB950; --info:#58A6FF; --ai:#A855F7; --warn:#D29922; --danger:#F85149; --gold:#FFB454;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:"Noto Sans TC","Helvetica Neue",-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.6;font-size:14px}
+
+  .topbar{padding:12px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;background:var(--panel)}
+  .breadcrumb{font-size:12px;color:var(--text-dim)}
+  .breadcrumb a{color:var(--text-dim);text-decoration:none}
+  .breadcrumb a:hover{color:var(--text)}
+  .breadcrumb strong{color:var(--text)}
+  .breadcrumb .backend{color:var(--info)}
+  .user{display:flex;align-items:center;gap:10px;font-size:12px}
+  .user-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--info),#3B82C4);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:12px}
+  .sync-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#3FB950;margin-left:4px;vertical-align:middle;transition:background .3s}
+  .sync-dot.syncing{background:var(--gold);animation:pulse .8s infinite}
+  .sync-dot.error{background:var(--danger)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  .page{max-width:760px;margin:0 auto;padding:32px 24px 60px}
+
+  .header{text-align:center;margin-bottom:8px}
+  .header-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(88,166,255,.14);color:var(--info);padding:5px 14px;border-radius:14px;font-size:11.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px}
+  .header h1{font-size:28px;font-weight:800;margin-bottom:8px}
+  .header p{font-size:14px;color:var(--text-dim);line-height:1.7}
+
+  .safety{background:rgba(63,185,80,.07);border:1px solid rgba(63,185,80,.3);border-radius:10px;padding:14px 18px;margin:22px 0 28px;display:flex;gap:12px;align-items:flex-start}
+  .safety-icon{font-size:20px;flex-shrink:0}
+  .safety-text{font-size:13px;line-height:1.7}
+  .safety-text strong{color:var(--success)}
+
+  .gov-empty{background:rgba(210,153,34,.07);border:1px solid rgba(210,153,34,.3);border-radius:10px;padding:16px 18px;font-size:13px;line-height:1.7;color:var(--warn);margin-bottom:24px}
+  .gov-empty code{font-family:"SF Mono",monospace;color:var(--gold);background:var(--bg);padding:1px 6px;border-radius:4px}
+
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:16px}
+  .step.disabled{opacity:.5;pointer-events:none}
+  .step-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .step-num{width:28px;height:28px;border-radius:50%;background:var(--info);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0}
+  .step-title{font-size:16px;font-weight:700}
+  .step-hint{font-size:12px;color:var(--text-mute);margin-left:auto}
+
+  .type-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .type-card{background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:16px;cursor:pointer;transition:all .15s;text-align:center}
+  .type-card:hover{border-color:var(--text-dim)}
+  .type-card.selected{border-color:var(--info);background:rgba(88,166,255,.07)}
+  .type-card-icon{font-size:26px;margin-bottom:6px}
+  .type-card-name{font-size:14px;font-weight:700;margin-bottom:3px}
+  .type-card-desc{font-size:11px;color:var(--text-dim);line-height:1.5}
+
+  .skill-picker{margin-top:14px;display:none}
+  .skill-picker.show{display:block}
+  .skill-picker-label{font-size:12px;color:var(--text-dim);margin-bottom:8px}
+  .skill-options{display:flex;flex-direction:column;gap:7px}
+  .skill-option{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;transition:all .15s}
+  .skill-option:hover{border-color:var(--text-dim)}
+  .skill-option.selected{border-color:var(--info);background:rgba(88,166,255,.06)}
+  .skill-option-name{font-size:13px;font-weight:700;font-family:"SF Mono",monospace}
+  .skill-option-ver{font-size:11.5px;color:var(--text-mute);text-align:right;white-space:nowrap}
+  .skill-option-ver strong{color:var(--success)}
+  .skill-option-ver .bugtag{color:var(--danger);font-weight:700}
+
+  .drop-zone{border:2px dashed var(--line);border-radius:12px;padding:36px 24px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg)}
+  .drop-zone:hover,.drop-zone.dragover{border-color:var(--info);background:rgba(88,166,255,.04)}
+  .drop-zone.has-file{border-color:var(--success);border-style:solid;background:rgba(63,185,80,.04)}
+  .drop-icon{font-size:34px;margin-bottom:10px}
+  .drop-text{font-size:14px;font-weight:600;margin-bottom:4px}
+  .drop-sub{font-size:11.5px;color:var(--text-mute)}
+  .file-chip{display:inline-flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 14px;font-size:13px}
+  .file-chip .file-icon{color:var(--success)}
+  .file-chip .file-size{color:var(--text-mute);font-size:11px}
+
+  .version-types{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
+  .ver-type{background:var(--bg);border:1.5px solid var(--line);border-radius:9px;padding:12px;cursor:pointer;text-align:center;transition:all .15s}
+  .ver-type:hover{border-color:var(--text-dim)}
+  .ver-type.selected{border-color:var(--info);background:rgba(88,166,255,.07)}
+  .ver-type-label{font-size:12.5px;font-weight:700;margin-bottom:2px}
+  .ver-type-desc{font-size:10.5px;color:var(--text-dim);line-height:1.4}
+  .ver-type-num{font-size:11px;color:var(--info);font-family:"SF Mono",monospace;margin-top:5px;font-weight:700}
+
+  .field-label{font-size:12.5px;font-weight:700;margin-bottom:7px;display:block}
+  .field-label .req{color:var(--info)}
+  textarea.changelog{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 13px;color:var(--text);font-size:13px;font-family:inherit;min-height:88px;resize:vertical;line-height:1.6}
+  .changelog:focus{outline:none;border-color:var(--info)}
+  .changelog-hint{font-size:11px;color:var(--text-mute);margin-top:5px}
+
+  .test-confirm{display:flex;align-items:flex-start;gap:10px;margin-top:16px;padding:13px 15px;background:rgba(210,153,34,.06);border:1px solid rgba(210,153,34,.25);border-radius:9px;cursor:pointer}
+  .test-confirm .check-box{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--warn);flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .test-confirm.checked .check-box{background:var(--warn)}
+  .test-confirm.checked .check-box::after{content:'✓';color:#0A0E14;font-size:13px;font-weight:800}
+  .test-confirm-text{font-size:12.5px;line-height:1.6}
+  .test-confirm-text strong{color:var(--warn)}
+
+  .publish-btn{width:100%;padding:15px;background:var(--info);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit;margin-top:8px;transition:all .15s}
+  .publish-btn:disabled{opacity:.35;cursor:not-allowed}
+  .publish-btn:not(:disabled):hover{background:#6FB3FF;transform:translateY(-1px)}
+  .publish-err{color:var(--danger);font-size:12.5px;text-align:center;margin-top:10px;min-height:1em}
+
+  .next-steps{background:var(--panel-3);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-top:24px}
+  .next-steps h3{font-size:13px;font-weight:800;margin-bottom:12px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px}
+  .next-flow{display:flex;flex-direction:column;gap:11px}
+  .next-item{display:flex;gap:11px;align-items:flex-start;font-size:12.5px}
+  .next-item-num{width:22px;height:22px;border-radius:50%;background:var(--panel-2);color:var(--text-dim);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+  .next-item-text{line-height:1.6}
+  .next-item-text strong{color:var(--text)}
+  .next-item-text .you{color:var(--gold)}
+  .next-item-text .auto{color:var(--info)}
+  .next-item.pending .next-item-text{color:var(--text-mute)}
+  .next-item.pending .next-item-num{background:transparent;border:1px dashed var(--line)}
+
+  .webhook-row{margin-top:18px;font-size:11.5px;color:var(--text-mute);text-align:center}
+  .webhook-row a{color:var(--info);text-decoration:none;cursor:pointer}
+  .webhook-row a:hover{text-decoration:underline}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:100}
+  .modal-overlay.show{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:30px;max-width:480px;width:90%;text-align:center;border-top:4px solid var(--success)}
+  .modal-icon{font-size:44px;margin-bottom:14px}
+  .modal h3{font-size:19px;font-weight:800;margin-bottom:10px}
+  .modal p{font-size:13px;line-height:1.7;color:var(--text-dim);margin-bottom:8px}
+  .modal .summary{background:var(--bg);border-radius:8px;padding:13px;margin:14px 0;text-align:left;font-size:12.5px;line-height:1.8}
+  .modal .summary code{font-family:"SF Mono",monospace;color:var(--gold)}
+  .modal .summary .pend{color:var(--text-mute)}
+  .modal-btn{background:var(--success);color:#0A0E14;border:none;border-radius:9px;padding:11px 24px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;margin-top:8px}
+
+  @media (max-width:600px){.type-cards{grid-template-columns:1fr}.version-types{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<script src="members.js"></script>
+
+<div class="topbar">
+  <div class="breadcrumb"><a href="console.html">MX IP STUDIO</a> › <span class="backend">後台</span> › <strong>發布新版本</strong><span class="sync-dot" id="syncDot" title="Supabase 連線中"></span></div>
+  <div class="user">
+    <span id="userName">Ray</span>
+    <div class="user-avatar" id="userAvatar">R</div>
+  </div>
+</div>
+
+<div class="page">
+
+  <div class="header">
+    <div class="header-tag">🔧 後台 · Skill 作者專用</div>
+    <h1>發布新版本</h1>
+    <p>本地測試好了？拖檔上來、填個說明就發布。<br>不用碰 git，系統自動幫你存版本。</p>
+  </div>
+
+  <div class="safety">
+    <span class="safety-icon">🛡️</span>
+    <div class="safety-text">
+      <strong>放心發布</strong>：你發布的版本<strong>不會立即上線給操作員</strong>。會先進測試環（automation-test + test），由 qmore 確認沒問題後才推到穩定區。就算有 bug 也擋在測試環，影響不到大家正在做的工作。
+    </div>
+  </div>
+
+  <div class="gov-empty" id="govEmpty" style="display:none"></div>
+
+  <!-- Step 1 -->
+  <div class="step" id="step1">
+    <div class="step-head">
+      <div class="step-num">1</div>
+      <div class="step-title">要更新什麼？</div>
+    </div>
+    <div class="type-cards">
+      <div class="type-card selected" data-type="skill">
+        <div class="type-card-icon">📦</div>
+        <div class="type-card-name">Skill</div>
+        <div class="type-card-desc">brand-core / 角色一致性 / storyboard 等的 prompt 邏輯</div>
+      </div>
+      <div class="type-card" data-type="engine">
+        <div class="type-card-icon">🎨</div>
+        <div class="type-card-name">生成引擎配置</div>
+        <div class="type-card-desc">哪個任務用哪套 AI 生圖最好的對應表</div>
+      </div>
+    </div>
+    <div class="skill-picker show" id="skillPicker">
+      <div class="skill-picker-label">選哪一個 Skill：</div>
+      <div class="skill-options" id="skillOptions"></div>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="step" id="step2">
+    <div class="step-head">
+      <div class="step-num">2</div>
+      <div class="step-title">上傳檔案</div>
+      <div class="step-hint" id="dropHint">支援資料夾 zip / 單檔</div>
+    </div>
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-icon">📁</div>
+      <div class="drop-text" id="dropText">拖曳檔案到這裡，或點擊選擇</div>
+      <div class="drop-sub" id="dropSub">把整個 skill 資料夾打包成 zip 拖進來就好</div>
+    </div>
+    <input type="file" id="fileInput" style="display:none">
+  </div>
+
+  <!-- Step 3 -->
+  <div class="step" id="step3">
+    <div class="step-head">
+      <div class="step-num">3</div>
+      <div class="step-title">版本與說明</div>
+    </div>
+
+    <label class="field-label">這次是哪種更新？<span class="req">*</span></label>
+    <div class="version-types">
+      <div class="ver-type" data-vt="patch">
+        <div class="ver-type-label">🔧 小修正</div>
+        <div class="ver-type-desc">修 bug、微調</div>
+        <div class="ver-type-num" id="vtPatch">—</div>
+      </div>
+      <div class="ver-type selected" data-vt="minor">
+        <div class="ver-type-label">✨ 新功能</div>
+        <div class="ver-type-desc">加東西、不破壞舊的</div>
+        <div class="ver-type-num" id="vtMinor">—</div>
+      </div>
+      <div class="ver-type" data-vt="major">
+        <div class="ver-type-label">🔄 大改版</div>
+        <div class="ver-type-desc">結構大改</div>
+        <div class="ver-type-num" id="vtMajor">—</div>
+      </div>
+    </div>
+
+    <label class="field-label">改了什麼？<span class="req">*</span></label>
+    <textarea class="changelog" id="changelog" placeholder="例：appeal_strategy 改成自動化，修正 ip_style_type 載入順序錯誤的問題"></textarea>
+    <div class="changelog-hint">用白話寫就好，這會顯示給 qmore 看，幫他判斷要不要推穩定區。</div>
+
+    <div class="test-confirm" id="testConfirm">
+      <div class="check-box"></div>
+      <div class="test-confirm-text">
+        <strong>我已在本地測試過這個版本</strong><br>
+        確認基本功能正常，可以進測試環讓大家進一步驗證。
+      </div>
+    </div>
+  </div>
+
+  <button class="publish-btn" id="publishBtn" disabled>🚀 發布（進測試環 + 通知 qmore）</button>
+  <div class="publish-err" id="publishErr"></div>
+
+  <div class="next-steps">
+    <h3>📋 發布後會發生什麼</h3>
+    <div class="next-flow">
+      <div class="next-item">
+        <div class="next-item-num">1</div>
+        <div class="next-item-text"><span class="auto">系統自動</span>把新版寫進版本庫（Supabase <code>skill_versions</code>）並掛到測試環</div>
+      </div>
+      <div class="next-item" id="nextGit">
+        <div class="next-item-num">2</div>
+        <div class="next-item-text"><span class="auto">系統自動</span>把檔案 commit 進 GitHub 並打版本標籤（你不用碰 git）</div>
+      </div>
+      <div class="next-item" id="nextSlack">
+        <div class="next-item-num">3</div>
+        <div class="next-item-text"><span class="you">通知 qmore</span>（Slack #mx-ip-通知）：「Ray 發布了新版，待你決定是否推穩定區」</div>
+      </div>
+      <div class="next-item">
+        <div class="next-item-num">4</div>
+        <div class="next-item-text"><span class="you">qmore 把關</span>：確認沒問題 → 推到操作員的穩定區；有問題 → 擋住，你再修</div>
+      </div>
+    </div>
+    <div class="webhook-row">
+      GitHub commit / Slack 通知需後端 webhook（金鑰留伺服器端，不進前端）·
+      <a id="webhookCfg"></a>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-icon" id="modalIcon">🚀</div>
+    <h3 id="modalTitle">發布成功！</h3>
+    <p id="modalLead">你的新版已寫進版本庫並進入測試環，qmore 會看到。</p>
+    <div class="summary" id="modalSummary"></div>
+    <p style="font-size:12px">你可以繼續做其他的，部署到穩定區由 qmore 負責。</p>
+    <button class="modal-btn" id="modalBtn">知道了</button>
+  </div>
+</div>
+
+<script>
+// ── Supabase 設定（與 roles.html / console.html 同一專案）──
+const SB_URL  = 'https://cpzbwxgokmvayhzrvkqm.supabase.co';
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNwemJ3eGdva212YXloenJ2a3FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNTY1NTYsImV4cCI6MjA5NDkzMjU1Nn0.7d_pasAywneqOxOHFGlc1dpMJcUv1BDCvhV2jYLaAGE';
+const HEADERS = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' };
+
+const WEBHOOK_KEY = 'mxip_ray_webhook_url';
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function setSyncState(state){
+  const dot = document.getElementById('syncDot');
+  dot.className = 'sync-dot' + (state==='syncing'?' syncing':state==='error'?' error':'');
+  dot.title = state==='syncing'?'同步中…':state==='error'?'同步失敗':'Supabase 已連線';
+}
+
+async function sbFetch(path, opts={}){
+  const res = await fetch(`${SB_URL}/rest/v1/${path}`, { headers: HEADERS, ...opts });
+  if(!res.ok){ const t = await res.text().catch(()=> ''); throw new Error(`${res.status} ${t}`.trim()); }
+  return res.status === 204 ? null : res.json();
+}
+
+// ── 身份（?u= 決定 released_by，預設 ray）──
+const myId = new URLSearchParams(location.search).get('u') || 'ray';
+const memberById = new Map((typeof MEMBERS !== 'undefined' ? MEMBERS : []).map(m=>[m.id,m]));
+const me = memberById.get(myId) || { id: myId, name: myId, short: myId.slice(0,2).toUpperCase() };
+document.getElementById('userName').textContent = me.name;
+document.getElementById('userAvatar').textContent = me.short;
+
+// ── semver ──
+function cmpVer(a,b){
+  const pa=String(a).split('.').map(Number), pb=String(b).split('.').map(Number);
+  for(let i=0;i<3;i++){ if((pa[i]||0)!==(pb[i]||0)) return (pa[i]||0)-(pb[i]||0); }
+  return 0;
+}
+function bump(cur, type){
+  const [a,b,c] = String(cur).split('.').map(Number);
+  if(type==='patch') return `${a}.${b}.${(c||0)+1}`;
+  if(type==='minor') return `${a}.${(b||0)+1}.0`;
+  return `${(a||0)+1}.0.0`;
+}
+
+// ── 狀態 ──
+const state = { type:'skill', skillKey:null, verType:'minor', file:null, fileText:null, confirmed:false, ready:false };
+let SKILLS = [];          // [{key, latest, stable, hasBug}]
+let engineMaxNum = 0;     // engine_config 最大版號（'v3' → 3）
+
+// ── 載入真實版本資料 ──
+async function loadData(){
+  setSyncState('syncing');
+  try{
+    const [versions, bindings, engines] = await Promise.all([
+      sbFetch('skill_versions?select=skill_key,version,released_at,released_by,changelog,has_bug'),
+      sbFetch('skill_bindings?select=skill_key,stage,version'),
+      sbFetch('engine_config?select=version,is_stable'),
+    ]);
+    const byKey = {};
+    versions.forEach(v => (byKey[v.skill_key] = byKey[v.skill_key] || []).push(v));
+    const bindMap = {};
+    bindings.forEach(b => (bindMap[b.skill_key] = bindMap[b.skill_key] || {})[b.stage] = b.version);
+    SKILLS = Object.keys(byKey).sort().map(key=>{
+      const vers = byKey[key].slice().sort((a,b)=> String(b.released_at).localeCompare(String(a.released_at)) || cmpVer(b.version, a.version));
+      const latest = vers[0];
+      const stable = (bindMap[key] && bindMap[key].stable) || latest.version;
+      return { key, latest: latest.version, stable, hasBug: !!latest.has_bug };
+    });
+    engineMaxNum = engines.reduce((m,e)=> Math.max(m, parseInt(String(e.version).replace(/^v/i,''),10)||0), 0);
+    state.skillKey = SKILLS[0]?.key || null;
+    state.ready = SKILLS.length > 0;
+    setSyncState('ok');
+  }catch(e){
+    console.warn('loadData failed', e);
+    setSyncState('error');
+    state.ready = false;
+    SKILLS = [];
+  }
+  renderAll();
+}
+
+function currentSkill(){ return SKILLS.find(s=>s.key===state.skillKey) || null; }
+
+function renderSkillOptions(){
+  const root = document.getElementById('skillOptions');
+  if(SKILLS.length === 0){ root.innerHTML = ''; return; }
+  root.innerHTML = SKILLS.map(s=>`
+    <div class="skill-option ${s.key===state.skillKey?'selected':''}" data-key="${esc(s.key)}">
+      <span class="skill-option-name">${esc(s.key)}</span>
+      <span class="skill-option-ver">最新 <strong>v${esc(s.latest)}</strong>　穩定 v${esc(s.stable)}${s.hasBug?' · <span class="bugtag">⚠ 最新版有 bug</span>':''}</span>
+    </div>`).join('');
+  root.querySelectorAll('.skill-option').forEach(el=>{
+    el.addEventListener('click', ()=>{ state.skillKey = el.dataset.key; renderAll(); });
+  });
+}
+
+function targetVersion(){
+  if(state.type === 'engine') return 'v' + (engineMaxNum + 1);
+  const s = currentSkill();
+  return s ? bump(s.latest, state.verType) : '—';
+}
+
+function renderVerNums(){
+  if(state.type === 'engine'){
+    const n = engineMaxNum;
+    document.getElementById('vtPatch').textContent = `v${n} 微調`;
+    document.getElementById('vtMinor').textContent = `v${n+1}`;
+    document.getElementById('vtMajor').textContent = `v${n+1} 重構`;
+  }else{
+    const s = currentSkill();
+    const cur = s ? s.latest : '0.0.0';
+    document.getElementById('vtPatch').textContent = 'v' + bump(cur,'patch');
+    document.getElementById('vtMinor').textContent = 'v' + bump(cur,'minor');
+    document.getElementById('vtMajor').textContent = 'v' + bump(cur,'major');
+  }
+}
+
+function renderAll(){
+  // 空狀態（migration 未跑）
+  const empty = document.getElementById('govEmpty');
+  if(!state.ready){
+    empty.style.display = 'block';
+    empty.innerHTML = '尚無版本資料 —— 請先在 Supabase Dashboard SQL Editor 跑 <code>supabase/migrations/20260528_skill_engine_governance.sql</code> 建表＋seed，再回來發布。';
+  }else{
+    empty.style.display = 'none';
+  }
+  ['step1','step2','step3'].forEach(id=> document.getElementById(id).classList.toggle('disabled', !state.ready));
+
+  document.getElementById('skillPicker').classList.toggle('show', state.type==='skill');
+  renderSkillOptions();
+  renderVerNums();
+  validate();
+}
+
+// ── Step 1：型別切換 ──
+document.querySelectorAll('.type-card').forEach(card=>{
+  card.addEventListener('click', ()=>{
+    if(!state.ready) return;
+    state.type = card.dataset.type;
+    document.querySelectorAll('.type-card').forEach(c=> c.classList.toggle('selected', c.dataset.type===state.type));
+    document.getElementById('dropSub').textContent = state.type==='engine'
+      ? '上傳 engine_config.json（任務→引擎對應表）'
+      : '把整個 skill 資料夾打包成 zip 拖進來就好';
+    document.getElementById('dropHint').textContent = state.type==='engine' ? '單一 .json 檔' : '支援資料夾 zip / 單檔';
+    document.getElementById('fileInput').accept = state.type==='engine' ? '.json,application/json' : '.zip,application/zip';
+    renderAll();
+  });
+});
+
+// ── Step 1：版本類型 ──
+document.querySelectorAll('.ver-type').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    if(!state.ready) return;
+    state.verType = el.dataset.vt;
+    document.querySelectorAll('.ver-type').forEach(c=> c.classList.toggle('selected', c.dataset.vt===state.verType));
+    validate();
+  });
+});
+
+// ── Step 2：拖放 + 點擊選檔 ──
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+dropZone.addEventListener('click', ()=> state.ready && fileInput.click());
+dropZone.addEventListener('dragover', e=>{ e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', ()=> dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e=>{
+  e.preventDefault(); dropZone.classList.remove('dragover');
+  if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', ()=>{ if(fileInput.files[0]) handleFile(fileInput.files[0]); });
+
+async function handleFile(file){
+  state.file = file;
+  state.fileText = null;
+  if(state.type==='engine' && /\.json$/i.test(file.name)){
+    try{ state.fileText = await file.text(); }catch{}
+  }
+  dropZone.classList.add('has-file');
+  const kb = file.size < 1024 ? `${file.size} B` : file.size < 1048576 ? `${(file.size/1024).toFixed(0)} KB` : `${(file.size/1048576).toFixed(1)} MB`;
+  document.getElementById('dropText').innerHTML = `<span class="file-chip"><span class="file-icon">✓</span> ${esc(file.name)} <span class="file-size">· ${kb}</span></span>`;
+  document.getElementById('dropSub').textContent = '點擊可重新選擇';
+  validate();
+}
+
+// ── Step 3：測試確認 ──
+document.getElementById('testConfirm').addEventListener('click', ()=>{
+  if(!state.ready) return;
+  state.confirmed = !state.confirmed;
+  document.getElementById('testConfirm').classList.toggle('checked', state.confirmed);
+  validate();
+});
+
+const changelogEl = document.getElementById('changelog');
+changelogEl.addEventListener('input', validate);
+function changelog(){ return changelogEl.value.trim(); }
+
+function validate(){
+  const ok = state.ready && state.file && changelog() && state.confirmed;
+  document.getElementById('publishBtn').disabled = !ok;
+}
+
+// ── 發布：真寫入 Supabase + 觸發後端 webhook（若有設定）──
+const publishBtn = document.getElementById('publishBtn');
+publishBtn.addEventListener('click', publish);
+
+async function publish(){
+  publishBtn.disabled = true;
+  document.getElementById('publishErr').textContent = '';
+  setSyncState('syncing');
+  const today = new Date().toISOString().slice(0,10);
+  const ver = targetVersion();
+  try{
+    if(state.type === 'engine'){
+      let engines = [], mappings = [];
+      if(state.fileText){
+        try{ const j = JSON.parse(state.fileText); engines = j.engines || []; mappings = j.mappings || []; }catch{}
+      }
+      await sbFetch('engine_config', { method:'POST', body: JSON.stringify({
+        version: ver, deployed_at: today, deployed_by: me.id, changelog: changelog(), is_stable: false, engines, mappings
+      })});
+    }else{
+      const key = state.skillKey;
+      await sbFetch('skill_versions', { method:'POST', body: JSON.stringify({
+        skill_key: key, version: ver, released_at: today, released_by: me.id, changelog: changelog(), has_bug: false
+      })});
+      // 自動掛測試環：automation-test + test → 新版（trial / stable 由 qmore 守門）
+      for(const stage of ['automation-test','test']){
+        await sbFetch(`skill_bindings?skill_key=eq.${encodeURIComponent(key)}&stage=eq.${stage}`, {
+          method:'PATCH', body: JSON.stringify({ version: ver, updated_by: me.id, updated_at: new Date().toISOString() })
+        });
+      }
+    }
+    setSyncState('ok');
+    const hook = await fireWebhook(ver, today).catch(()=> false);
+    showSuccess(ver, hook);
+    await loadData();
+  }catch(e){
+    setSyncState('error');
+    document.getElementById('publishErr').textContent = '發布失敗：' + e.message;
+    publishBtn.disabled = false;
+  }
+}
+
+async function fireWebhook(ver, today){
+  const url = localStorage.getItem(WEBHOOK_KEY);
+  if(!url) return false;
+  const fd = new FormData();
+  fd.append('payload', JSON.stringify({
+    type: state.type, skill_key: state.skillKey, version: ver,
+    released_by: me.id, released_at: today, changelog: changelog()
+  }));
+  if(state.file) fd.append('file', state.file, state.file.name);
+  const res = await fetch(url, { method:'POST', body: fd });
+  return res.ok;
+}
+
+function showSuccess(ver, hookFired){
+  const isEngine = state.type === 'engine';
+  const target = isEngine ? `engine_config ${ver}` : `${state.skillKey} v${ver}`;
+  const gitLine = hookFired
+    ? `<div><strong>GitHub：</strong> 已觸發後端 commit + tag <code>${esc(isEngine?'engine_config':state.skillKey)}@${esc(ver)}</code></div>`
+    : `<div class="pend"><strong>GitHub / Slack：</strong> 待後端 webhook 串接（尚未設定，本次只寫了版本庫）</div>`;
+  const slackLine = hookFired ? `<div><strong>通知：</strong> Slack #mx-ip-通知 → qmore</div>` : '';
+  document.getElementById('modalSummary').innerHTML = `
+    <div><strong>發布內容：</strong> <code>${esc(target)}</code></div>
+    <div><strong>狀態：</strong> 已寫進 Supabase 版本庫${isEngine?'（is_stable=false，待 qmore 切換）':'，並掛到 automation-test + test'}</div>
+    ${gitLine}${slackLine}
+    <div><strong>說明：</strong> ${esc(changelog())}</div>`;
+  // 更新 next-steps 的 git/slack 狀態
+  document.getElementById('nextGit').classList.toggle('pending', !hookFired);
+  document.getElementById('nextSlack').classList.toggle('pending', !hookFired);
+  document.getElementById('modal').classList.add('show');
+}
+
+// reset 表單（關閉成功彈窗後）
+function resetForm(){
+  state.file = null; state.fileText = null; state.confirmed = false;
+  dropZone.classList.remove('has-file');
+  document.getElementById('dropText').textContent = '拖曳檔案到這裡，或點擊選擇';
+  document.getElementById('dropSub').textContent = state.type==='engine' ? '上傳 engine_config.json（任務→引擎對應表）' : '把整個 skill 資料夾打包成 zip 拖進來就好';
+  document.getElementById('testConfirm').classList.remove('checked');
+  changelogEl.value = '';
+  fileInput.value = '';
+  validate();
+}
+
+document.getElementById('modalBtn').addEventListener('click', ()=>{
+  document.getElementById('modal').classList.remove('show');
+  resetForm();
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') document.getElementById('modal').classList.remove('show'); });
+
+// ── webhook 設定 ──
+function renderWebhookCfg(){
+  const url = localStorage.getItem(WEBHOOK_KEY);
+  document.getElementById('webhookCfg').textContent = url ? '✏️ 已設定，點此修改' : '⚙️ 設定 webhook';
+}
+document.getElementById('webhookCfg').addEventListener('click', ()=>{
+  const cur = localStorage.getItem(WEBHOOK_KEY) || '';
+  const next = prompt('後端 webhook URL（n8n / Edge Function，留空＝清除）：', cur);
+  if(next === null) return;
+  if(next.trim()) localStorage.setItem(WEBHOOK_KEY, next.trim());
+  else localStorage.removeItem(WEBHOOK_KEY);
+  renderWebhookCfg();
+});
+
+// ── 啟動 ──
+renderWebhookCfg();
+loadData();
+</script>
+</body>
+</html>

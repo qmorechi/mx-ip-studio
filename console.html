@@ -116,6 +116,141 @@ button.big-copy.success{background:linear-gradient(180deg,#4ade80,#22c55e)}
 .modal-btn.primary:disabled{opacity:.4;cursor:not-allowed;background:#666}
 .modal-btn.success{background:#4ade80;color:#111318;border-color:transparent}
 
+/* ── 分頁 ── */
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,.12);flex-wrap:wrap}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:#9ba7b5;font-family:inherit;font-size:14px;font-weight:700;padding:11px 16px;cursor:pointer;transition:.15s color,.15s border-color;margin-bottom:-1px;white-space:nowrap}
+.tab-btn:hover{color:#fff4e3}
+.tab-btn.active{color:#f2b35e;border-bottom-color:#f2b35e}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* ── 治理共用 ── */
+.gov-principle{background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.25);border-left:4px solid #4ade80;border-radius:10px;padding:13px 16px;margin-bottom:20px;font-size:13px;line-height:1.7}
+.gov-principle strong{color:#86efac}
+.gov-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.gov-stat{background:#171b22;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 16px}
+.gov-stat .n{font-size:26px;font-weight:900;line-height:1}
+.gov-stat .n.ok{color:#86efac}.gov-stat .n.new{color:#58A6FF}.gov-stat .n.warn{color:#ff8b73}
+.gov-stat .l{font-size:11.5px;color:#9ba7b5;margin-top:3px}
+.gov-section-title{font-size:15px;font-weight:900;margin:6px 0 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.gov-section-title .sub{font-size:11.5px;color:#6b7280;font-weight:400}
+.gov-empty{text-align:center;padding:40px 20px;color:#9ba7b5;font-size:13px;background:#171b22;border:1px dashed rgba(255,255,255,.15);border-radius:12px}
+.gov-empty code{font-family:'SF Mono',Menlo,monospace;color:#f2b35e;background:#0f1116;padding:2px 6px;border-radius:4px}
+
+/* ── Skill 卡 ── */
+.skill-cards{display:flex;flex-direction:column;gap:12px;margin-bottom:30px}
+.skill-card{background:#171b22;border:1px solid rgba(255,255,255,.12);border-radius:14px;overflow:hidden}
+.skill-card.has-new{border-color:rgba(88,166,255,.4)}
+.skill-card.has-bug{border-color:rgba(255,139,115,.45)}
+.skill-card-main{padding:16px 18px;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center}
+.skill-name{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px}
+.skill-name code{font-family:'SF Mono',Menlo,monospace;font-size:13px;color:#f2b35e}
+.tier-badge{font-size:9.5px;padding:2px 7px;border-radius:8px;font-weight:700;background:#242a34;color:#9ba7b5}
+.skill-desc{font-size:11.5px;color:#9ba7b5}
+.ver-display{display:flex;align-items:center;gap:14px}
+.ver-block{text-align:center}
+.ver-block .lab{font-size:9.5px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.ver-num{font-size:16px;font-weight:800;font-family:'SF Mono',Menlo,monospace;padding:4px 10px;border-radius:6px}
+.ver-num.stable{background:rgba(74,222,128,.12);color:#86efac}
+.ver-num.same{background:#242a34;color:#9ba7b5}
+.ver-num.new{background:rgba(88,166,255,.12);color:#58A6FF}
+.ver-num.bug{background:rgba(255,139,115,.14);color:#ff8b73}
+.ver-arrow{color:#6b7280;font-size:14px}
+.skill-status-row{padding:11px 18px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#0f1116}
+.status-msg{font-size:12px;display:flex;align-items:center;gap:7px}
+.status-msg.ok{color:#86efac}.status-msg.new{color:#58A6FF}.status-msg.bug{color:#ff8b73}
+.status-msg .cl{color:#9ba7b5;font-size:11.5px}
+.skill-actions{display:flex;gap:7px;flex-wrap:wrap}
+.act-btn{padding:7px 13px;border-radius:7px;font-size:11.5px;font-weight:700;cursor:pointer;border:none;font-family:inherit;white-space:nowrap}
+.act-btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.15);color:#fff4e3}
+.act-btn.ghost:hover{border-color:#9ba7b5}
+.act-btn.promote{background:#4ade80;color:#111318}
+.act-btn.rollback{background:#ff8b73;color:#111318}
+.act-btn.deploy{background:#58A6FF;color:#111318}
+.act-btn.disabled{opacity:.4;cursor:not-allowed}
+.ver-history{padding:0 18px;max-height:0;overflow:hidden;transition:max-height .25s,padding .25s}
+.ver-history.open{padding:14px 18px;max-height:800px;border-top:1px solid rgba(255,255,255,.08)}
+.vh-item{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.08);align-items:flex-start}
+.vh-item:last-child{border-bottom:none}
+.vh-ver{font-family:'SF Mono',Menlo,monospace;font-size:12px;font-weight:700;padding:2px 8px;border-radius:5px;background:#242a34;flex-shrink:0;min-width:64px;text-align:center}
+.vh-ver.cur-stable,.vh-ver.cur{background:rgba(74,222,128,.15);color:#86efac}
+.vh-ver.cur-latest{background:rgba(88,166,255,.15);color:#58A6FF}
+.vh-detail{flex:1;min-width:0}
+.vh-meta{font-size:10.5px;color:#6b7280;margin-bottom:2px}
+.vh-log{font-size:12px}
+.vh-rollback{background:transparent;border:1px solid rgba(255,255,255,.15);color:#9ba7b5;padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;font-family:inherit;flex-shrink:0;white-space:nowrap}
+.vh-rollback:hover{border-color:#ff8b73;color:#ff8b73}
+
+/* ── 部署環矩陣 ── */
+.rings-wrap{background:#171b22;border:1px solid rgba(255,255,255,.12);border-radius:14px;overflow:hidden;margin-bottom:24px}
+.rings-head{padding:16px 18px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.rings-head h3{font-size:14px;font-weight:900;margin:0 0 4px}
+.rings-head p{font-size:11.5px;color:#9ba7b5;margin:0}
+.rings-flow{font-size:11px;color:#6b7280;margin-top:8px;font-family:'SF Mono',Menlo,monospace}
+.rings-flow .rt{color:#58A6FF}
+.rings-scroll{overflow-x:auto}
+table.rings{width:100%;border-collapse:collapse;font-size:12px;min-width:640px}
+table.rings th,table.rings td{padding:10px 12px;text-align:center;border-bottom:1px solid rgba(255,255,255,.08);border-right:1px solid rgba(255,255,255,.08)}
+table.rings th:last-child,table.rings td:last-child{border-right:none}
+table.rings thead th{background:#0f1116;font-size:11px;color:#9ba7b5;font-weight:700}
+table.rings thead th .rs{display:block;font-size:9.5px;color:#6b7280;margin-top:2px;font-weight:400}
+table.rings td.sk{text-align:left;font-family:'SF Mono',Menlo,monospace;font-size:11.5px;color:#f2b35e;background:#0f1116;white-space:nowrap}
+.rcell{font-family:'SF Mono',Menlo,monospace;font-weight:700;padding:3px 8px;border-radius:5px;display:inline-block;font-size:11.5px}
+.rcell.stable{background:rgba(74,222,128,.12);color:#86efac}
+.rcell.testing{background:rgba(88,166,255,.12);color:#58A6FF}
+.rcell.held{background:rgba(255,139,115,.12);color:#ff8b73}
+
+/* ── 緊急 ── */
+.emergency{background:rgba(255,139,115,.05);border:1px solid rgba(255,139,115,.25);border-radius:14px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+.emergency h3{font-size:14px;font-weight:900;color:#ff8b73;margin:0 0 3px}
+.emergency p{font-size:11.5px;color:#9ba7b5;margin:0}
+.emergency-btn{background:#ff8b73;color:#111318;border:none;border-radius:9px;padding:11px 20px;font-weight:900;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap}
+
+/* ── 引擎 ── */
+.config-card{background:#171b22;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+.config-ver{font-size:16px;font-weight:900;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.badge-stable{font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(74,222,128,.15);color:#86efac}
+.config-meta{font-size:11.5px;color:#9ba7b5;margin-top:5px}
+.config-meta code{font-family:'SF Mono',Menlo,monospace;color:#f2b35e}
+.config-actions{display:flex;gap:7px;flex-wrap:wrap}
+.map-wrap{background:#171b22;border:1px solid rgba(255,255,255,.12);border-radius:14px;overflow:hidden;margin-bottom:24px}
+.map-head{padding:16px 18px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.map-head h3{font-size:14px;font-weight:900;margin:0 0 4px}
+.map-head p{font-size:11.5px;color:#9ba7b5;margin:0}
+.map-scroll{overflow-x:auto}
+table.mapping{width:100%;border-collapse:collapse;font-size:12px;min-width:680px}
+table.mapping th,table.mapping td{padding:10px 12px;text-align:left;border-bottom:1px solid rgba(255,255,255,.08)}
+table.mapping thead th{background:#0f1116;font-size:11px;color:#9ba7b5;font-weight:700}
+.task-name{font-weight:700}
+.task-channel{font-size:10.5px;color:#6b7280;margin-top:2px}
+.engine-pill{display:inline-flex;align-items:center;gap:6px;background:#242a34;padding:4px 10px;border-radius:999px;font-size:11.5px;font-weight:700}
+.vendor-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.vendor-dot.gemini{background:#58A6FF}.vendor-dot.gpt{background:#86efac}.vendor-dot.other{background:#A855F7}
+.changed-tag{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(88,166,255,.12);color:#58A6FF}
+.changed-tag.stable-tag{background:#242a34;color:#9ba7b5}
+.alt-engines{font-size:11px;color:#9ba7b5}
+.registry{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:24px}
+.engine-card{background:#171b22;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 16px}
+.engine-card.testing{border-color:rgba(88,166,255,.35)}
+.engine-card.disabled{opacity:.5}
+.engine-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px}
+.engine-card-name{font-size:13.5px;font-weight:800;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.vendor-badge{font-size:9px;padding:2px 6px;border-radius:5px;font-weight:700;background:#242a34;color:#9ba7b5}
+.engine-state{font-size:10px;font-weight:800;white-space:nowrap}
+.engine-state.enabled{color:#86efac}.engine-state.testing{color:#58A6FF}.engine-state.disabled{color:#6b7280}
+.engine-card-desc{font-size:11.5px;color:#9ba7b5;margin-bottom:10px}
+.engine-card-foot{display:flex;justify-content:space-between;font-size:11px;color:#6b7280}
+.engine-card-foot code{font-family:'SF Mono',Menlo,monospace;color:#f2b35e}
+.vh-wrap{background:#171b22;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px 18px;margin-bottom:24px}
+.vh-wrap h3{font-size:14px;font-weight:900;margin:0 0 12px}
+
+/* ── 確認 Modal 額外 ── */
+.impact-box{background:#0f1116;border-radius:8px;padding:13px 15px;margin:14px 0;font-size:12.5px;line-height:1.8}
+.impact-box .label{color:#6b7280;display:inline-block;width:96px}
+.impact-box code{font-family:'SF Mono',Menlo,monospace;color:#f2b35e;font-size:11.5px}
+
+@media(max-width:768px){.gov-summary{grid-template-columns:1fr 1fr}.skill-card-main{grid-template-columns:1fr}.ver-display{justify-content:flex-start}}
+
 </style>
 </head>
 <body>
@@ -124,7 +259,7 @@ button.big-copy.success{background:linear-gradient(180deg,#4ade80,#22c55e)}
 <script src="roles-data.js"></script>
 <div class="wrap">
   <nav class="breadcrumb">
-    <a href="index.html">MX IP STUDIO</a>
+    <a href="index.html">SIPAI.STUDIO</a>
     <span class="sep">›</span>
     <span class="current">主控台</span>
     <span class="extra">· <a href="roles.html" id="navRoles">開角色互動圖(唯讀) →</a></span>
@@ -142,6 +277,13 @@ button.big-copy.success{background:linear-gradient(180deg,#4ade80,#22c55e)}
     </div>
   </header>
 
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="roles">📋 角色指派</button>
+    <button class="tab-btn" data-tab="skills">📦 Skill 版本管理</button>
+    <button class="tab-btn" data-tab="engines">🤖 AI 引擎管理</button>
+  </div>
+
+  <div class="tab-panel active" id="tab-roles">
   <section class="block">
     <h2>📊 進度</h2>
     <div class="progress-stats" id="progressStats"></div>
@@ -179,6 +321,40 @@ button.big-copy.success{background:linear-gradient(180deg,#4ade80,#22c55e)}
       <button class="big-copy" id="sendAll">📤 發送全員通知到 Slack</button>
     </div>
   </section>
+  </div><!-- /tab-roles -->
+
+  <div class="tab-panel" id="tab-skills">
+    <div class="gov-principle">
+      <strong>運作原則</strong>：操作員永遠跑「已驗證的穩定版」。Ray 推新版只會進「最新版」，不會覆蓋進行中的工作；新版須由你經測試環逐層放行才會進穩定區，出包時一鍵回調、作業不中斷。
+    </div>
+    <div class="gov-summary" id="skillSummary"></div>
+    <div class="gov-section-title">📦 各 Skill 版本狀態 <span class="sub">穩定版 = 操作員當前使用 · 最新版 = Ray 剛推</span></div>
+    <div class="skill-cards" id="skillCards"></div>
+    <div class="rings-wrap">
+      <div class="rings-head">
+        <h3>🎯 部署環矩陣（版本綁定到 stage）</h3>
+        <p>同一 skill 在不同 stage 可跑不同版本──這就是金絲雀部署。新版由右往左逐環放行。</p>
+        <div class="rings-flow">Ray push → <span class="rt">自動化測試</span> → <span class="rt">測試區</span> → <span class="rt">試寫區</span> → <span class="rt">穩定區</span>（操作員主力）</div>
+      </div>
+      <div class="rings-scroll"><table class="rings" id="ringsTable"></table></div>
+    </div>
+    <div class="emergency">
+      <div><h3>🚨 緊急全域回調</h3><p>多個 skill 同時出包時，一鍵回到上一個全綠穩定快照。（快照基礎建設尚未接，目前為佔位）</p></div>
+      <button class="emergency-btn" id="emergencyBtn">🔴 全部回到穩定快照</button>
+    </div>
+  </div><!-- /tab-skills -->
+
+  <div class="tab-panel" id="tab-engines">
+    <div class="gov-section-title">📌 當前部署中的引擎配置</div>
+    <div id="engineCurrent"></div>
+    <div class="map-wrap">
+      <div class="map-head"><h3>🎯 任務 → 最佳引擎對應</h3><p>每個生成任務當前用哪個引擎 · 「上次變更」顯示對應會隨時間漂移</p></div>
+      <div class="map-scroll"><table class="mapping" id="mappingTable"></table></div>
+    </div>
+    <div class="gov-section-title">🤖 引擎登錄表 <span class="sub">所有可用引擎 · 啟用 / 測試中 / 停用</span></div>
+    <div class="registry" id="engineRegistry"></div>
+    <div class="vh-wrap"><h3>🕓 engine_config 版本史</h3><div id="configHistory"></div></div>
+  </div><!-- /tab-engines -->
 </div>
 
 <!-- Slack 發送 Modal -->
@@ -191,6 +367,19 @@ button.big-copy.success{background:linear-gradient(180deg,#4ade80,#22c55e)}
       <button class="modal-btn" id="modalCancel">取消</button>
       <button class="modal-btn" id="modalCopy">📋 複製</button>
       <button class="modal-btn primary" id="modalSend">📤 直接發送</button>
+    </div>
+  </div>
+</div>
+
+<!-- 升級 / 回調 確認 Modal -->
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="modal">
+    <h3 id="confirmTitle"></h3>
+    <p class="modal-sub" id="confirmDesc"></p>
+    <div class="impact-box" id="confirmImpact"></div>
+    <div class="modal-actions">
+      <button class="modal-btn" id="confirmCancel">取消</button>
+      <button class="modal-btn primary" id="confirmOk"></button>
     </div>
   </div>
 </div>
@@ -564,6 +753,286 @@ document.getElementById('ipSelect').addEventListener('change', async e => {
   renderMatrix();
   renderInviteList();
 });
+
+// ════════════════ 治理分頁：Skill 版本 + AI 引擎 ════════════════
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// skill 的 tier/desc 留在前端常數（與 IPS/MEMBERS 同樣 Phase 1 寫死的作法）
+const SKILL_META = {
+  'ip-full-workflow':         {tier:'L1 主入口', desc:'統一入口路由'},
+  'brand-core':               {tier:'L2', desc:'IP 品牌核心建立'},
+  'character-consistency-v2': {tier:'L2', desc:'角色一致性 · 含 AI 生成'},
+  'storyboard-workflow':      {tier:'L2', desc:'Kling-aware 短影音製作'},
+  'multi-party-discussion':   {tier:'L2', desc:'多方 AI 討論'},
+};
+const RING_STAGES = [
+  {key:'automation-test', label:'自動化測試', desc:'Ray 推新版先到'},
+  {key:'test',  label:'測試區', desc:'金絲雀驗證'},
+  {key:'trial', label:'試寫區', desc:'beta 試用'},
+  {key:'stable',label:'穩定區', desc:'操作員主力'},
+];
+function cmpVer(a,b){const pa=String(a).split('.').map(Number),pb=String(b).split('.').map(Number);for(let i=0;i<3;i++){const d=(pa[i]||0)-(pb[i]||0);if(d)return d;}return 0;}
+
+let skillState = null;
+let engineState = null;
+
+// ── Skill tab：載入 + 渲染 ──
+async function loadSkills(){
+  setSyncState('syncing');
+  try{
+    const [versions, bindings] = await Promise.all([
+      sbFetch('skill_versions?select=skill_key,version,released_at,released_by,changelog,has_bug'),
+      sbFetch('skill_bindings?select=skill_key,stage,version'),
+    ]);
+    const byKey = {};
+    versions.forEach(v=>{ (byKey[v.skill_key] = byKey[v.skill_key] || []).push(v); });
+    const bindMap = {};
+    bindings.forEach(b=>{ (bindMap[b.skill_key] = bindMap[b.skill_key] || {})[b.stage] = b.version; });
+    const skills = Object.keys(byKey).sort().map(key=>{
+      const vers = byKey[key].slice().sort((a,b)=> String(b.released_at).localeCompare(String(a.released_at)) || cmpVer(b.version, a.version));
+      const latest = vers[0];
+      const stable = (bindMap[key] && bindMap[key].stable) || latest.version;
+      const status = latest.has_bug ? 'bug' : (stable !== latest.version ? 'new' : 'ok');
+      return {key, vers, latest, stable, status, bind: bindMap[key] || {}, meta: SKILL_META[key] || {tier:'',desc:''}};
+    });
+    skillState = {skills};
+    setSyncState('ok');
+  }catch(e){ console.warn('loadSkills failed', e); setSyncState('error'); skillState = {skills:[], error:String(e)}; }
+}
+
+function renderSkillTab(){
+  if(!skillState) return;
+  const sum = document.getElementById('skillSummary');
+  const cards = document.getElementById('skillCards');
+  if(skillState.error || skillState.skills.length === 0){
+    sum.innerHTML = '';
+    cards.innerHTML = `<div class="gov-empty">尚無 Skill 版本資料。請先在 Supabase Dashboard 跑 <code>20260528_skill_engine_governance.sql</code> 建表＋seed。</div>`;
+    document.getElementById('ringsTable').innerHTML = '';
+    return;
+  }
+  const s = skillState.skills;
+  const okN = s.filter(x=>x.status==='ok').length;
+  const newN = s.filter(x=>x.status==='new').length;
+  const bugN = s.filter(x=>x.status==='bug').length;
+  sum.innerHTML = `
+    <div class="gov-stat"><div class="n">${s.length}</div><div class="l">總 Skill 數</div></div>
+    <div class="gov-stat"><div class="n ok">${okN}</div><div class="l">✓ 已是最新穩定</div></div>
+    <div class="gov-stat"><div class="n new">${newN}</div><div class="l">⚡ 新版可測試</div></div>
+    <div class="gov-stat"><div class="n warn">${bugN}</div><div class="l">⚠ 有 Bug 回報</div></div>`;
+  cards.innerHTML = s.map(renderSkillCard).join('');
+  renderRings(s);
+  document.querySelectorAll('#tab-skills [data-act]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const {act, key, ver} = btn.dataset;
+      if(act==='hist') document.getElementById('hist-'+key).classList.toggle('open');
+      else if(act==='promote') confirmPromote(key, ver);
+      else if(act==='rollback') confirmRollback(key, ver);
+    });
+  });
+}
+
+function renderSkillCard(s){
+  const hasUpdate = s.stable !== s.latest.version;
+  const latestCls = s.status==='new' ? 'new' : s.status==='bug' ? 'bug' : 'same';
+  let actions = `<button class="act-btn ghost" data-act="hist" data-key="${s.key}">📜 版本紀錄</button>`;
+  if(s.status==='new') actions += `<button class="act-btn promote" data-act="promote" data-key="${s.key}" data-ver="${s.latest.version}">⬆️ 升級到穩定版</button>`;
+  else if(s.status==='bug') actions += `<button class="act-btn promote disabled" disabled>⬆️ 升級（已鎖）</button>`;
+  const icon = s.status==='ok'?'✓':s.status==='new'?'⚡':'⚠';
+  const msg = s.status==='ok'?'已是最新穩定版':s.status==='new'?`新版 v${s.latest.version} 可測試`:`v${s.latest.version} 有 Bug 回報 · 建議維持穩定版`;
+  const cl = (s.status!=='ok' && s.latest.changelog) ? `<span class="cl">· ${esc(s.latest.changelog)}</span>` : '';
+  return `
+  <div class="skill-card ${s.status==='new'?'has-new':s.status==='bug'?'has-bug':''}">
+    <div class="skill-card-main">
+      <div>
+        <div class="skill-name"><code>${esc(s.key)}</code> <span class="tier-badge">${esc(s.meta.tier)}</span></div>
+        <div class="skill-desc">${esc(s.meta.desc)}</div>
+      </div>
+      <div class="ver-display">
+        <div class="ver-block"><div class="lab">穩定版（操作中）</div><span class="ver-num stable">v${esc(s.stable)}</span></div>
+        <div class="ver-arrow">${hasUpdate?'→':'='}</div>
+        <div class="ver-block"><div class="lab">最新版（Ray 推）</div><span class="ver-num ${latestCls}">v${esc(s.latest.version)}</span></div>
+      </div>
+    </div>
+    <div class="skill-status-row">
+      <div class="status-msg ${s.status}">${icon} ${msg} ${cl}</div>
+      <div class="skill-actions">${actions}</div>
+    </div>
+    <div class="ver-history" id="hist-${esc(s.key)}">
+      ${s.vers.map(v=>{
+        const tag = v.version===s.stable ? 'cur-stable' : v.version===s.latest.version ? 'cur-latest' : '';
+        return `<div class="vh-item">
+          <span class="vh-ver ${tag}">v${esc(v.version)}</span>
+          <div class="vh-detail">
+            <div class="vh-meta">${esc(v.released_at)} · ${esc(v.released_by)} ${tag==='cur-stable'?'· 🟢 穩定版':tag==='cur-latest'?'· 🔵 最新版':''}</div>
+            <div class="vh-log">${esc(v.changelog)}</div>
+          </div>
+          ${tag?'':`<button class="vh-rollback" data-act="rollback" data-key="${esc(s.key)}" data-ver="${esc(v.version)}">⟲ 回調到此版</button>`}
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function renderRings(skills){
+  const t = document.getElementById('ringsTable');
+  let head = '<thead><tr><th style="text-align:left">Skill ＼ 部署環</th>';
+  RING_STAGES.forEach(r=> head += `<th>${r.label}<span class="rs">${r.desc}</span></th>`);
+  head += '</tr></thead>';
+  const body = skills.map(s=>{
+    const stableVer = s.bind.stable || s.stable;
+    let row = `<td class="sk">${esc(s.key)}</td>`;
+    RING_STAGES.forEach(r=>{
+      const v = s.bind[r.key] || stableVer;
+      let cls = 'stable';
+      if(v !== stableVer) cls = (s.status==='bug' && r.key==='automation-test') ? 'held' : 'testing';
+      row += `<td><span class="rcell ${cls}">v${esc(v)}</span></td>`;
+    });
+    return `<tr>${row}</tr>`;
+  }).join('');
+  t.innerHTML = head + '<tbody>' + body + '</tbody>';
+}
+
+function confirmPromote(key, ver){
+  openConfirm({
+    title:'⬆️ 確認升級到穩定版',
+    desc:`將 <strong>${esc(key)}</strong> 的穩定區版本升級到 <strong>v${esc(ver)}</strong>。建議先確認已在試寫／測試區驗證過。`,
+    impact:`<div><span class="label">影響</span>使用此 skill 的穩定區頻道</div>
+            <div><span class="label">操作員</span>下次進入自動使用 <code>v${esc(ver)}</code></div>
+            <div><span class="label">可回退</span>是 · 隨時可回調</div>`,
+    okText:'確認升級', onOk:()=> setStableBinding(key, ver),
+  });
+}
+function confirmRollback(key, ver){
+  openConfirm({
+    title:'🔄 確認回調',
+    desc:`將 <strong>${esc(key)}</strong> 穩定區回調到 <strong>v${esc(ver)}</strong>。通常用於新版出包時保住作業連續性。`,
+    impact:`<div><span class="label">回調目標</span><code>v${esc(ver)}</code></div>
+            <div><span class="label">進行中工作</span>不受影響 · 下次進入才切換</div>`,
+    okText:'確認回調', onOk:()=> setStableBinding(key, ver),
+  });
+}
+async function setStableBinding(key, ver){
+  setSyncState('syncing');
+  try{
+    await sbFetch(`skill_bindings?skill_key=eq.${encodeURIComponent(key)}&stage=eq.stable`, {
+      method:'PATCH', body: JSON.stringify({version: ver, updated_by:'qmore', updated_at: new Date().toISOString()})
+    });
+    await loadSkills();
+    renderSkillTab();
+  }catch(e){ setSyncState('error'); alert('更新失敗：'+e.message); }
+}
+
+// ── Engine tab：載入 + 渲染 ──
+async function loadEngines(){
+  setSyncState('syncing');
+  try{
+    const rows = await sbFetch('engine_config?select=version,deployed_at,deployed_by,changelog,is_stable,engines,mappings&order=deployed_at.desc');
+    engineState = {versions: rows, current: rows.find(r=>r.is_stable) || rows[0] || null};
+    setSyncState('ok');
+  }catch(e){ console.warn('loadEngines failed', e); setSyncState('error'); engineState = {versions:[], current:null, error:String(e)}; }
+}
+
+function renderEngineTab(){
+  if(!engineState) return;
+  const cur = engineState.current;
+  const curEl = document.getElementById('engineCurrent');
+  const mapEl = document.getElementById('mappingTable');
+  const regEl = document.getElementById('engineRegistry');
+  const histEl = document.getElementById('configHistory');
+  if(engineState.error || !cur){
+    curEl.innerHTML = `<div class="gov-empty">尚無引擎配置資料。請先在 Supabase Dashboard 跑 <code>20260528_skill_engine_governance.sql</code>。</div>`;
+    mapEl.innerHTML = ''; regEl.innerHTML = ''; histEl.innerHTML = '';
+    return;
+  }
+  const maps = cur.mappings || [];
+  curEl.innerHTML = `<div class="config-card">
+    <div>
+      <div class="config-ver">engine_config ${esc(cur.version)} <span class="badge-stable">🟢 STABLE · 雲端運行中</span></div>
+      <div class="config-meta">部署於 ${esc(cur.deployed_at)} · 由 ${esc(cur.deployed_by)} 部署 · 涵蓋 ${maps.length} 種生成任務</div>
+    </div>
+    <div class="config-actions"><button class="act-btn deploy" id="deployBtn">🚀 部署新版</button></div>
+  </div>`;
+  mapEl.innerHTML = maps.length
+    ? `<thead><tr><th>生成任務</th><th>當前推薦引擎</th><th>上次變更</th><th>替代選項</th></tr></thead><tbody>`
+      + maps.map(m=>`<tr>
+          <td><div class="task-name">${esc(m.task)}</div><div class="task-channel">${esc(m.channel)}</div></td>
+          <td><span class="engine-pill"><span class="vendor-dot ${esc(m.vendor||'other')}"></span>⭐ ${esc(m.engine)}</span></td>
+          <td><span class="changed-tag ${m.changed==='W22'?'':'stable-tag'}">${esc(m.changed)}</span></td>
+          <td><span class="alt-engines">${esc(m.alts||'—')}</span></td>
+        </tr>`).join('') + `</tbody>`
+    : `<tbody><tr><td class="task-channel" style="padding:14px">此版本未存任務對應（歷史表頭）</td></tr></tbody>`;
+  const engs = cur.engines || [];
+  regEl.innerHTML = engs.length ? engs.map(e=>`
+    <div class="engine-card ${esc(e.state)}">
+      <div class="engine-card-top">
+        <div class="engine-card-name">${esc(e.name)} <span class="vendor-badge">${e.vendor==='gemini'?'Google':e.vendor==='gpt'?'OpenAI':'其他'}</span></div>
+        <span class="engine-state ${esc(e.state)}">${e.state==='enabled'?'✓ 啟用':e.state==='testing'?'🧪 測試中':'停用'}</span>
+      </div>
+      <div class="engine-card-desc">${esc(e.desc)}</div>
+      <div class="engine-card-foot"><code>${esc(e.model)}</code><span>${esc(e.cost)}</span></div>
+    </div>`).join('') : `<div class="gov-empty">此版本未存引擎登錄表</div>`;
+  histEl.innerHTML = engineState.versions.map(h=>`
+    <div class="vh-item">
+      <span class="vh-ver ${h.is_stable?'cur':''}">${esc(h.version)}</span>
+      <div class="vh-detail">
+        <div class="vh-meta">${esc(h.deployed_at)} · 部署人 ${esc(h.deployed_by)} ${h.is_stable?'· 🟢 運行中':''}</div>
+        <div class="vh-log">${esc(h.changelog)}</div>
+      </div>
+      ${h.is_stable?'':`<button class="vh-rollback" data-cfg="${esc(h.version)}">⟲ 回調到 ${esc(h.version)}</button>`}
+    </div>`).join('');
+  histEl.querySelectorAll('[data-cfg]').forEach(b=> b.addEventListener('click', ()=> confirmConfigRollback(b.dataset.cfg)));
+  const dep = document.getElementById('deployBtn');
+  if(dep) dep.addEventListener('click', ()=> alert('部署新版需 Ray 先交付 draft config（draft 流程尚未接）。'));
+}
+
+function confirmConfigRollback(version){
+  openConfirm({
+    title:`⟲ 回調到 engine_config ${esc(version)}`,
+    desc:`將雲端運行中的引擎配置回調到 <strong>${esc(version)}</strong>。用於新版引擎出包／品質下降時。`,
+    impact:`<div><span class="label">回調目標</span><code>engine_config ${esc(version)}</code></div>
+            <div><span class="label">影響</span>所有生成面板的推薦引擎</div>
+            <div><span class="label">進行中生成</span>不受影響 · 下次生成才切換</div>`,
+    okText:'確認回調', onOk:()=> rollbackConfig(version),
+  });
+}
+async function rollbackConfig(version){
+  setSyncState('syncing');
+  try{
+    const cur = engineState.current;
+    if(cur && cur.version !== version){
+      await sbFetch(`engine_config?version=eq.${encodeURIComponent(cur.version)}`, {method:'PATCH', body: JSON.stringify({is_stable:false})});
+    }
+    await sbFetch(`engine_config?version=eq.${encodeURIComponent(version)}`, {method:'PATCH', body: JSON.stringify({is_stable:true})});
+    await loadEngines();
+    renderEngineTab();
+  }catch(e){ setSyncState('error'); alert('回調失敗：'+e.message); }
+}
+
+// ── 確認 Modal ──
+function openConfirm({title, desc, impact, okText, onOk}){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmDesc').innerHTML = desc;
+  document.getElementById('confirmImpact').innerHTML = impact;
+  const ok = document.getElementById('confirmOk');
+  ok.textContent = okText;
+  ok.onclick = async ()=>{ closeConfirm(); await onOk(); };
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function closeConfirm(){ document.getElementById('confirmOverlay').classList.remove('open'); }
+document.getElementById('confirmCancel').addEventListener('click', closeConfirm);
+document.getElementById('confirmOverlay').addEventListener('click', e=>{ if(e.target.id==='confirmOverlay') closeConfirm(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && document.getElementById('confirmOverlay').classList.contains('open')) closeConfirm(); });
+document.getElementById('emergencyBtn').addEventListener('click', ()=> alert('全域回調需先接「穩定快照」基礎建設（snapshots 表），目前尚未實作。'));
+
+// ── 分頁切換（首次進入才載入該頁資料）──
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach(b=> b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('.tab-panel').forEach(p=> p.classList.toggle('active', p.id==='tab-'+name));
+  document.querySelector('.ip-picker').style.display = name==='roles' ? '' : 'none';
+  if(name==='skills'  && !skillState)  loadSkills().then(renderSkillTab);
+  if(name==='engines' && !engineState) loadEngines().then(renderEngineTab);
+}
+document.querySelectorAll('.tab-btn').forEach(b=> b.addEventListener('click', ()=> switchTab(b.dataset.tab)));
 
 // ── 啟動 ──
 async function init() {
