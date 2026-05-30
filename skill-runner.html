@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MX IP STUDIO｜Skill Runner 引導式產出</title>
+<style>
+  :root { --bg:#0d0d0f; --panel:#161618; --panel2:#1c1c20; --line:#2a2a30;
+          --gold:#c5a46b; --txt:#e8e6e0; --dim:#7a7870; --ok:#71d1c2; --warn:#f2b35e; }
+  * { box-sizing: border-box; }
+  body { font-family:'Noto Sans TC',system-ui,sans-serif; background:var(--bg); color:var(--txt);
+         margin:0; padding:0 0 64px; }
+  header { padding:20px 28px 14px; border-bottom:1px solid var(--line); position:sticky; top:0;
+           background:rgba(13,13,15,.94); backdrop-filter:blur(6px); z-index:50; }
+  h1 { font-size:20px; letter-spacing:.06em; margin:0 0 2px; }
+  h1 span { color:var(--gold); }
+  .sub { color:var(--dim); font-size:12px; }
+  .wrap { max-width:1080px; margin:0 auto; padding:0 20px; }
+  .banner { background:rgba(242,179,94,.12); border:1px solid rgba(242,179,94,.4); color:var(--warn);
+            font-size:12px; padding:8px 12px; border-radius:8px; margin:14px auto 0; max-width:1040px; }
+  .banner.hidden { display:none; }
+
+  /* 選擇列 */
+  .picker { display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end; margin:18px 0 8px; }
+  .field { display:flex; flex-direction:column; gap:4px; }
+  .field label { font-size:11px; color:var(--dim); letter-spacing:.04em; }
+  select, input[type=text], textarea {
+    background:var(--panel2); color:var(--txt); border:1px solid var(--line); border-radius:8px;
+    padding:9px 11px; font:14px/1.5 inherit; outline:none; }
+  select:focus, input:focus, textarea:focus { border-color:var(--gold); }
+  select { min-width:200px; }
+  .skill-summary { font-size:12px; color:var(--dim); margin:6px 0 0; line-height:1.6; }
+  .outputs { font-size:11px; color:var(--ok); margin-top:4px; }
+  .tag { display:inline-block; font-size:10px; padding:1px 7px; border-radius:3px; font-family:monospace;
+         letter-spacing:.04em; margin-left:6px; }
+  .tag.rec { background:rgba(113,209,194,.16); color:var(--ok); }
+  .tag.opt { background:rgba(122,120,112,.18); color:var(--dim); }
+
+  /* 主體：左進度 + 右表單 */
+  .runner { display:grid; grid-template-columns:230px 1fr; gap:22px; margin-top:18px; }
+  .progress { border:1px solid var(--line); border-radius:10px; background:var(--panel); padding:8px;
+              align-self:start; position:sticky; top:96px; max-height:calc(100vh - 120px); overflow:auto; }
+  .pstep { display:flex; gap:8px; align-items:center; padding:8px 9px; border-radius:7px; cursor:pointer;
+           font-size:12.5px; color:var(--dim); }
+  .pstep:hover { background:var(--panel2); }
+  .pstep.active { background:rgba(197,164,107,.13); color:var(--txt); }
+  .pstep .dot { width:18px; height:18px; border-radius:50%; border:1px solid var(--line); flex:0 0 auto;
+                display:flex; align-items:center; justify-content:center; font-size:10px; }
+  .pstep.filled .dot { background:var(--ok); color:#06302a; border-color:var(--ok); }
+  .pstep .cmd { font-family:monospace; font-size:10px; opacity:.6; }
+
+  .stage { border:1px solid var(--line); border-radius:10px; background:var(--panel); padding:20px 22px; }
+  .stage h2 { font-size:17px; margin:0 0 2px; }
+  .stage .cmd { font-family:monospace; font-size:12px; color:var(--gold); }
+  .stage .intro { font-size:13px; color:var(--dim); line-height:1.7; margin:8px 0 16px; }
+  .stage .note { font-size:12px; color:var(--warn); background:rgba(242,179,94,.08);
+                 border-left:3px solid var(--warn); padding:7px 10px; border-radius:4px; margin:0 0 16px; }
+  .frow { margin-bottom:16px; }
+  .frow > label { display:block; font-size:13px; margin-bottom:5px; }
+  .frow .req { color:var(--gold); }
+  .frow .hint { font-size:11px; color:var(--dim); margin-top:4px; line-height:1.6; }
+  .frow input[type=text], .frow textarea, .frow select { width:100%; }
+  .frow textarea { min-height:92px; resize:vertical; }
+
+  .navrow { display:flex; justify-content:space-between; align-items:center; margin-top:20px;
+            border-top:1px solid var(--line); padding-top:16px; gap:10px; flex-wrap:wrap; }
+  .navrow .right { display:flex; gap:8px; }
+  button { cursor:pointer; border:0; border-radius:8px; padding:9px 16px; font:13px/1 inherit;
+           background:var(--panel2); color:var(--txt); border:1px solid var(--line); }
+  button:hover { border-color:var(--gold); }
+  button.primary { background:var(--gold); color:#1a1408; border-color:var(--gold); font-weight:700; }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  .savestate { font-size:11px; color:var(--dim); }
+
+  /* repeatable rounds */
+  .round { border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:12px;
+           background:var(--panel2); }
+  .round .rhead { font-size:11px; color:var(--gold); margin-bottom:8px; font-family:monospace; }
+
+  /* 完成列 */
+  .footer-bar { margin-top:22px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+                border-top:1px solid var(--line); padding-top:18px; }
+  .empty { color:var(--dim); font-size:13px; padding:40px 0; text-align:center; }
+  @media (max-width:780px){ .runner{ grid-template-columns:1fr; } .progress{ position:static; max-height:none; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>MX IP <span>STUDIO</span> · Skill Runner</h1>
+    <div class="sub">選你的 IP 與角色 skill，顧問會逐階段帶你產出 deliverable —— 不是空白表單，是引導式產生。</div>
+  </div>
+</header>
+
+<div class="banner hidden" id="banner"></div>
+
+<div class="wrap">
+  <div class="picker">
+    <div class="field">
+      <label>IP 計畫</label>
+      <select id="ipSel"></select>
+    </div>
+    <div class="field">
+      <label>角色 Skill</label>
+      <select id="skillSel"></select>
+    </div>
+    <div class="field" style="flex:1; min-width:200px;">
+      <div class="skill-summary" id="skillSummary"></div>
+      <div class="outputs" id="skillOutputs"></div>
+    </div>
+  </div>
+
+  <div id="runnerArea"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js?v=9"></script>
+<script src="ips.js"></script>
+<script src="roles-data.js"></script>
+<script src="skill-flows.js"></script>
+<script>
+'use strict';
+// ── Skill Runner（北極星 MVP：階段引導填寫）──
+// 受 auth gate 保護。依登入者 role_members 推導建議 skill，但任何 IP×skill 都可選。
+// 產出存 Supabase skill_runs（upsert，RLS 下只能寫自己的 row）+ localStorage fallback。
+// skill_runs 表/RLS 未部署時自動退回「只存本機」並顯示 banner。
+
+const SB = (window.MXIPAuth && MXIPAuth.SB_URL) || '';
+const T = { ip:null, skill:null, run:null, dirty:false, saveTimer:null, online:true };
+
+function $(id){ return document.getElementById(id); }
+function memberId(){ const e = MXIPAuth.currentEmail(); return e ? e.split('@')[0] : null; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function showBanner(msg){ const b=$('banner'); if(!msg){ b.classList.add('hidden'); return; } b.textContent=msg; b.classList.remove('hidden'); }
+
+// ── 取得登入者的 22 角色（role_members），推導建議 skill ──
+async function myRoleIds(){
+  const id = memberId();
+  if(!id) return [];
+  try{
+    const r = await fetch(SB + '/rest/v1/role_members?member_id=eq.' + encodeURIComponent(id) + '&select=role_id',
+                          { headers: MXIPAuth.authHeaders() });
+    if(!r.ok) return [];
+    return (await r.json()).map(x=>x.role_id);
+  }catch(e){ return []; }
+}
+function recommendedSkills(roleIds){
+  const set = new Set();
+  roleIds.forEach(rid => { const s = ROLE_SKILL[rid]; if(s) set.add(s); });
+  return set;
+}
+
+// ── 下拉選單 ──
+function fillIpSelect(){
+  const sel = $('ipSel');
+  const ips = (typeof IPS!=='undefined'?IPS:[]).slice().sort((a,b)=>(a.order_no||99)-(b.order_no||99));
+  sel.innerHTML = ips.map(ip=>'<option value="'+esc(ip.id)+'">'+esc(ip.name)+(ip.status&&ip.status!=='active'?'（'+ip.status+'）':'')+'</option>').join('');
+}
+function fillSkillSelect(recSet){
+  const sel = $('skillSel');
+  sel.innerHTML = SKILL_LIST.map(sid=>{
+    const f = SKILL_FLOWS[sid];
+    const rec = recSet.has(sid) ? '　★建議' : '';
+    return '<option value="'+esc(sid)+'">'+esc(f.label)+rec+'</option>';
+  }).join('');
+  // 預設選第一個建議的 skill
+  for(const sid of SKILL_LIST){ if(recSet.has(sid)){ sel.value=sid; break; } }
+}
+
+function renderSkillMeta(){
+  const f = SKILL_FLOWS[T.skill];
+  $('skillSummary').textContent = f ? f.summary : '';
+  $('skillOutputs').textContent = f ? ('交付物：' + f.outputs.join('、')) : '';
+}
+
+// ── 載入 / 建立 run ──
+function lsKey(){ return 'mxip_run_' + memberId() + '_' + T.ip + '_' + T.skill; }
+function blankRun(){ return { member_id:memberId(), ip_id:T.ip, skill_id:T.skill, responses:{}, current_stage:0, status:'draft' }; }
+
+async function loadRun(){
+  T.run = null;
+  // 先試 Supabase
+  let loaded = false;
+  try{
+    const url = SB + '/rest/v1/skill_runs?member_id=eq.' + encodeURIComponent(memberId())
+              + '&ip_id=eq.' + encodeURIComponent(T.ip) + '&skill_id=eq.' + encodeURIComponent(T.skill)
+              + '&select=*';
+    const r = await fetch(url, { headers: MXIPAuth.authHeaders() });
+    if(r.ok){
+      T.online = true; showBanner('');
+      const rows = await r.json();
+      if(rows.length){ T.run = rows[0]; loaded = true; }
+    } else {
+      T.online = false;
+    }
+  }catch(e){ T.online = false; }
+  if(!T.online){
+    showBanner('⚠️ 連不到 skill_runs 表（migration PART7 可能尚未部署）。目前只會存到這台瀏覽器的本機暫存，部署後會自動改存雲端。');
+  }
+  // 雲端沒有 → 試 localStorage
+  if(!loaded){
+    try{ const raw = localStorage.getItem(lsKey()); if(raw){ T.run = JSON.parse(raw); loaded = true; } }catch(e){}
+  }
+  if(!T.run) T.run = blankRun();
+  if(!T.run.responses) T.run.responses = {};
+}
+
+function persistLocal(){ try{ localStorage.setItem(lsKey(), JSON.stringify(T.run)); }catch(e){} }
+
+async function saveRun(){
+  T.run.member_id = memberId(); T.run.ip_id = T.ip; T.run.skill_id = T.skill;
+  persistLocal();
+  $('saveState') && ($('saveState').textContent = '儲存中…');
+  if(!T.online){ markSaved('已存本機'); return; }
+  try{
+    const body = { member_id:T.run.member_id, ip_id:T.run.ip_id, skill_id:T.run.skill_id,
+                   responses:T.run.responses, current_stage:T.run.current_stage, status:T.run.status,
+                   updated_at:new Date().toISOString() };
+    const r = await fetch(SB + '/rest/v1/skill_runs?on_conflict=member_id,ip_id,skill_id', {
+      method:'POST',
+      headers: MXIPAuth.authHeaders({ 'Prefer':'resolution=merge-duplicates,return=representation' }),
+      body: JSON.stringify(body),
+    });
+    if(r.ok){ const rows = await r.json(); if(rows && rows[0]) T.run.id = rows[0].id; markSaved('已存雲端 ✓'); }
+    else { T.online = false; showBanner('⚠️ 雲端儲存失敗（'+r.status+'）。已改存本機，請稍後重試或通知管理者。'); markSaved('已存本機'); }
+  }catch(e){ T.online=false; markSaved('已存本機'); }
+}
+function markSaved(txt){ T.dirty=false; if($('saveState')) $('saveState').textContent = txt + '　' + new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}); }
+function scheduleSave(){ T.dirty=true; clearTimeout(T.saveTimer); T.saveTimer=setTimeout(saveRun, 800); }
+
+// ── 渲染進度欄 ──
+function stageFilled(st){
+  const r = T.run.responses[st.cmd];
+  if(st.repeatable){ const rounds = T.run.responses[st.cmd+'__rounds']; return !!(rounds && rounds.length); }
+  if(!r) return false;
+  return Object.values(r).some(v => String(v||'').trim() !== '');
+}
+function renderProgress(){
+  const f = SKILL_FLOWS[T.skill];
+  const cur = T.run.current_stage;
+  return '<div class="progress">' + f.stages.map((st,i)=>{
+    const filled = stageFilled(st);
+    const cls = 'pstep' + (i===cur?' active':'') + (filled?' filled':'');
+    return '<div class="'+cls+'" data-i="'+i+'">'
+         + '<span class="dot">'+(filled?'✓':(i+1))+'</span>'
+         + '<span><div>'+esc(st.title)+(st.optional?'<span class="tag opt">選用</span>':'')+'</div>'
+         + '<div class="cmd">'+esc(st.cmd)+'</div></span></div>';
+  }).join('') + '</div>';
+}
+
+// ── 渲染欄位 ──
+function fieldInput(field, value, idPrefix){
+  const id = idPrefix + field.key;
+  const v = value==null?'':value;
+  if(field.type==='textarea')
+    return '<textarea id="'+id+'" data-key="'+esc(field.key)+'">'+esc(v)+'</textarea>';
+  if(field.type==='select'){
+    const opts = ['<option value="">— 請選擇 —</option>'].concat(
+      (field.options||[]).map(o=>'<option value="'+esc(o)+'"'+(o===v?' selected':'')+'>'+esc(o)+'</option>'));
+    return '<select id="'+id+'" data-key="'+esc(field.key)+'">'+opts.join('')+'</select>';
+  }
+  return '<input type="text" id="'+id+'" data-key="'+esc(field.key)+'" value="'+esc(v)+'">';
+}
+function fieldRow(field, value, idPrefix){
+  return '<div class="frow"><label>'+esc(field.label)+(field.required?' <span class="req">*</span>':'')+'</label>'
+       + fieldInput(field, value, idPrefix)
+       + (field.hint?'<div class="hint">'+esc(field.hint)+'</div>':'')
+       + '</div>';
+}
+
+// ── 渲染目前階段 ──
+function renderStage(){
+  const f = SKILL_FLOWS[T.skill];
+  const i = T.run.current_stage;
+  const st = f.stages[i];
+  const resp = T.run.responses[st.cmd] || {};
+  let html = '<div class="stage"><div class="cmd">'+esc(st.cmd)+'　·　階段 '+(i+1)+'/'+f.stages.length+'</div>'
+           + '<h2>'+esc(st.title)+(st.optional?'<span class="tag opt">選用</span>':'')+'</h2>'
+           + '<div class="intro">'+esc(st.intro||'')+'</div>'
+           + (st.note?'<div class="note">⚙️ '+esc(st.note)+'</div>':'');
+
+  if(st.repeatable){
+    const rounds = T.run.responses[st.cmd+'__rounds'] || [];
+    html += rounds.map((rd,ri)=>'<div class="round"><div class="rhead">已存第 '+(ri+1)+' 輪　<button data-delround="'+ri+'" style="padding:2px 8px;font-size:11px">刪</button></div>'
+          + st.fields.map(fl=>fieldRow(fl, rd[fl.key], 'rd_'+ri+'_')).join('') + '</div>').join('');
+    html += '<div class="round"><div class="rhead">＋ 新增一輪</div>'
+          + st.fields.map(fl=>fieldRow(fl, '', 'newrd_')).join('')
+          + '<button id="addRound">加入這一輪</button></div>';
+  } else {
+    html += st.fields.map(fl=>fieldRow(fl, resp[fl.key], 'f_')).join('');
+  }
+
+  html += '<div class="navrow"><span class="savestate" id="saveState">—</span>'
+        + '<div class="right">'
+        + '<button id="prevBtn"'+(i===0?' disabled':'')+'>← 上一階段</button>'
+        + '<button id="nextBtn" class="primary">'+(i===f.stages.length-1?'完成此階段':'下一階段 →')+'</button>'
+        + '</div></div></div>';
+  return html;
+}
+
+function renderFooter(){
+  const st = T.run.status;
+  return '<div class="footer-bar">'
+       + '<span class="savestate">狀態：</span>'
+       + '<select id="statusSel">'
+       + '<option value="draft"'+(st==='draft'?' selected':'')+'>草稿 draft</option>'
+       + '<option value="in_review"'+(st==='in_review'?' selected':'')+'>送審 in_review</option>'
+       + '<option value="done"'+(st==='done'?' selected':'')+'>完成 done</option>'
+       + '</select>'
+       + '<button id="exportMd">⬇ 匯出 deliverable (Markdown)</button>'
+       + '<button id="exportJson">⬇ 匯出原始 JSON</button>'
+       + '</div>';
+}
+
+function renderRunner(){
+  const area = $('runnerArea');
+  if(!T.skill || !T.ip){ area.innerHTML='<div class="empty">請先選擇 IP 與 skill。</div>'; return; }
+  area.innerHTML = '<div class="runner">' + renderProgress() + '<div>' + renderStage() + '</div></div>' + renderFooter();
+  wireStage();
+}
+
+// ── 互動綁定 ──
+function collectInputs(prefix){
+  const out = {};
+  document.querySelectorAll('[id^="'+prefix+'"]').forEach(el=>{ out[el.dataset.key] = el.value; });
+  return out;
+}
+function captureCurrentStage(){
+  const st = SKILL_FLOWS[T.skill].stages[T.run.current_stage];
+  if(st.repeatable) return; // rounds 由 addRound 個別處理；編輯已存輪即時寫回
+  T.run.responses[st.cmd] = collectInputs('f_');
+}
+function wireStage(){
+  const f = SKILL_FLOWS[T.skill];
+  const st = f.stages[T.run.current_stage];
+
+  // 一般欄位：即時寫回 + debounce 存檔
+  if(!st.repeatable){
+    document.querySelectorAll('[id^="f_"]').forEach(el=>{
+      el.addEventListener('input', ()=>{ captureCurrentStage(); scheduleSave(); refreshProgressDots(); });
+      el.addEventListener('change', ()=>{ captureCurrentStage(); scheduleSave(); refreshProgressDots(); });
+    });
+  } else {
+    // 已存輪：即時寫回陣列
+    const rounds = T.run.responses[st.cmd+'__rounds'] || [];
+    rounds.forEach((rd,ri)=>{
+      document.querySelectorAll('[id^="rd_'+ri+'_"]').forEach(el=>{
+        el.addEventListener('input', ()=>{ rd[el.dataset.key]=el.value; scheduleSave(); });
+      });
+    });
+    const addBtn = $('addRound');
+    if(addBtn) addBtn.onclick = ()=>{
+      const nr = collectInputs('newrd_');
+      const hasVal = Object.values(nr).some(v=>String(v||'').trim()!=='');
+      if(!hasVal){ alert('這一輪還沒填內容'); return; }
+      if(!T.run.responses[st.cmd+'__rounds']) T.run.responses[st.cmd+'__rounds']=[];
+      T.run.responses[st.cmd+'__rounds'].push(nr);
+      saveRun(); renderRunner();
+    };
+    document.querySelectorAll('[data-delround]').forEach(b=>{
+      b.onclick = ()=>{ const ri=+b.dataset.delround; T.run.responses[st.cmd+'__rounds'].splice(ri,1); saveRun(); renderRunner(); };
+    });
+  }
+
+  // 進度欄跳階段
+  document.querySelectorAll('.pstep').forEach(p=>{
+    p.onclick = ()=>{ captureCurrentStage(); saveRun(); T.run.current_stage = +p.dataset.i; renderRunner(); };
+  });
+  // 上/下一階段
+  $('prevBtn') && ($('prevBtn').onclick = ()=>{ captureCurrentStage(); if(T.run.current_stage>0) T.run.current_stage--; saveRun(); renderRunner(); });
+  $('nextBtn').onclick = ()=>{
+    captureCurrentStage();
+    if(T.run.current_stage < f.stages.length-1) T.run.current_stage++;
+    saveRun(); renderRunner();
+    window.scrollTo({top:0, behavior:'smooth'});
+  };
+  // 狀態
+  $('statusSel') && ($('statusSel').onchange = (e)=>{ T.run.status = e.target.value; saveRun(); });
+  // 匯出
+  $('exportMd').onclick = exportMarkdown;
+  $('exportJson').onclick = exportJson;
+}
+
+function refreshProgressDots(){
+  const f = SKILL_FLOWS[T.skill];
+  document.querySelectorAll('.pstep').forEach(p=>{
+    const st = f.stages[+p.dataset.i];
+    p.classList.toggle('filled', stageFilled(st));
+    const dot = p.querySelector('.dot');
+    if(dot) dot.textContent = stageFilled(st) ? '✓' : (parseInt(p.dataset.i)+1);
+  });
+}
+
+// ── 匯出 deliverable ──
+function ipName(id){ const m=(typeof IPS!=='undefined'?IPS:[]).find(x=>x.id===id); return m?m.name:id; }
+function buildMarkdown(){
+  const f = SKILL_FLOWS[T.skill];
+  let md = '# ' + f.label + ' — ' + ipName(T.ip) + '\n\n';
+  md += '> 成員：' + memberId() + '　·　狀態：' + T.run.status + '　·　產出：' + new Date().toLocaleString('zh-TW') + '\n\n';
+  md += f.summary + '\n\n';
+  f.stages.forEach(st=>{
+    md += '## ' + st.title + '  `' + st.cmd + '`' + (st.optional?'（選用）':'') + '\n\n';
+    if(st.repeatable){
+      const rounds = T.run.responses[st.cmd+'__rounds'] || [];
+      if(!rounds.length){ md += '_（尚無紀錄）_\n\n'; }
+      rounds.forEach((rd,ri)=>{
+        md += '### 第 ' + (ri+1) + ' 輪\n\n';
+        st.fields.forEach(fl=>{ const v=(rd[fl.key]||'').trim(); if(v){ md += '**'+fl.label+'**：\n'+v+'\n\n'; } });
+      });
+    } else {
+      const resp = T.run.responses[st.cmd] || {};
+      let any=false;
+      st.fields.forEach(fl=>{ const v=String(resp[fl.key]||'').trim(); if(v){ any=true; md += '**'+fl.label+'**：\n'+v+'\n\n'; } });
+      if(!any) md += '_（尚未填寫）_\n\n';
+    }
+  });
+  return md;
+}
+function download(name, text, mime){
+  const blob = new Blob([text], {type:mime||'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+}
+function safeName(){ return (T.skill+'_'+T.ip+'_'+memberId()).replace(/[^\w\-]/g,'-'); }
+function exportMarkdown(){ download(safeName()+'.md', buildMarkdown(), 'text/markdown;charset=utf-8'); }
+function exportJson(){ download(safeName()+'.json', JSON.stringify(T.run, null, 2), 'application/json'); }
+
+// ── 切換 IP / skill ──
+async function onPick(){
+  T.ip = $('ipSel').value;
+  T.skill = $('skillSel').value;
+  renderSkillMeta();
+  await loadRun();
+  renderRunner();
+}
+
+// ── 啟動 ──
+async function boot(){
+  await MXIPAuth.init({ gate:true });        // 未登入導回 index
+  if(!(MXIPAuth.currentUser() && MXIPAuth.isAllowed())) return; // gate 會跳轉
+
+  fillIpSelect();
+  const roleIds = await myRoleIds();
+  const recSet = recommendedSkills(roleIds);
+  fillSkillSelect(recSet);
+  if(!roleIds.length){
+    showBanner('ℹ️ 你目前在 role_members 沒有指定角色，所以沒有「建議」skill。你仍可自由選任一 skill 試跑；要綁角色請到 roles 頁設定。');
+  }
+
+  $('ipSel').onchange = onPick;
+  $('skillSel').onchange = onPick;
+  await onPick();
+
+  // 登出時清掉畫面（避免座位殘留）
+  MXIPAuth.onChange(s=>{ if(!(s && s.user)){ $('runnerArea').innerHTML='<div class="empty">已登出。</div>'; } });
+}
+
+boot().catch(e=>{ console.error(e); $('runnerArea').innerHTML='<div class="empty">載入失敗：'+esc(e.message||e)+'</div>'; });
+</script>
+</body>
+</html>
