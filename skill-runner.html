@@ -54,13 +54,24 @@
   .tile .rname { font-size:15px; font-weight:700; margin:3px 0 7px; }
   .tile .rscope { font-size:11.5px; color:var(--dim); line-height:1.55; flex:1;
                   display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
-  .tile .tstat { margin-top:11px; display:flex; gap:8px; align-items:center; }
+  .tile .tbar { height:5px; background:#0e0e10; border-radius:4px; overflow:hidden; margin:11px 0 0; }
+  .tile .tbar > i { display:block; height:100%; background:var(--ok); transition:width .3s; }
+  .tile .tstat { margin-top:8px; display:flex; gap:8px; align-items:center; }
   .pstat { display:inline-block; font-size:11px; padding:2px 10px; border-radius:20px; }
   .s-todo{ background:rgba(122,120,112,.18); color:var(--dim); }
   .s-doing{ background:rgba(141,211,255,.16); color:#8dd3ff; }
   .s-review{ background:rgba(242,179,94,.16); color:var(--warn); }
   .s-done{ background:rgba(113,209,194,.18); color:var(--ok); }
   .wk { color:var(--ok); font-weight:700; font-size:11px; }
+  .digest { display:flex; flex-direction:column; gap:10px; max-width:960px; }
+  .dcard { border:1px solid var(--line); border-radius:10px; background:var(--panel); overflow:hidden; }
+  .dhead { display:flex; align-items:center; gap:8px; padding:11px 14px; cursor:pointer; font-size:14px; }
+  .dhead:hover { background:var(--panel2); }
+  .dwk { color:var(--ok); font-size:11px; font-weight:700; width:46px; flex:0 0 auto; }
+  .dtoggle { color:var(--dim); margin-left:6px; }
+  .dbody { padding:8px 16px 14px; border-top:1px solid var(--line); font-size:13px; line-height:1.7; max-height:420px; overflow:auto; }
+  .dmsg { padding:6px 0; white-space:pre-wrap; word-break:break-word; }
+  .dmsg.ai b { color:var(--gold); } .dmsg.user b { color:var(--ok); }
   .gday { margin-bottom:20px; }
   .gday h3 { font-size:13px; color:var(--gold); margin:0 0 10px; border-bottom:1px solid var(--line); padding-bottom:6px; }
   .gday h3 span { color:var(--dim); font-weight:400; font-size:11px; }
@@ -78,6 +89,9 @@
   .chat-head { display:flex; gap:14px; align-items:center; padding:12px 28px 0; flex:0 0 auto; }
   .chat-role { font-size:14px; color:var(--dim); }
   .chat-role b { color:var(--txt); }
+  .chat-prog { margin-left:auto; display:flex; align-items:center; gap:10px; font-size:12px; color:var(--dim); }
+  .chat-prog .cbar { width:130px; height:6px; background:#0e0e10; border-radius:4px; overflow:hidden; }
+  .chat-prog .cbar > i { display:block; height:100%; background:var(--ok); transition:width .3s; }
   .runner { display:grid; grid-template-columns:230px 1fr 320px; gap:18px; padding:12px 28px 0; flex:1 1 auto; min-height:0; }
   .refpanel { border:1px solid var(--line); border-radius:10px; background:var(--panel); padding:10px; overflow:auto; }
   .refpanel .ref-h { font-size:12px; color:var(--dim); margin:0 2px 8px; font-weight:600; }
@@ -122,6 +136,10 @@
   .doc-chip { display:inline-flex; align-items:center; gap:4px; font-size:11px; padding:5px 9px; border-radius:7px; background:var(--panel); border:1px solid var(--line); color:var(--txt); }
   .doc-chip button { border:0; background:none; color:#fcc; cursor:pointer; padding:0 0 0 4px; font-size:12px; }
   .bdocs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+  .lightbox { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.9); display:none; align-items:center; justify-content:center; padding:24px; cursor:zoom-out; }
+  .lightbox.on { display:flex; }
+  .lightbox img { max-width:96%; max-height:96%; border-radius:8px; box-shadow:0 20px 70px rgba(0,0,0,.6); }
+  .gitem img, .bimgs img { cursor:zoom-in; }
   .toolbar { flex:0 0 auto; display:flex; gap:10px; align-items:center; flex-wrap:wrap; border-top:1px solid var(--line); padding:10px 0; margin-bottom:6px; }
   .savestate { font-size:11px; color:var(--dim); margin-left:auto; }
   .empty { color:var(--dim); font-size:14px; padding:48px 20px; text-align:center; line-height:1.9; }
@@ -145,6 +163,7 @@
 </div>
 
 <div id="runnerArea" style="flex:1 1 auto; min-height:0; display:flex; flex-direction:column;"></div>
+<div class="lightbox" id="lightbox"><img id="lightboxImg" alt=""></div>
 
 <script src="vendor/supabase.js"></script>
 <script src="auth.js?v=9"></script>
@@ -243,17 +262,21 @@ async function renderHome(){
   const pct=sumTot?Math.round(sumCov/sumTot*100):0;
   let html='<div class="home"><div class="home-top">'
     +'<div class="pbar-wrap"><div class="pbar-top"><span>'+(T.isAdmin?'全部角色':'我的協作角色')+'　實質完成度（交付項覆蓋率）</span><span><b>'+pct+'%</b>　完成角色 '+done+' / '+ids.length+'</span></div><div class="pbar"><i style="width:'+pct+'%"></i></div></div>'
+    + '<button id="digestBtn">📋 本週成果</button>'
     + (T.isAdmin?'<button id="teamBtn">📊 全 IP 進度表</button>':'')
     + '</div><div class="tiles">'
     + ids.map(id=>{ const r=roleById(id); if(!r) return ''; const c=cmap[id]; const sk=ROLE_SKILL[id];
+        const tp=c.total?Math.round((c.covered+0.5*c.partial)/c.total*100):0;
         return '<div class="tile" data-id="'+id+'"><div class="rn">'+pad2(id)+'　'+esc(SKILL_FLOWS[sk].label)+'</div>'
           +'<div class="rname">'+esc(r.name)+'</div><div class="rscope">'+esc(r.scope)+'</div>'
-          +'<div class="tstat"><span class="pstat s-'+c.s+'">'+LBL[c.s]+'</span><span style="font-size:11px;color:var(--dim)">涵蓋 '+c.covered+'/'+c.total+'</span>'+(c.wk?'<span class="wk">● 本週</span>':'')+'</div></div>';
+          +'<div class="tbar"><i style="width:'+tp+'%"></i></div>'
+          +'<div class="tstat"><span class="pstat s-'+c.s+'">'+LBL[c.s]+'</span><span style="font-size:11px;color:var(--dim)">'+tp+'%・涵蓋 '+c.covered+'/'+c.total+'</span>'+(c.wk?'<span class="wk">● 本週</span>':'')+'</div></div>';
       }).join('')
     + '</div><div class="home-gallery" id="homeGallery"></div></div>';
   area.innerHTML=html;
   document.querySelectorAll('.tile').forEach(t=>t.onclick=()=>openRole(+t.dataset.id));
   if($('teamBtn')) $('teamBtn').onclick=()=>renderTeamTable();
+  if($('digestBtn')) $('digestBtn').onclick=()=>renderWeeklyDigest();
   fillGallery('homeGallery', true);
 }
 
@@ -297,7 +320,47 @@ async function fillGallery(elId, big){
   if(!$(elId)) return;
   $(elId).innerHTML=(big?'<div class="ref-h">🖼 參考圖牆（以週瀏覽・邊看邊協作）</div>':'<div class="ref-h">🖼 參考圖（以週瀏覽）</div>')+galleryHTML(items, big);
   $(elId).querySelectorAll('.wktab').forEach(b=>{ b.onclick=()=>{ T.galWeek=+b.dataset.wk; fillGallery(elId, big); }; });
-  $(elId).querySelectorAll('.gitem img').forEach(img=>{ img.onclick=()=>{ const w=window.open(''); if(w){ w.document.body.style.margin='0'; w.document.body.style.background='#0d0d0f'; const i=w.document.createElement('img'); i.src=img.src; i.style.maxWidth='100%'; w.document.body.appendChild(i); } }; });
+  $(elId).querySelectorAll('.gitem img').forEach(img=>{ img.onclick=()=>openLightbox(img.src); });
+}
+function openLightbox(src){ const lb=$('lightbox'), im=$('lightboxImg'); if(lb&&im){ im.src=src; lb.classList.add('on'); } }
+
+// ── 本週成果彙整／檢索（開會材料：各角色產出，本週更新優先，可展開看內容）──
+function digestBodyHTML(x){
+  const ms=x.chat.filter(m=>!m.kickoff);
+  if(!ms.length) return '<div style="color:var(--dim)">（尚無內容）</div>';
+  return ms.map(m=>'<div class="dmsg '+(m.role==='assistant'?'ai':'user')+'"><b>'+(m.role==='assistant'?'AI 顧問':esc(x.member))+'：</b>'+fmt(m.content)+'</div>').join('');
+}
+async function renderWeeklyDigest(){
+  T.view='digest';
+  const area=$('runnerArea'); area.innerHTML='<div class="empty">載入本週成果中…</div>';
+  let runs=[];
+  try{ const r=await fetch(SB+'/rest/v1/skill_runs?ip_id=eq.'+encodeURIComponent(T.ip)+'&select=member_id,skill_id,status,updated_at,responses&order=updated_at.desc&limit=60',{headers:MXIPAuth.authHeaders()}); if(r.ok) runs=await r.json(); }catch(e){}
+  const ws=weekStart(Date.now());
+  const rows=runs.map(run=>{
+    const rid=(run.skill_id&&run.skill_id.indexOf('#')>=0)?+run.skill_id.split('#')[1]:null;
+    const role=rid?((roleById(rid)||{}).name||('角色'+rid)):((SKILL_FLOWS[run.skill_id]||{}).label||run.skill_id);
+    const upMs=run.updated_at?new Date(run.updated_at).getTime():0;
+    const rd=rid?roleById(rid):null; const items=(rd&&rd.deliverables)||[]; const cov=(run.responses&&run.responses.__coverage)||[];
+    const covered=items.filter((d,i)=>cov[i]&&cov[i].status==='covered').length;
+    const pct=items.length?Math.round(covered/items.length*100):0;
+    const chat=(run.responses&&run.responses.__chat)||[];
+    const st=run.status==='done'?'done':(run.status==='in_review'?'review':'doing');
+    return {rid:rid, role:role, member:run.member_id, st:st, pct:pct, covered:covered, total:items.length, upMs:upMs, thisWeek:upMs>=ws, chat:chat};
+  }).filter(x=>x.chat.filter(m=>!m.kickoff).length>0).sort((a,b)=>(b.thisWeek-a.thisWeek)||(b.upMs-a.upMs));
+  const wkCount=rows.filter(r=>r.thisWeek).length;
+  let html='<div class="home"><div class="home-top"><button id="backBtnD">← 我的角色</button>'
+    +'<div style="font-size:15px;font-weight:700;align-self:center">📋 本週成果 · '+esc(ipName(T.ip))+'　<span style="font-size:11px;color:var(--dim);font-weight:400">'+esc(weekLabel(ws))+'　本週更新 '+wkCount+' 項</span></div></div>';
+  if(!rows.length){ html+='<div class="empty">這個 IP 還沒有任何產出。大家在 Skill Runner 跟顧問對談後，成果就會彙整到這裡。</div></div>'; area.innerHTML=html; $('backBtnD').onclick=()=>renderHome(); return; }
+  html+='<div class="digest">'+rows.map((x,i)=>'<div class="dcard"><div class="dhead" data-i="'+i+'">'
+    +'<span class="dwk">'+(x.thisWeek?'● 本週':'')+'</span><b>'+esc(x.role)+'</b>　<span style="color:var(--dim)">'+esc(x.member)+'</span>'
+    +'<span class="pstat s-'+x.st+'" style="margin-left:auto">'+LBL[x.st]+'</span>'
+    +'<span style="font-size:12px;color:var(--dim);margin-left:8px">'+x.pct+'%・'+x.covered+'/'+x.total+'</span><span class="dtoggle">▾</span></div>'
+    +'<div class="dbody" id="dbody-'+i+'" style="display:none"></div></div>').join('')+'</div></div>';
+  area.innerHTML=html;
+  $('backBtnD').onclick=()=>renderHome();
+  document.querySelectorAll('.dhead').forEach(h=>{ h.onclick=()=>{ const i=+h.dataset.i, b=$('dbody-'+i); if(!b) return;
+    if(b.style.display==='none'){ b.innerHTML=digestBodyHTML(rows[i]); b.style.display='block'; h.querySelector('.dtoggle').textContent='▴'; }
+    else { b.style.display='none'; h.querySelector('.dtoggle').textContent='▾'; } }; });
 }
 
 // ── admin 團隊細表 ──
@@ -440,8 +503,13 @@ function renderChat(){
   const area=$('runnerArea');
   if(!T.skill){ renderHome(); return; }
   const r=T.roleId?roleById(T.roleId):null; const f=SKILL_FLOWS[T.skill];
+  const _items=(r&&r.deliverables)||[]; const _cov=(T.run&&T.run.responses&&T.run.responses.__coverage)||[];
+  const _covd=_items.filter((d,i)=>_cov[i]&&_cov[i].status==='covered').length;
+  const _cpct=_items.length?Math.round(_covd/_items.length*100):0;
   area.innerHTML='<div class="chat-head"><button id="backBtn">← 我的角色</button>'
-    +'<div class="chat-role">'+(r?'<b>'+esc(r.name)+'</b>（'+esc(r.en)+'）<span class="pill">'+esc(f.label)+'</span>':'<b>'+esc(f.label)+'</b>')+'</div></div>'
+    +'<div class="chat-role">'+(r?'<b>'+esc(r.name)+'</b>（'+esc(r.en)+'）<span class="pill">'+esc(f.label)+'</span>':'<b>'+esc(f.label)+'</b>')+'</div>'
+    +(r?'<div class="chat-prog"><span>覆蓋率 '+_cpct+'%・'+_covd+'/'+_items.length+'</span><div class="cbar"><i style="width:'+_cpct+'%"></i></div></div>':'')
+    +'</div>'
     +'<div class="runner">'+renderGuide()+'<div class="chat">'
     +'<div class="msgs" id="msgs">'+bubbles()+(T.busy?'<div class="typing">顧問思考中…</div>':'')+'</div>'
     +((T.pending.length||T.pendingDocs.length)?'<div class="attach-row">'
@@ -465,6 +533,7 @@ function wire(){
   if($('fileInput')) $('fileInput').onchange=(e)=>{ addFiles(e.target.files); e.target.value=''; };
   document.querySelectorAll('[data-rm]').forEach(b=>{ b.onclick=()=>{ T.pending.splice(+b.dataset.rm,1); renderChat(); }; });
   document.querySelectorAll('[data-rmd]').forEach(b=>{ b.onclick=()=>{ T.pendingDocs.splice(+b.dataset.rmd,1); renderChat(); }; });
+  document.querySelectorAll('.bimgs img').forEach(img=>{ img.onclick=()=>openLightbox(img.src); });
   const input=$('input');
   if($('sendBtn')) $('sendBtn').onclick=()=>doSend();
   if(input){ input.onkeydown=(e)=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); doSend(); } }; input.focus(); }
@@ -514,6 +583,8 @@ async function boot(){
   T.ip=$('ipSel').value;
   $('ipSel').onchange=onIpChange;
   if($('rolesLink')) $('rolesLink').onclick=()=>{ location.href='roles.html?u='+encodeURIComponent(memberId())+'&ip='+encodeURIComponent(T.ip||''); };
+  if($('lightbox')) $('lightbox').onclick=()=>$('lightbox').classList.remove('on');
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ const l=$('lightbox'); if(l) l.classList.remove('on'); } });
   await renderHome();
   MXIPAuth.onChange(s=>{ if(!(s&&s.user)) $('runnerArea').innerHTML='<div class="empty">已登出。</div>'; });
 }
