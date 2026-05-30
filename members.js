@@ -1,7 +1,8 @@
-// MX-IP-Studio 11 位成員名單
+// MX-IP-Studio 成員名單
 // roles.html 與 roles-invite.html 共用，要改名單就改這裡一份
 const MEMBERS = [
   { id:'qmore',  name:'qmore',  short:'QM' },
+  { id:'echo',   name:'Echo',   short:'EC' },   // 測試用非 admin 帳號（echo@minimax.com.tw）
   { id:'bow',    name:'Bow',    short:'BW' },
   { id:'debby',  name:'Debby',  short:'DB' },
   { id:'emmy',   name:'Emmy',   short:'EM' },
