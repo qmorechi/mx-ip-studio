@@ -138,7 +138,7 @@
 <script src="members.js"></script>
 <!-- 方案 C / P1 登入層（草稿，未啟用前不影響運作） -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="auth.js?v=8"></script>
+<script src="auth.js?v=9"></script>
 
 <div class="topbar">
   <div class="breadcrumb"><a href="console.html">MX IP STUDIO</a> › <span class="backend">後台</span> › <strong>發布新版本</strong><span class="sync-dot" id="syncDot" title="Supabase 連線中"></span></div>
@@ -341,6 +341,11 @@ let engineMaxNum = 0;     // engine_config 最大版號（'v3' → 3）
 
 // ── 載入真實版本資料 ──
 async function loadData(){
+  // 後台發版頁僅限 backend / admin：其他人（含一般成員）擋在門外。
+  if (window.MXIPAuth && !(await MXIPAuth.hasAnyRole(['admin','backend']))) {
+    MXIPAuth.showForbidden('此頁僅限後台（Ray / 管理員）');
+    return;
+  }
   // 未登入：不載資料、停用發布流程（後台發版頁必須登入）。
   if (window.MXIPAuth && !MXIPAuth.currentUser()) {
     state.ready = false; state.needsLogin = true; SKILLS = [];

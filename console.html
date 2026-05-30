@@ -259,7 +259,7 @@ table.mapping thead th{background:#0f1116;font-size:11px;color:#9ba7b5;font-weig
 <script src="roles-data.js"></script>
 <!-- 方案 C / P1 登入層（草稿，未啟用前不影響運作） -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="auth.js?v=8"></script>
+<script src="auth.js?v=9"></script>
 <div class="wrap">
   <nav class="breadcrumb">
     <a href="index.html">SIPAI.STUDIO</a>
@@ -1049,15 +1049,13 @@ document.querySelectorAll('.tab-btn').forEach(b=> b.addEventListener('click', ()
 
 // ── 啟動 ──
 async function init() {
-  renderIpPicker();
-  document.getElementById('navRoles').href = `roles.html?ip=${encodeURIComponent(currentIpId)}`;
-  // 未登入：不載資料、清空顯示（主控台含成員指派，不對未登入者顯示）。
-  if (window.MXIPAuth && !MXIPAuth.currentUser()) {
-    assignments = {}; skillState = null; engineState = null;
-    setSyncState('ok');
-    renderProgress(); renderVacant(); renderMatrix(); renderInviteList();
+  // 主控台僅限管理員與後台（qmore / Ray）：一般成員（如 echo）擋在門外。
+  if (window.MXIPAuth && !(await MXIPAuth.hasAnyRole(['admin', 'backend']))) {
+    MXIPAuth.showForbidden('主控台僅限管理員與後台');
     return;
   }
+  renderIpPicker();
+  document.getElementById('navRoles').href = `roles.html?ip=${encodeURIComponent(currentIpId)}`;
   await loadAssignments();
   renderProgress();
   renderVacant();

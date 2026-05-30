@@ -73,6 +73,30 @@
     );
   }
 
+  // ── 角色門檻（頁面層級存取控制）──
+  // 查登入者在 user_roles 的角色（email 帳號名＝member_id）。RLS 下 authenticated 可讀。
+  async function myRoles() {
+    if (!(currentUser() && isAllowed())) return [];
+    const id = currentEmail().split('@')[0];
+    try {
+      const res = await fetch(SB_URL + '/rest/v1/user_roles?member_id=eq.' + encodeURIComponent(id) + '&select=role', { headers: authHeaders() });
+      if (!res.ok) return [];
+      return (await res.json()).map(function (r) { return r.role; });
+    } catch (e) { return []; }
+  }
+  async function hasAnyRole(roles) {
+    const mine = await myRoles();
+    return roles.some(function (r) { return mine.indexOf(r) !== -1; });
+  }
+  // 非授權頁面用：整頁換成「無權限」提示 + 回首頁連結（不渲染原內容）。
+  function showForbidden(msg) {
+    document.body.innerHTML =
+      '<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;'
+      + 'font:15px/1.6 system-ui,sans-serif;color:#e7edf3;background:#0d0d0f;text-align:center;padding:24px">'
+      + '<div style="font-size:40px">🔒</div><div>' + (msg || '此頁僅限授權人員') + '</div>'
+      + '<a href="' + HOME_URL + '" style="color:#c5a46b;text-decoration:none">← 回首頁</a></div>';
+  }
+
   function isWrite(opts) {
     const m = (opts && opts.method ? opts.method : 'GET').toUpperCase();
     return WRITE_VERBS.indexOf(m) !== -1;
@@ -233,6 +257,7 @@
 
   global.MXIPAuth = {
     init, signIn, signOut, requireLogin, guardWrite, authHeaders, onChange, consumeNext,
+    myRoles, hasAnyRole, showForbidden,
     currentUser, currentEmail, accessToken, isAllowed, refreshSession,
     SB_URL, SB_ANON, HOME_URL,
   };
