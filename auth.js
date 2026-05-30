@@ -1,23 +1,25 @@
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  auth.js — 方案 C / P1 共用登入層（草稿，尚未部署）            ║
+// ║  auth.js — 共用登入層（方案 C，已上線）                        ║
 // ╚══════════════════════════════════════════════════════════════╝
 //
-// 對應 docs/HANDOFF.md「方案 C」P1。roles.html / console.html / ray-upload.html
-// 三頁共用：Google 登入（限 MX 公司 Workspace，比對主要網域 @minimax.com.tw）、
-// session 管理、把寫入請求帶上使用者 JWT。
+// 全站共用（index / roles / console / ray-upload / timeline）：Google 登入
+// （限 MX 公司 Workspace，比對主要網域 @minimax.com.tw —— mx.design 是其網域別名，
+// OIDC 回傳的是主要地址）、session 管理、把請求帶上使用者 JWT。
 //
-// 載入順序（頁面 <head> 或 inline script 之前）：
+// 載入順序（頁面 inline script 之前；用 ?v= 做快取破壞，改版要 bump）：
 //   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-//   <script src="auth.js"></script>
-// 然後頁面 inline script 把 sbFetch 的 headers 換成 MXIPAuth.authHeaders()。
+//   <script src="auth.js?v=N"></script>
 //
-// ⚠️ 生效前提（缺一不可，否則登入會失敗 / 寫入會 401）：
-//   1. Supabase Dashboard 已開 Google provider 並限網域 mx.design
-//   2. drafts/DRAFT_20260529_auth_rls.sql 的 member_identities 已填真 email 並套用
-//   3. 各表已 ENABLE RLS（在那之前 anon 仍可寫，登入只是「備好」不影響運作）
+// 主要能力：
+//   MXIPAuth.init({ gate:true })  受保護頁：未登入導回 index 門面（記住來源頁，登入後返回）
+//   authHeaders()                 REST headers：登入帶 JWT、否則 anon
+//   guardWrite(opts)              寫入前擋未登入
+//   onChange(cb)                  登入/登出時通知頁面重載/清資料
+//   hasAnyRole([...]) / showForbidden()  頁面層角色門檻（console 限 admin+backend 等）
+//   閒置 30 分自動登出；登出歸位 index。
 //
-// 設計：讀（SELECT）一律可走 anon（公開唯讀）；寫（POST/PATCH/PUT/DELETE）要登入，
-// 帶使用者 access_token 當 Bearer，RLS 再依角色判斷能不能寫。
+// 安全模型（伺服器端為準，RLS 已全表 ENABLE）：讀=要登入（anon 已收回 SELECT）；
+// 寫=登入 + RLS 依角色限縮（本人/admin/backend）。前端 gate/隱藏只是體驗層，硬擋靠 RLS。
 
 (function (global) {
   'use strict';
