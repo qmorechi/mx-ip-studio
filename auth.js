@@ -96,9 +96,11 @@
     await sb.auth.signOut();
     _session = null;
     if (_idleTimer) { clearTimeout(_idleTimer); _idleTimer = null; }
-    // 單一入口：登出一律回首頁門面（除非已在首頁）。
+    // 單一入口：登出回首頁門面（除非已在首頁），並用 ?next 記住當前頁，
+    // 重新登入後由 index 自動送回。
     if (!/(^|\/)index\.html?($|\?|#)/.test(location.pathname) && location.pathname !== '/') {
-      location.href = HOME_URL;
+      const next = encodeURIComponent(location.pathname + location.search + location.hash);
+      location.href = HOME_URL + '?next=' + next;
       return;
     }
     renderBar();
