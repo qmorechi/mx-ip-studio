@@ -154,7 +154,8 @@
     const u = currentUser();
     if (u && isAllowed()) {
       const md = u.user_metadata || {};
-      const nm = md.full_name || md.name || (u.email ? u.email.split('@')[0] : '已登入');
+      // 顯示 email 帳號名（= 系統 member_id，如 qmore），不顯示 Google 全名。
+      const nm = (u.email ? u.email.split('@')[0] : '') || md.full_name || md.name || '已登入';
       bar.innerHTML = '<span>✅ ' + nm + '</span><button id="mxip-signout" style="cursor:pointer;border:0;border-radius:6px;padding:3px 8px;background:#33405a;color:#cfe">登出</button>';
       bar.querySelector('#mxip-signout').onclick = signOut;
     } else if (u && !isAllowed()) {
