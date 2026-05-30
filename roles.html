@@ -169,10 +169,16 @@ const channelByKey = new Map(CHANNELS.map(c=>[c.key,c]));
 const roleChannel  = new Map();
 CHANNELS.forEach(c => c.ids.forEach(id => roleChannel.set(id, c.key)));
 
-// ── URL 參數:?u= 個人身份, ?ip= 目前看的 IP ──
+// ── 身分 = 登入帳號（不再用 ?u= 假冒）；?ip= 仍決定看哪個 IP ──
+// email 規則 <id>@minimax.com.tw → 帳號名即 member_id。未登入時無身分（唯讀）。
 const urlParams = new URLSearchParams(location.search);
-const myUserId  = urlParams.get('u');
-const myUser    = myUserId ? memberById.get(myUserId) : null;
+let myUserId = null;   // 由 resolveIdentity() 依登入帳號設定
+let myUser   = null;
+function resolveIdentity() {
+  const email = (window.MXIPAuth && MXIPAuth.isAllowed && MXIPAuth.isAllowed()) ? MXIPAuth.currentEmail() : null;
+  myUserId = email ? email.split('@')[0] : null;
+  myUser   = myUserId ? (memberById.get(myUserId) || null) : null;
+}
 const myIpId    = urlParams.get('ip') || (IPS.find(i => i.status === 'active')?.id || 'SIPAI');
 const myIp      = ipById.get(myIpId) || IPS[0];
 
@@ -527,8 +533,9 @@ renderFlow();
 renderMyPanel();
 selectRole(1);
 function reloadAndRender() {
+  resolveIdentity();   // 依登入帳號更新「你是誰」（登入→該帳號、登出→null）
   return loadAllAssignments().then(() => {
-    renderFlow(); renderMyPanel();
+    renderFlow(); renderMyPanel(); renderIdentityBadge();
     const a = document.querySelector('.node-btn.active');
     selectRole(a ? Number(a.dataset.id) : 1);
   });
