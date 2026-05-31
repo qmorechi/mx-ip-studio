@@ -279,7 +279,7 @@ table.mapping thead th{background:#0f1116;font-size:11px;color:#9ba7b5;font-weig
     </div>
   </header>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0 8px">
+  <div style="margin:16px 0 8px">
     <div style="background:#181c23;border:1px solid rgba(255,255,255,.12);border-radius:12px;overflow:hidden">
       <button class="hubHead" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:none;color:#fff4e3;font-family:inherit;font-weight:800;font-size:15px;padding:13px 16px;cursor:pointer">
         <span>📋 本週開會包</span><span class="hubCaret" style="color:#9ba7b5;font-size:12px">▸</span>
@@ -287,15 +287,6 @@ table.mapping thead th{background:#0f1116;font-size:11px;color:#9ba7b5;font-weig
       <div class="hubBody" style="display:none;padding:0 16px 14px;border-top:1px solid rgba(255,255,255,.08)">
         <p style="font-size:13px;color:#9ba7b5;margin:11px 0 12px;line-height:1.6">把大家在 Skill Runner 的交付，AI 合成成「決策驅動」的會議議程（<b style="color:#71d1c2">只含上線中 IP</b>）。拖曳排序、折疊聚焦、一鍵貼 Slack。</p>
         <button class="hubOpen" data-src="meeting.html" data-title="📋 本週開會包" style="background:#f2b35e;color:#111318;border:none;border-radius:8px;font-family:inherit;font-weight:800;font-size:13px;padding:8px 15px;cursor:pointer">⚙️ 開啟本週開會包（浮層）</button>
-      </div>
-    </div>
-    <div style="background:#181c23;border:1px solid rgba(255,255,255,.12);border-radius:12px;overflow:hidden">
-      <button class="hubHead" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:none;color:#fff4e3;font-family:inherit;font-weight:800;font-size:15px;padding:13px 16px;cursor:pointer">
-        <span>👥 角色互動圖（唯讀）</span><span class="hubCaret" style="color:#9ba7b5;font-size:12px">▸</span>
-      </button>
-      <div class="hubBody" style="display:none;padding:0 16px 14px;border-top:1px solid rgba(255,255,255,.08)">
-        <p style="font-size:13px;color:#9ba7b5;margin:11px 0 12px;line-height:1.6">看目前這個 IP 的 22 角色互動節點圖、誰認領哪塊、過載指標（唯讀，適合 brief 新成員）。</p>
-        <button id="navRoles" class="hubOpen" data-roles="1" data-title="👥 角色互動圖（唯讀）" style="background:#20242c;color:#fff4e3;border:1px solid rgba(255,255,255,.14);border-radius:8px;font-family:inherit;font-weight:800;font-size:13px;padding:8px 15px;cursor:pointer">🔗 開啟角色互動圖（浮層）</button>
       </div>
     </div>
   </div>
@@ -319,6 +310,10 @@ table.mapping thead th{background:#0f1116;font-size:11px;color:#9ba7b5;font-weig
   </div>
 
   <div class="tab-panel active" id="tab-roles">
+  <div style="margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <button id="navRoles" class="hubOpen" data-roles="1" data-title="👥 角色互動圖（唯讀）" style="background:#20242c;color:#fff4e3;border:1px solid rgba(255,255,255,.14);border-radius:9px;font-family:inherit;font-weight:800;font-size:13px;padding:9px 15px;cursor:pointer">👥 開啟角色互動圖（唯讀浮層）</button>
+    <span style="font-size:12px;color:#9ba7b5">這個 IP 的 22 角色互動節點圖 / 過載指標，疊在主控台上看、不換頁。</span>
+  </div>
   <section class="block">
     <h2>📊 進度</h2>
     <div class="progress-stats" id="progressStats"></div>
