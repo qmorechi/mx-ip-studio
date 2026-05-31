@@ -497,10 +497,17 @@ function renderLinks(){
     + '<button id="addLinkBtn" style="margin-top:6px;background:#20242c;border:1px solid rgba(255,255,255,.14);border-radius:7px;color:#fff4e3;font-family:inherit;font-size:12px;font-weight:700;padding:6px 11px;cursor:pointer">+ 加提案連結</button>'
     + '</div>';
 }
+// 📦 正式提案狀態：依 skill 規格彙整的統一提案（存 responses.__deliverable），開會包會顯示
+function renderDeliverable(){
+  if(!T.roleId) return '';
+  const d=T.run&&T.run.responses&&T.run.responses.__deliverable;
+  if(!d||!d.text) return '<div class="covbox" style="border:1px solid rgba(242,179,94,.3)"><h3>📦 正式提案</h3><div style="font-size:11.5px;color:var(--dim)">還沒彙整。對談到一段落，按下方「🧩 彙整成正式提案」依 skill 規格產出統一格式，開會包就會顯示給大家。</div></div>';
+  return '<div class="covbox" style="border:1px solid rgba(113,209,194,.45)"><h3>📦 正式提案 ✅</h3><div style="font-size:11.5px;color:var(--dim)">已依 skill 規格彙整（'+esc(new Date(d.at).toLocaleString("zh-TW"))+'）。再按「彙整」會更新；狀態設「完成」即正式提交，開會包顯示這份。</div></div>';
+}
 function renderGuide(){
   const f=SKILL_FLOWS[T.skill];
   const focus = T.roleId ? ('★ 你的角色：'+esc(roleById(T.roleId).name)+'　顧問只帶你做這塊，其餘階段是上下游脈絡') : '';
-  return '<div class="guide">'+renderCovBox()+renderLinks()+'<h3>流程全貌（'+f.stages.length+' 階段）</h3>'+(focus?'<div class="focus">'+focus+'</div>':'')
+  return '<div class="guide">'+renderDeliverable()+renderCovBox()+renderLinks()+'<h3>流程全貌（'+f.stages.length+' 階段）</h3>'+(focus?'<div class="focus">'+focus+'</div>':'')
     + f.stages.map((s,i)=>'<div class="gstep"><span class="n">'+(i+1)+'</span><span><div>'+esc(s.title)+'</div><div class="cmd">'+esc(s.cmd)+'</div></span></div>').join('')+'</div>';
 }
 function bubbles(){
@@ -530,7 +537,7 @@ function renderChat(){
     +'<div class="composer"><label class="attach-btn" title="上傳參考圖 / 手稿 / 影片 / PDF（影片自動抽影格、PDF 直接給 AI 讀）">📎<input type="file" id="fileInput" accept="image/*,video/*,application/pdf" multiple hidden></label>'
     +'<textarea id="input" placeholder="輸入你的回覆，或上傳參考圖/手稿讓 AI 看（Enter 送出）"'+(T.busy?' disabled':'')+'></textarea>'
     +'<button class="primary" id="sendBtn"'+(T.busy?' disabled':'')+'>送出</button></div>'
-    +'<div class="toolbar"><button id="deliverBtn"'+(T.busy?' disabled':'')+'>🧩 請顧問彙整成 deliverable</button>'
+    +'<div class="toolbar"><button id="deliverBtn"'+(T.busy?' disabled':'')+'>🧩 彙整成正式提案（依 skill 規格）</button>'
     +'<button id="exportMd">⬇ 匯出對話</button><button id="restartBtn">↻ 重新開始</button>'
     +'<select id="statusSel" style="min-width:auto"><option value="draft"'+(T.run.status==='draft'?' selected':'')+'>草稿</option>'
     +'<option value="in_review"'+(T.run.status==='in_review'?' selected':'')+'>送審</option>'
@@ -556,19 +563,28 @@ function wire(){
   const input=$('input');
   if($('sendBtn')) $('sendBtn').onclick=()=>doSend();
   if(input){ input.onkeydown=(e)=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); doSend(); } }; input.focus(); }
-  if($('deliverBtn')) $('deliverBtn').onclick=()=>doSend('請把我這個角色目前累積的成果，彙整成一份乾淨、可直接交付的 Markdown deliverable。');
+  if($('deliverBtn')) $('deliverBtn').onclick=()=>doSend(deliverInstr(), true);
   if($('exportMd')) $('exportMd').onclick=exportMarkdown;
   if($('restartBtn')) $('restartBtn').onclick=restart;
   if($('statusSel')) $('statusSel').onchange=(e)=>{ const prev=T.run.status; T.run.status=e.target.value; saveRun(); if(e.target.value==='done'&&prev!=='done') notifyDone(); };
 }
-async function doSend(forced){
+// 依「這個角色 skill 定義的交付清單」結構化彙整指令 → 全公司提案格式統一
+function deliverInstr(){
+  const r=roleById(T.roleId); const items=(r&&r.deliverables)||[];
+  const spec = items.length
+    ? '\n\n請**嚴格依這個角色的交付清單逐項組織**（每一項用一個 `## 小標題`，內容寫該項的具體產出；尚未完成的標「（待補）」），讓所有人的提案格式一致：\n- '+items.join('\n- ')
+    : '';
+  return '請把我這個角色目前累積的成果，彙整成一份「正式提案」deliverable：乾淨、可直接交付的 Markdown，開頭一行標題寫「'+(r?r.name:'')+' · '+ipName(T.ip)+'」。'+spec;
+}
+async function doSend(forced, asDeliverable){
   if(T.busy) return;
   const input=$('input'); const text=forced||(input?input.value.trim():'');
   const imgs=T.pending.slice(); const docs=T.pendingDocs.slice();
   if(!text && !imgs.length && !docs.length) return;
   T.lastDocs=docs;
-  chat().push({ role:'user', content:text||'（請看我上傳的附件）', images:imgs, docNames:docs.map(d=>d.name), ts:Date.now() }); if(imgs.length) T.ipImages=null; T.pending=[]; T.pendingDocs=[]; T.busy=true; renderChat(); saveRun();
-  try{ const res=await callConsult(); chat().push({ role:'assistant', content:res.text }); if(res.coverage) T.run.responses.__coverage=res.coverage; if(res.roster && T.skill==='brand-core') T.run.responses.__roster=res.roster; }
+  chat().push({ role:'user', content:(asDeliverable?'（請依 skill 規格彙整成正式提案）':(text||'（請看我上傳的附件）')), images:imgs, docNames:docs.map(d=>d.name), ts:Date.now() }); if(imgs.length) T.ipImages=null; T.pending=[]; T.pendingDocs=[]; T.busy=true; renderChat(); saveRun();
+  try{ const res=await callConsult(); chat().push({ role:'assistant', content:res.text, deliverable:!!asDeliverable }); if(res.coverage) T.run.responses.__coverage=res.coverage; if(res.roster && T.skill==='brand-core') T.run.responses.__roster=res.roster;
+    if(asDeliverable) T.run.responses.__deliverable={ text:res.text, at:new Date().toISOString(), by:memberId() }; }
   catch(e){ chat().push({ role:'assistant', content:'⚠️ 顧問暫時連不上：'+e.message+'\n\n（可先重試；若持續，通知管理者。）' }); }
   T.busy=false; renderChat(); saveRun();
 }
