@@ -504,10 +504,26 @@ function renderDeliverable(){
   if(!d||!d.text) return '<div class="covbox" style="border:1px solid rgba(242,179,94,.3)"><h3>📦 正式提案</h3><div style="font-size:11.5px;color:var(--dim)">還沒彙整。對談到一段落，按下方「🧩 彙整成正式提案」依 skill 規格產出統一格式，開會包就會顯示給大家。</div></div>';
   return '<div class="covbox" style="border:1px solid rgba(113,209,194,.45)"><h3>📦 正式提案 ✅</h3><div style="font-size:11.5px;color:var(--dim)">已依 skill 規格彙整（'+esc(new Date(d.at).toLocaleString("zh-TW"))+'）。再按「彙整」會更新；狀態設「完成」即正式提交，開會包顯示這份。</div></div>';
 }
+function promptList(){ return (T.run && T.run.responses && Array.isArray(T.run.responses.__prompts)) ? T.run.responses.__prompts : []; }
+// 🎨 生圖 Prompt 清單：彙整正式提案時若有生圖需求，顧問附 ===PROMPTS===，這裡列出讓成員選一個複製去 Gemini/ChatGPT 生圖
+function renderPrompts(){
+  if(!T.roleId) return '';
+  const ps=promptList(); if(!ps.length) return '';
+  return '<div class="covbox" style="border:1px solid rgba(141,211,255,.4)"><h3>🎨 生圖 Prompt（'+ps.length+'）· 選一個複製去生圖</h3>'
+    + '<div style="font-size:11px;color:var(--dim);margin:-4px 0 7px">同畫面有 Gemini / ChatGPT 兩版時自己挑。複製後貼去生圖，圖跑好用上方「🔗 提案連結」附上。</div>'
+    + ps.map((p,i)=>{ const tool=String(p.tool||'').toLowerCase();
+        const badge=tool.indexOf('gemini')>=0?'<span style="background:rgba(113,209,194,.18);color:#71d1c2;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px">Gemini</span>':'<span style="background:rgba(248,214,109,.18);color:#f8d66d;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px">ChatGPT</span>';
+        return '<div style="background:#1a1e25;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 10px;margin:6px 0">'
+          + '<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">'+badge+'<span style="font-size:12px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.use||('Prompt '+(i+1)))+'</span><button data-copyp="'+i+'" style="background:#20242c;border:1px solid rgba(255,255,255,.14);color:#fff4e3;border-radius:6px;font-family:inherit;font-size:11px;font-weight:700;padding:3px 9px;cursor:pointer">複製</button></div>'
+          + '<div style="font-size:11.5px;color:#cdd3db;white-space:pre-wrap;line-height:1.45;max-height:120px;overflow:auto">'+esc(p.prompt||'')+'</div>'
+          + (p.negative?'<div style="font-size:10.5px;color:var(--dim);margin-top:4px">負面：'+esc(p.negative)+'</div>':'')
+          + '</div>'; }).join('')
+    + '</div>';
+}
 function renderGuide(){
   const f=SKILL_FLOWS[T.skill];
   const focus = T.roleId ? ('★ 你的角色：'+esc(roleById(T.roleId).name)+'　顧問只帶你做這塊，其餘階段是上下游脈絡') : '';
-  return '<div class="guide">'+renderDeliverable()+renderCovBox()+renderLinks()+'<h3>流程全貌（'+f.stages.length+' 階段）</h3>'+(focus?'<div class="focus">'+focus+'</div>':'')
+  return '<div class="guide">'+renderDeliverable()+renderPrompts()+renderCovBox()+renderLinks()+'<h3>流程全貌（'+f.stages.length+' 階段）</h3>'+(focus?'<div class="focus">'+focus+'</div>':'')
     + f.stages.map((s,i)=>'<div class="gstep"><span class="n">'+(i+1)+'</span><span><div>'+esc(s.title)+'</div><div class="cmd">'+esc(s.cmd)+'</div></span></div>').join('')+'</div>';
 }
 function bubbles(){
@@ -559,6 +575,7 @@ function wire(){
     T.run.responses.__links.push(u); saveRun(); renderChat();
   };
   document.querySelectorAll('[data-rml]').forEach(b=>{ b.onclick=()=>{ if(T.run.responses.__links){ T.run.responses.__links.splice(+b.dataset.rml,1); saveRun(); renderChat(); } }; });
+  document.querySelectorAll('[data-copyp]').forEach(b=>{ b.onclick=()=>{ const p=promptList()[+b.dataset.copyp]; if(p&&p.prompt){ try{ navigator.clipboard.writeText(p.prompt); b.textContent='已複製✓'; setTimeout(()=>{b.textContent='複製';},1200); }catch(e){ alert('複製失敗，請手動選取'); } } }; });
   document.querySelectorAll('.bimgs img').forEach(img=>{ img.onclick=()=>openLightbox(img.src); });
   const input=$('input');
   if($('sendBtn')) $('sendBtn').onclick=()=>doSend();
@@ -574,7 +591,8 @@ function deliverInstr(){
   const spec = items.length
     ? '\n\n請**嚴格依這個角色的交付清單逐項組織**（每一項用一個 `## 小標題`，內容寫該項的具體產出；尚未完成的標「（待補）」），讓所有人的提案格式一致：\n- '+items.join('\n- ')
     : '';
-  return '請把我這個角色目前累積的成果，彙整成一份「正式提案」deliverable：乾淨、可直接交付的 Markdown，開頭一行標題寫「'+(r?r.name:'')+' · '+ipName(T.ip)+'」。'+spec;
+  const promptAsk = '\n\n若你這個角色的產出**需要 AI 生圖**（角色設定圖、分鏡畫面、視覺稿等），請在 deliverable 之後**另起一行 `===PROMPTS===`**，接一個 JSON 陣列，每個生圖需求一筆：{"tool":"gemini" 或 "gpt-image","use":"用途/這張要畫什麼","prompt":"完整、可直接貼去生圖的 prompt（英文佳）","negative":"防漂移/負面控制"}。**同一個畫面若 Gemini 與 ChatGPT 都適用，就各出一筆**，讓成員自己選要用哪版。沒有生圖需求就完全不要這段。';
+  return '請把我這個角色目前累積的成果，彙整成一份「正式提案」deliverable：乾淨、可直接交付的 Markdown，開頭一行標題寫「'+(r?r.name:'')+' · '+ipName(T.ip)+'」。'+spec+promptAsk;
 }
 async function doSend(forced, asDeliverable){
   if(T.busy) return;
@@ -583,8 +601,17 @@ async function doSend(forced, asDeliverable){
   if(!text && !imgs.length && !docs.length) return;
   T.lastDocs=docs;
   chat().push({ role:'user', content:(asDeliverable?'（請依 skill 規格彙整成正式提案）':(text||'（請看我上傳的附件）')), images:imgs, docNames:docs.map(d=>d.name), ts:Date.now() }); if(imgs.length) T.ipImages=null; T.pending=[]; T.pendingDocs=[]; T.busy=true; renderChat(); saveRun();
-  try{ const res=await callConsult(); chat().push({ role:'assistant', content:res.text, deliverable:!!asDeliverable }); if(res.coverage) T.run.responses.__coverage=res.coverage; if(res.roster && T.skill==='brand-core') T.run.responses.__roster=res.roster;
-    if(asDeliverable) T.run.responses.__deliverable={ text:res.text, at:new Date().toISOString(), by:memberId() }; }
+  try{ const res=await callConsult();
+    let atxt=res.text, prompts=null;
+    if(asDeliverable){
+      const pi=atxt.indexOf('===PROMPTS===');
+      if(pi>=0){ const after=atxt.slice(pi+13); atxt=atxt.slice(0,pi).trim();
+        try{ const mm=after.match(/\[[\s\S]*\]/); if(mm) prompts=JSON.parse(mm[0]); }catch(_e){} }
+      T.run.responses.__deliverable={ text:atxt, at:new Date().toISOString(), by:memberId() };
+      if(Array.isArray(prompts)&&prompts.length) T.run.responses.__prompts=prompts; else if(pi>=0) T.run.responses.__prompts=[];
+    }
+    chat().push({ role:'assistant', content:atxt, deliverable:!!asDeliverable });
+    if(res.coverage) T.run.responses.__coverage=res.coverage; if(res.roster && T.skill==='brand-core') T.run.responses.__roster=res.roster; }
   catch(e){ chat().push({ role:'assistant', content:'⚠️ 顧問暫時連不上：'+e.message+'\n\n（可先重試；若持續，通知管理者。）' }); }
   T.busy=false; renderChat(); saveRun();
 }
