@@ -203,6 +203,9 @@ const SB = (window.MXIPAuth && MXIPAuth.SB_URL) || '';
 const CONSULT_URL = SB + '/functions/v1/' + CONSULT_SLUG;
 const DRIVE_URL = SB + '/functions/v1/' + DRIVE_SLUG;
 const KICKOFF = '請開始。依我這個「指定角色」的職責，用顧問的方式一步步帶我產出我這塊的 deliverable：先用一兩句說明你是我的什麼角色顧問、會怎麼帶我，然後直接問我第一個、最該先決定的問題。一次只問一件事。';
+// 開場版本：含背景（既有角色名冊）的新開場＝2。存進 responses.__kickoffV，
+// 用來判斷舊存檔的開場要不要自動升級（只升級「還沒實質進度」的對談）。
+const KICKOFF_VERSION = 2;
 const LBL = { todo:'未開始', doing:'進行中', review:'送審', done:'完成' };
 
 const T = { ip:null, isAdmin:false, view:'home', skill:null, roleId:null, run:null, busy:false, online:true, pending:[], pendingDocs:[], lastDocs:null, roster:null, ipImages:null, galWeek:null };
@@ -520,7 +523,10 @@ async function openRole(id){
   setFlowRoute(id);   // 寫進網址 hash，瀏覽器重整後仍停在這條流程
   // 所有流程都帶入該 IP 既有角色名冊：讓顧問開場先講背景（已有哪些角色），不從零問起、不重複問已知的事。
   T.roster = await fetchIpRoster(T.ip);
-  await loadRun(); await startIfEmpty();
+  await loadRun();
+  // 舊版、還沒動過的開場 → 清掉，讓 startIfEmpty 用含背景的新開場重生（不影響有進度的對談）。
+  if(shouldUpgradeKickoff()) T.run.responses.__chat=[];
+  await startIfEmpty();
 }
 
 // ── run 載入/儲存 ──
@@ -772,9 +778,21 @@ function buildKickoff(){
 async function startIfEmpty(){
   if(chat().length>0){ renderChat(); return; }
   chat().push({ role:'user', content:buildKickoff(), kickoff:true }); T.busy=true; renderChat(); saveRun();
-  try{ const res=await callConsult(); chat().push({ role:'assistant', content:res.text }); if(res.coverage) T.run.responses.__coverage=res.coverage; if(res.roster && T.skill==='brand-core') T.run.responses.__roster=res.roster; }
+  try{ const res=await callConsult(); chat().push({ role:'assistant', content:res.text }); if(res.coverage) T.run.responses.__coverage=res.coverage; if(res.roster && T.skill==='brand-core') T.run.responses.__roster=res.roster; T.run.responses.__kickoffV=KICKOFF_VERSION; }
   catch(e){ chat().push({ role:'assistant', content:'⚠️ 顧問暫時連不上：'+e.message+'\n\n（後端可能尚未部署完成，稍後按「↻ 重新開始」再試。）' }); }
   T.busy=false; renderChat(); saveRun();
+}
+// 舊存檔的開場要不要自動升級成「含背景」的新開場？
+// 條件：版本舊 + 還沒實質進度（沒有使用者回覆、沒有覆蓋率）+ 這個 IP 真的有背景可加。
+// 已經談到一半的對談一律不動，避免洗掉進度。
+function shouldUpgradeKickoff(){
+  if(!T.run||!T.run.responses) return false;
+  if((T.run.responses.__kickoffV||0)>=KICKOFF_VERSION) return false;
+  const userMsgs=chat().filter(m=>!m.kickoff&&m.role==='user').length;
+  const cov=T.run.responses.__coverage||[];
+  const prog=Array.isArray(cov)?cov.filter(c=>c&&(c.status==='covered'||c.status==='partial')).length:0;
+  if(userMsgs>0||prog>0) return false;
+  return !!rosterSummaryText();   // 沒背景可加就不折騰（舊＝新）
 }
 function restart(){ if(!confirm('重新開始會清空這條流程的對話，確定？')) return; T.run.responses.__chat=[]; saveRun(); startIfEmpty(); }
 
