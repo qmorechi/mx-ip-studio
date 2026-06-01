@@ -594,7 +594,7 @@ function renderPrompts(){
   if(!T.roleId) return '';
   const ps=promptList(); if(!ps.length) return '';
   return '<div class="covbox" style="border:1px solid rgba(141,211,255,.4)"><h3>🎨 生圖 Prompt（'+ps.length+'）· 選一個複製去生圖</h3>'
-    + '<div style="font-size:11px;color:var(--dim);margin:-4px 0 7px">同畫面有 Gemini / ChatGPT 兩版時自己挑。複製後貼去生圖，圖跑好用上方「🔗 提案連結」附上。</div>'
+    + '<div style="font-size:11px;color:var(--dim);margin:-4px 0 8px;line-height:1.55">① 複製 Prompt → ② 貼到 <b style="color:#71d1c2">Gemini</b> / <b style="color:#f8d66d">ChatGPT</b> 生成提案檔/圖 → ③ 回來用上方「🔗 提案連結」貼上連結 → ④ 把右下角狀態設「<b style="color:#71d1c2">完成</b>」，這個流程才算結案。同畫面有兩版時自己挑要用哪個。</div>'
     + ps.map((p,i)=>{ const tool=String(p.tool||'').toLowerCase();
         const badge=tool.indexOf('gemini')>=0?'<span style="background:rgba(113,209,194,.18);color:#71d1c2;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px">Gemini</span>':'<span style="background:rgba(248,214,109,.18);color:#f8d66d;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px">ChatGPT</span>';
         return '<div style="background:#1a1e25;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 10px;margin:6px 0">'
@@ -744,6 +744,9 @@ async function boot(){
   try{ T.isAdmin = await MXIPAuth.hasAnyRole(['admin']); }catch(e){ T.isAdmin=false; }
   await loadIPs();            // 動態 IP 清單（含新增/暫停；暫停 IP 仍可選來充實內容）
   fillIpSelect();
+  // 從流程選擇頁帶 ?ip= 深連結進來時，預選該 IP（值不存在就退回第一個）。
+  const _qip=new URLSearchParams(location.search).get('ip');
+  if(_qip && Array.from($('ipSel').options).some(o=>o.value===_qip)) $('ipSel').value=_qip;
   T.ip=$('ipSel').value;
   $('ipSel').onchange=onIpChange;
   if($('rolesLink')) $('rolesLink').onclick=()=>{ location.href='roles.html?u='+encodeURIComponent(memberId())+'&ip='+encodeURIComponent(T.ip||''); };

@@ -145,6 +145,7 @@ li{margin:.35em 0}
       </div>
     </header>
     <section class="flow" id="flow"></section>
+    <section id="afterFlow"></section>
   </main>
   <aside class="side" id="detail"></aside>
 </div>
@@ -165,6 +166,30 @@ li{margin:.35em 0}
 .flow-detail-btn{appearance:none;font-family:inherit;margin-top:16px;background:transparent;border:0;color:#a3a097;font-size:12.5px;font-weight:800;cursor:pointer;padding:4px 0}
 .flow-detail-btn:hover{color:var(--c)}
 .flow-card .node-members{margin:0;min-height:0}
+
+/* ── 流程完成狀態徽章（已參與的流程卡才顯示）── */
+.flow-status-badge{display:inline-block;margin-left:8px;font-size:11px;font-weight:900;border-radius:999px;padding:2px 9px;vertical-align:middle}
+.fsb-done{background:rgba(113,209,194,.2);color:#71d1c2}
+.fsb-doing{background:rgba(141,211,255,.18);color:#8dd3ff}
+.fsb-todo{background:#242a34;color:#a3a097}
+
+/* ── 流程下方：完成迴圈說明 + 下一步提示 + 行動按鈕 ── */
+.afterflow{margin:26px 0 8px;display:grid;gap:16px;max-width:1120px}
+.flow-loop{border:1px solid rgba(255,255,255,.12);background:#161a21;border-radius:14px;padding:16px 18px}
+.flow-loop h3{margin:0 0 11px;font-size:15px;color:#c5a46b}
+.loop-steps{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:#cfc7bb;font-weight:700}
+.loop-steps .ls{background:#20242c;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:6px 12px}
+.loop-steps .ls .hl{color:#8dd3ff}
+.loop-steps .arr{color:#5a6270;font-weight:900}
+.next-nudge{border:1px solid rgba(242,179,94,.45);background:rgba(242,179,94,.1);border-radius:14px;padding:14px 16px;color:#f4ebdc;font-weight:700;line-height:1.6}
+.next-nudge .nn-flows{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.next-nudge .nn-chip{background:#20242c;border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:4px 11px;font-size:12.5px;font-weight:800}
+.all-done{border:1px solid rgba(113,209,194,.45);background:rgba(113,209,194,.1);border-radius:14px;padding:14px 16px;color:#d8f5ee;font-weight:800;line-height:1.5}
+.go-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.go-primary{appearance:none;font-family:inherit;font-weight:900;font-size:16px;padding:14px 22px;border-radius:12px;border:none;background:#8dd3ff;color:#0d0d0f;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:.15s transform,.15s box-shadow;box-shadow:0 8px 24px rgba(141,211,255,.25)}
+.go-primary:hover{transform:translateY(-1px);box-shadow:0 12px 30px rgba(141,211,255,.4)}
+.go-ghost{appearance:none;font-family:inherit;font-weight:800;font-size:14px;padding:13px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#cfc7bb;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:.15s border,.15s color}
+.go-ghost:hover{border-color:#c5a46b;color:#e8e6e0}
 </style>
 <script>
 // ── Supabase 設定 ──
@@ -296,6 +321,71 @@ async function removeMember(roleId, memberId) {
 
 function getAssigned(roleId) { return assignments[roleId] || []; }
 
+// ── 我的流程完成度（讀 skill_runs：status==='done' 才算結案）──
+// skill_runs 的鍵 = skill_id = `<skill>#<repId>`（與 skill-runner 的 runKey 一致），
+// 所以這裡可由 DATA.flows 直接組鍵，不必載入 ROLE_SKILL / skill-flows。
+let myRuns = {};   // skill_id -> status
+function flowRunKey(f) { return f.skill + '#' + f.repId; }
+function flowStatus(f) {
+  const st = myRuns[flowRunKey(f)];
+  if (st === 'done') return 'done';
+  if (st) return 'doing';
+  return 'todo';
+}
+async function loadMyRuns() {
+  myRuns = {};
+  if (!myUser) return;   // 唯讀模式不查個人進度
+  try {
+    const rows = await sbFetch(`skill_runs?member_id=eq.${encodeURIComponent(myUser.id)}&ip_id=eq.${encodeURIComponent(myIp.id)}&select=skill_id,status`);
+    (rows || []).forEach(r => { myRuns[r.skill_id] = r.status; });
+  } catch (e) { /* 抓不到就當未開始，靜默 */ }
+}
+
+// ── 流程下方：完成迴圈說明 + 下一個未完成提示 + 行動按鈕（進 Skill Runner / 回首頁）──
+function renderAfterFlow() {
+  const el = document.getElementById('afterFlow');
+  if (!el) return;
+  const loop = `<div class="flow-loop">
+    <h3>🔁 一個流程怎麼算「完成」</h3>
+    <div class="loop-steps">
+      <span class="ls">① 在 Skill Runner 跟顧問<span class="hl">對談</span></span><span class="arr">→</span>
+      <span class="ls">② 按「彙整成正式提案」<span class="hl">產出 Prompt</span></span><span class="arr">→</span>
+      <span class="ls">③ Prompt 拿去 <span class="hl">Gemini / ChatGPT</span> 生成提案檔</span><span class="arr">→</span>
+      <span class="ls">④ 回該流程貼<span class="hl">🔗提案連結</span>＋狀態設<span class="hl">「完成」</span></span>
+    </div>
+    <div style="margin-top:10px;color:#a3a097;font-size:12.5px;line-height:1.5">提交提案檔與連結、把狀態設「完成」，這個流程才算結案。</div>
+  </div>`;
+
+  let nudge = '';
+  let goLabel = '→ 進 Skill Runner 開工';
+  if (myUser) {
+    const joined = DATA.flows.filter(f => getAssigned(f.repId).includes(myUser.id));
+    const undone = joined.filter(f => flowStatus(f) !== 'done');
+    if (joined.length === 0) {
+      nudge = `<div class="next-nudge">你還沒選任何流程。先在上面挑「＋ 參與這個流程」，再進 Skill Runner 開工。</div>`;
+    } else if (undone.length === 0) {
+      nudge = `<div class="all-done">🎉 你參與的 ${joined.length} 個流程都完成了！可以等下次會議，或再認領新的流程。</div>`;
+    } else {
+      const next = undone[0];
+      goLabel = '→ 去做下一個：' + next.emoji + ' ' + next.zh;
+      const chips = undone.map(f => `<span class="nn-chip" style="border-color:${f.color}66">${f.emoji} ${f.zh}・${flowStatus(f) === 'doing' ? '進行中' : '未開始'}</span>`).join('');
+      nudge = `<div class="next-nudge">⚠️ 你參與了 ${joined.length} 個流程，還有 <b>${undone.length}</b> 個沒完成：
+        <div class="nn-flows">${chips}</div>
+        <div style="margin-top:8px;color:#cfc7bb;font-weight:600;font-size:12.5px">建議一個一個做完（提交提案檔＋連結、狀態設「完成」）再開下一個，負荷比較穩。</div>
+      </div>`;
+    }
+  }
+
+  const goHref = 'skill-runner.html?ip=' + encodeURIComponent(myIp.id);
+  const bar = `<div class="go-bar">
+    <a class="go-primary" href="${goHref}">${goLabel}</a>
+    <a class="go-ghost" href="index.html">← 回首頁</a>
+  </div>`;
+
+  el.className = 'afterflow';
+  el.innerHTML = loop + nudge + bar;
+}
+
 // ── render legend ──
 function renderLegend() {
   document.getElementById('legend').innerHTML = DATA.flows.map(f =>
@@ -343,8 +433,12 @@ function flowCardHTML(f) {
   const control = myUser
     ? `<button class="flow-join${mine ? ' joined' : ''}" data-rep="${f.repId}" data-flow="${f.key}">${mine ? '✓ 我參與中（點此退出）' : '＋ 參與這個流程'}</button>`
     : `<div class="flow-readonly">唯讀模式 — 要參與請從 Slack 收到的個人邀請信進入</div>`;
+  const stKey = mine ? flowStatus(f) : null;
+  const stBadge = stKey
+    ? `<span class="flow-status-badge fsb-${stKey}">${stKey === 'done' ? '✅ 已完成' : stKey === 'doing' ? '🔵 進行中' : '⚪ 未開始'}</span>`
+    : '';
   return `<article class="phase flow-card${mine ? ' mine' : ''}" id="flow-card-${f.key}" data-flow="${f.key}" style="--c:${f.color}">
-    <h2><span class="flow-emoji">${f.emoji}</span>${f.zh}</h2>
+    <h2><span class="flow-emoji">${f.emoji}</span>${f.zh}${stBadge}</h2>
     <p>${f.desc}</p>
     ${control}
     <div class="flow-section-label">這個流程的協作專家（${f.collaborators.length}）</div>
@@ -362,7 +456,7 @@ function bindFlowCard(card) {
     const rep = Number(joinBtn.dataset.rep);
     if (getAssigned(rep).includes(myUser.id)) await removeMember(rep, myUser.id);
     else await addMember(rep, myUser.id);
-    renderFlow(); renderMyPanel(); selectFlow(key);
+    renderFlow(); renderMyPanel(); renderAfterFlow(); selectFlow(key);
   });
   const detailBtn = card.querySelector('.flow-detail-btn');
   if (detailBtn) detailBtn.addEventListener('click', () => selectFlow(key));
@@ -443,7 +537,7 @@ document.addEventListener('click', async e => {
     const rep = Number(e.target.dataset.role);
     const memberId = e.target.dataset.member;
     await removeMember(rep, memberId);
-    renderFlow(); renderMyPanel();
+    renderFlow(); renderMyPanel(); renderAfterFlow();
   }
 });
 
@@ -452,11 +546,12 @@ renderLegend();
 renderIdentityBadge();
 renderFlow();
 renderMyPanel();
+renderAfterFlow();
 selectFlow('brand');
 function reloadAndRender() {
   resolveIdentity();   // 依登入帳號更新「你是誰」（登入→該帳號、登出→null）
-  return loadAllAssignments().then(() => {
-    renderFlow(); renderMyPanel(); renderIdentityBadge();
+  return loadAllAssignments().then(() => loadMyRuns()).then(() => {
+    renderFlow(); renderMyPanel(); renderIdentityBadge(); renderAfterFlow();
     const sel = document.querySelector('.flow-card[style*="outline"]');
     selectFlow(sel ? sel.dataset.flow : 'brand');
   });
