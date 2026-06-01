@@ -229,7 +229,7 @@ const KICKOFF = '請開始。依我這個「指定角色」的職責，用顧問
 const KICKOFF_VERSION = 3;
 const LBL = { todo:'未開始', doing:'進行中', review:'送審', done:'完成' };
 
-const T = { ip:null, isAdmin:false, view:'home', skill:null, roleId:null, run:null, busy:false, online:true, pending:[], pendingDocs:[], lastDocs:null, roster:null, premise:null, ipImages:null, galWeek:null };
+const T = { ip:null, isAdmin:false, view:'home', skill:null, roleId:null, run:null, busy:false, online:true, pending:[], pendingDocs:[], lastDocs:null, roster:null, premise:null, ipImages:null, galWeek:null, nav:0 };
 
 function $(id){ return document.getElementById(id); }
 function memberId(){ const e=MXIPAuth.currentEmail(); return e?e.split('@')[0]:null; }
@@ -281,7 +281,8 @@ async function myRunsForIp(ip){
 
 // ── 首頁：磚塊牆 ──
 async function renderHome(){
-  T.view='home';
+  // 離開流程：作廢在途請求(nav++)、清流程脈絡、解除 busy → back/磚塊永遠回得來，不被卡住或被晚到的 AI 回應拉回對話。
+  T.nav++; T.view='home'; T.skill=null; T.roleId=null; T.run=null; T.busy=false;
   const area=$('runnerArea');
   area.innerHTML='<div class="empty">載入中…</div>';
   if(!T.ip){ area.innerHTML='<div class="empty">請先選 IP。</div>'; return; }
@@ -562,11 +563,15 @@ function isReloadNav(){
 }
 async function openRole(id){
   if(T.busy) return;
+  const myNav=++T.nav;   // 這次開啟的序號；期間使用者若離開/切換，後面的 await 回來就放棄。
   T.roleId=id; T.skill=ROLE_SKILL[id]; T.view='chat';
   setFlowRoute(id);   // 寫進網址 hash，瀏覽器重整後仍停在這條流程
   // 帶入既有角色名冊（背景）＋最新會議命題（本週優化方向）：開場先講背景與本週要優化什麼。
-  [T.roster, T.premise] = await Promise.all([fetchIpRoster(T.ip), fetchLatestPremise(T.ip)]);
+  const [rost, prem] = await Promise.all([fetchIpRoster(T.ip), fetchLatestPremise(T.ip)]);
+  if(T.nav!==myNav) return;   // 已離開 → 放棄這次開啟
+  T.roster=rost; T.premise=prem;
   await loadRun();
+  if(T.nav!==myNav) return;
   if(shouldUpgradeKickoff()){
     // 還沒動過的對談：清掉舊開場，用含背景＋本週命題的新開場重生。
     T.run.responses.__chat=[]; await startIfEmpty();
@@ -595,6 +600,7 @@ async function loadRun(){
 }
 function persistLocal(){ try{ localStorage.setItem(lsKey(), JSON.stringify(T.run)); }catch(e){} }
 async function saveRun(){
+  if(!T.run) return;   // 已離開流程（renderHome 清掉 T.run）→ 晚到的存檔放棄，避免 null 報錯
   T.run.member_id=memberId(); T.run.ip_id=T.ip; T.run.skill_id=runKey();
   persistLocal();
   if(!T.online){ markSaved('已存本機'); return; }
@@ -761,7 +767,7 @@ function renderChat(){
 }
 function scrollMsgs(){ const m=$('msgs'); if(m) m.scrollTop=m.scrollHeight; }
 function wire(){
-  if($('backBtn')) $('backBtn').onclick=()=>{ if(!T.busy){ setFlowRoute(null); renderHome(); } };
+  if($('backBtn')) $('backBtn').onclick=()=>{ setFlowRoute(null); renderHome(); };   // 永遠可回（renderHome 會作廢在途請求、解除 busy）
   if($('fileInput')) $('fileInput').onchange=(e)=>{ addFiles(e.target.files); e.target.value=''; };
   if($('docBtn')) $('docBtn').onclick=async ()=>{
     const u=(prompt('貼上 Google Doc / Drive 連結，把裡面的文字讀進來當素材：')||'').trim();
@@ -812,8 +818,9 @@ async function doSend(forced, asDeliverable){
   const imgs=T.pending.slice(); const docs=T.pendingDocs.slice();
   if(!text && !imgs.length && !docs.length) return;
   T.lastDocs=docs;
+  const myNav=T.nav;
   chat().push({ role:'user', content:(asDeliverable?'（請依 skill 規格彙整成正式提案）':(text||'（請看我上傳的附件）')), images:imgs, docNames:docs.map(d=>d.name), ts:Date.now() }); if(imgs.length) T.ipImages=null; T.pending=[]; T.pendingDocs=[]; T.busy=true; renderChat(); saveRun();
-  try{ const res=await callConsult();
+  try{ const res=await callConsult(); if(T.nav!==myNav) return;
     let atxt=res.text, prompts=null;
     if(asDeliverable){
       const pi=atxt.indexOf('===PROMPTS===');
@@ -824,7 +831,8 @@ async function doSend(forced, asDeliverable){
     }
     chat().push({ role:'assistant', content:atxt, deliverable:!!asDeliverable });
     if(res.coverage) T.run.responses.__coverage=res.coverage; if(res.roster && T.skill==='brand-core') T.run.responses.__roster=res.roster; }
-  catch(e){ chat().push({ role:'assistant', content:'⚠️ 顧問暫時連不上：'+e.message+'\n\n（可先重試；若持續，通知管理者。）' }); }
+  catch(e){ if(T.nav!==myNav) return; chat().push({ role:'assistant', content:'⚠️ 顧問暫時連不上：'+e.message+'\n\n（可先重試；若持續，通知管理者。）' }); }
+  if(T.nav!==myNav) return;
   T.busy=false; renderChat(); saveRun();
 }
 // 既有角色名冊 → 開場背景文字（A/B/C…＋一句描述）。沒有 roster 就回空字串。
@@ -867,9 +875,11 @@ function buildKickoff(){
 }
 async function startIfEmpty(){
   if(chat().length>0){ renderChat(); return; }
+  const myNav=T.nav;
   chat().push({ role:'user', content:buildKickoff(), kickoff:true }); T.busy=true; renderChat(); saveRun();
-  try{ const res=await callConsult(); chat().push({ role:'assistant', content:res.text }); if(res.coverage) T.run.responses.__coverage=res.coverage; if(res.roster && T.skill==='brand-core') T.run.responses.__roster=res.roster; T.run.responses.__kickoffV=KICKOFF_VERSION; T.run.responses.__premiseWeek=currentPremiseWeek(); }
-  catch(e){ chat().push({ role:'assistant', content:'⚠️ 顧問暫時連不上：'+e.message+'\n\n（後端可能尚未部署完成，稍後按「↻ 重新開始」再試。）' }); }
+  try{ const res=await callConsult(); if(T.nav!==myNav) return; chat().push({ role:'assistant', content:res.text }); if(res.coverage) T.run.responses.__coverage=res.coverage; if(res.roster && T.skill==='brand-core') T.run.responses.__roster=res.roster; T.run.responses.__kickoffV=KICKOFF_VERSION; T.run.responses.__premiseWeek=currentPremiseWeek(); }
+  catch(e){ if(T.nav!==myNav) return; chat().push({ role:'assistant', content:'⚠️ 顧問暫時連不上：'+e.message+'\n\n（後端可能尚未部署完成，稍後按「↻ 重新開始」再試。）' }); }
+  if(T.nav!==myNav) return;
   T.busy=false; renderChat(); saveRun();
 }
 // 舊存檔的開場要不要自動升級成「含背景／本週命題」的新開場？
