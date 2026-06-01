@@ -371,7 +371,7 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
     <div class="gov-principle">
       <strong>運作原則</strong>：操作員永遠跑「已驗證的穩定版」。Ray 推新版只會進「最新版」，不會覆蓋進行中的工作；新版須由你經測試環逐層放行才會進穩定區，出包時一鍵回調、作業不中斷。
     </div>
-    <div style="margin:0 0 16px">
+    <div class="ray-only" style="margin:0 0 16px;display:none">
       <button class="hubOpen" data-src="ray-upload.html?type=skill" data-title="🚀 發布新版本" style="background:#c5a46b;color:#111318;border:none;border-radius:8px;font-family:inherit;font-weight:800;font-size:13px;padding:9px 15px;cursor:pointer">🚀 發布新版 Skill（進測試環）</button>
     </div>
     <div class="gov-summary" id="skillSummary"></div>
@@ -385,14 +385,14 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
       </div>
       <div class="rings-scroll"><table class="rings" id="ringsTable"></table></div>
     </div>
-    <div class="emergency">
+    <div class="emergency admin-only" style="display:none">
       <div><h3>🚨 緊急全域回調</h3><p>多個 skill 同時出包時，一鍵回到上一個全綠穩定快照。（快照基礎建設尚未接，目前為佔位）</p></div>
       <button class="emergency-btn" id="emergencyBtn">🔴 全部回到穩定快照</button>
     </div>
   </div><!-- /tab-skills -->
 
   <div class="tab-panel" id="tab-engines">
-    <div style="margin:0 0 16px">
+    <div class="ray-only" style="margin:0 0 16px;display:none">
       <button class="hubOpen" data-src="ray-upload.html?type=engine" data-title="🚀 發布新版本" style="background:#c5a46b;color:#111318;border:none;border-radius:8px;font-family:inherit;font-weight:800;font-size:13px;padding:9px 15px;cursor:pointer">🚀 發布新引擎配置（進測試環）</button>
     </div>
     <div class="gov-section-title">📌 當前部署中的引擎配置</div>
@@ -489,6 +489,9 @@ const roleById = new Map(ROLE_DATA.roles.map(r=>[r.id,r]));
 // ── State ──
 let currentIpId = localStorage.getItem('console_current_ip') || (IPS.find(i=>i.status==='active')?.id || IPS[0].id);
 let assignments = {};  // role_id → [member_id, member_id...]
+// 角色分流：同一頁依登入者顯示不同按鈕。qmore=admin（把關：升級穩定版/部署/回調）；
+// Ray=backend（發布：上傳新版 Skill/引擎）。互看不到對方的按鈕。
+let MYROLE = { admin: false, backend: false };
 
 // ── 載入指派 ──
 async function loadAssignments() {
@@ -914,8 +917,9 @@ function renderSkillCard(s){
   const hasUpdate = s.stable !== s.latest.version;
   const latestCls = s.status==='new' ? 'new' : s.status==='bug' ? 'bug' : 'same';
   let actions = `<button class="act-btn ghost" data-act="hist" data-key="${s.key}">📜 版本紀錄</button>`;
-  if(s.status==='new') actions += `<button class="act-btn promote" data-act="promote" data-key="${s.key}" data-ver="${s.latest.version}">⬆️ 升級到穩定版</button>`;
-  else if(s.status==='bug') actions += `<button class="act-btn promote disabled" disabled>⬆️ 升級（已鎖）</button>`;
+  // 升級到穩定版＝qmore（admin）把關專屬；Ray（backend）看不到這顆。
+  if(MYROLE.admin && s.status==='new') actions += `<button class="act-btn promote" data-act="promote" data-key="${s.key}" data-ver="${s.latest.version}">⬆️ 升級到穩定版</button>`;
+  else if(MYROLE.admin && s.status==='bug') actions += `<button class="act-btn promote disabled" disabled>⬆️ 升級（已鎖）</button>`;
   const icon = s.status==='ok'?'✓':s.status==='new'?'⚡':'⚠';
   const msg = s.status==='ok'?'已是最新穩定版':s.status==='new'?`新版 v${s.latest.version} 可測試`:`v${s.latest.version} 有 Bug 回報 · 建議維持穩定版`;
   const cl = (s.status!=='ok' && s.latest.changelog) ? `<span class="cl">· ${esc(s.latest.changelog)}</span>` : '';
@@ -1029,7 +1033,7 @@ function renderEngineTab(){
       <div class="config-ver">engine_config ${esc(cur.version)} <span class="badge-stable">🟢 STABLE · 雲端運行中</span></div>
       <div class="config-meta">部署於 ${esc(cur.deployed_at)} · 由 ${esc(cur.deployed_by)} 部署 · 涵蓋 ${maps.length} 種生成任務</div>
     </div>
-    <div class="config-actions"><button class="act-btn deploy" id="deployBtn">🚀 部署新版</button></div>
+    <div class="config-actions">${MYROLE.admin ? '<button class="act-btn deploy" id="deployBtn">🚀 部署新版</button>' : ''}</div>
   </div>`;
   mapEl.innerHTML = maps.length
     ? `<thead><tr><th>生成任務</th><th>當前推薦引擎</th><th>上次變更</th><th>替代選項</th></tr></thead><tbody>`
@@ -1209,6 +1213,13 @@ async function addProject(){
 var _np = document.getElementById('npBtn'); if(_np) _np.addEventListener('click', addProject);
 
 // ── 啟動 ──
+// 依角色顯示/隱藏靜態按鈕：.ray-only 只給 backend（Ray 發布）、.admin-only 只給 admin（qmore 把關）。
+// （動態 render 的升級/部署按鈕另在 render 時用 MYROLE.admin 判斷。）
+function applyRoleVisibility(){
+  document.querySelectorAll('.ray-only').forEach(el => el.style.display = MYROLE.backend ? '' : 'none');
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = MYROLE.admin ? '' : 'none');
+}
+
 async function init() {
   // 未登入：交給置中登入浮層（gate:'overlay'），先別跑角色門檻，否則 hasAnyRole 回空
   // 會誤觸 showForbidden 把整頁（含浮層）蓋掉。登入後 OAuth 整頁重載會再進來。
@@ -1218,6 +1229,10 @@ async function init() {
     MXIPAuth.showForbidden('主控台僅限管理員與後台');
     return;
   }
+  // 判定本人角色 → 按鈕分流（admin 看把關、backend 看發布）。無 MXIPAuth 時（本地）全顯示。
+  MYROLE.admin   = window.MXIPAuth ? await MXIPAuth.hasAnyRole(['admin'])   : true;
+  MYROLE.backend = window.MXIPAuth ? await MXIPAuth.hasAnyRole(['backend']) : true;
+  applyRoleVisibility();
   await loadIPs();                 // 從 ip_projects 載入最新 IP 清單+狀態（含新增的）
   if(!IPS.some(i=>i.id===currentIpId) && IPS[0]) currentIpId = IPS[0].id;
   renderIpPicker();
