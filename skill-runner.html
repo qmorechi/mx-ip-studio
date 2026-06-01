@@ -635,7 +635,7 @@ function renderChat(){
   const _cpct=_items.length?Math.round(_covd/_items.length*100):0;
   const _title=fl?esc(fl.emoji+' '+fl.zh):esc(f.label);
   const _chap=(fl&&fl.chapter)?('（'+(fl.chapter==='story'?'故事章節':'分鏡章節')+'）'):'';
-  area.innerHTML='<div class="chat-head"><button id="backBtn">← 我的流程</button>'
+  area.innerHTML='<div class="chat-head"><button id="backBtn" style="background:#f8d66d;color:#111318;border-color:#f8d66d;font-weight:800">← 回我選定的流程</button>'
     +'<div class="chat-role"><b>'+_title+'</b>'+_chap+' <span class="pill">'+esc(f.label)+'</span></div>'
     +(_items.length?'<div class="chat-prog"><span>覆蓋率 '+_cpct+'%・'+_covd+'/'+_items.length+'</span><div class="cbar"><i style="width:'+_cpct+'%"></i></div></div>':'')
     +'</div>'
