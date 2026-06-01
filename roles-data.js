@@ -21,3 +21,20 @@ ROLE_DATA.templates = [
   { key:'art-director', label:'美術總監（跨域）', emoji:'🎯', ids:[3,12,22] },
   { key:'commercial',   label:'商業提案組',       emoji:'💼', ids:[13,17] },
 ];
+
+// ── 4 大流程（新節點：成員只選流程參與，22 角色降為「協作專家」列在旁）──
+// 對齊 ROLE_DATA.groups（畫面那 4 欄）。每個流程綁一個「代表 roleId」當內部把手，
+// role_members / skill_runs 照舊用該 repId 當鍵 → 零資料遷移、零 schema/RLS 改動。
+// 故事企劃 / 分鏡輸出 都跑 storyboard-workflow，用 chapter(story/board) 區分章節。
+// emoji 給流程卡用；collaborators = 該流程的協作專家 roleId（取自 groups）。
+ROLE_DATA.flows = [
+  { key:'brand',     repId:1,  zh:'品牌核心',     skill:'brand-core',               chapter:null,
+    emoji:'🧠', color:'#f2b35e', desc:ROLE_DATA.phaseMeta['Brand Core'].desc,          collaborators:[1] },
+  { key:'character', repId:2,  zh:'角色聖經',     skill:'character-consistency-v2', chapter:null,
+    emoji:'🎨', color:'#71d1c2', desc:ROLE_DATA.phaseMeta['Character v2'].desc,        collaborators:[2,3,4,5,6,7,8,9] },
+  { key:'story',     repId:10, zh:'故事企劃',     skill:'storyboard-workflow',      chapter:'story',
+    emoji:'🎬', color:'#ff8b73', desc:ROLE_DATA.phaseMeta['Story & Planning'].desc,    collaborators:[10,11,12,14,17] },
+  { key:'board',     repId:18, zh:'分鏡輸出',     skill:'storyboard-workflow',      chapter:'board',
+    emoji:'🎞️', color:'#8dd3ff', desc:ROLE_DATA.phaseMeta['Storyboard / Motion'].desc, collaborators:[18,19,20,21,22,13,15,16] },
+];
+ROLE_DATA.flowByRep = {}; ROLE_DATA.flows.forEach(f => { ROLE_DATA.flowByRep[f.repId] = f; });

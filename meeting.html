@@ -176,7 +176,7 @@
 <script src="vendor/supabase.js"></script>
 <script src="auth.js?v=11"></script>
 <script src="ips.js"></script>
-<script src="roles-data.js"></script>
+<script src="roles-data.js?v=2"></script>
 <script src="members.js"></script>
 <script>
 const CONSULT_SLUG = 'hyper-processor';
@@ -211,6 +211,7 @@ async function gatherIP(ip){
     const sid = run.skill_id || ''; if(seen.has(sid)) continue; seen.add(sid);
     const roleId = parseInt((sid.split('#')[1] || '').trim(), 10);
     const rd = roleById(roleId);
+    const fl = (ROLE_DATA.flowByRep || {})[roleId];   // 代表 roleId → 4 大流程
     const cov = (run.responses && run.responses.__coverage) || [];
     const covered = cov.filter(c => c && c.status === 'covered').length;
     const partial = cov.filter(c => c && c.status === 'partial').length;
@@ -229,7 +230,7 @@ async function gatherIP(ip){
     const content = (deliv || lastA).slice(0,4000);  // 展開看（正式提案給較完整空間），不送 AI
     const wk = run.updated_at ? (isoWeek(new Date(run.updated_at)) === isoWeek(new Date())) : false;
     const lnks = (run.responses && Array.isArray(run.responses.__links)) ? run.responses.__links : [];
-    roles.push({ role: rd ? rd.name : ('角色#'+(roleId||'?')), roleId: roleId || 0, phase: rd ? phaseZh(rd.phase) : '',
+    roles.push({ role: fl ? (fl.emoji+' '+fl.zh) : (rd ? rd.name : ('角色#'+(roleId||'?'))), roleId: roleId || 0, phase: fl ? fl.zh : (rd ? phaseZh(rd.phase) : ''),
       member: run.member_id || '', coverage_pct: pct, status: run.status || '', delivered, excerpt, content, official, links: lnks, wk });
   }
   const ipPct = totSum ? Math.round(covSum/totSum*100) : 0;

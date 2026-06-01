@@ -148,7 +148,7 @@ header.top .meta .auto-tag{background:rgba(197,164,107,.15);color:var(--accent-1
 
 <script src="vendor/supabase.js"></script>
 <script src="auth.js?v=11"></script>
-<script src="roles-data.js"></script>
+<script src="roles-data.js?v=2"></script>
 <script src="skill-flows.js"></script>
 <script>
 const IPS = [
@@ -368,8 +368,11 @@ async function loadProgress() {
       assigns.forEach(a => {
         mem.add(a.member_id);
         const sk = (typeof ROLE_SKILL !== 'undefined') ? ROLE_SKILL[a.role_id] : null;
-        const role = (typeof ROLE_DATA !== 'undefined') ? ROLE_DATA.roles.find(r => r.id === a.role_id) : null;
-        const total = (role && role.deliverables) ? role.deliverables.length : 0;
+        // a.role_id 是流程的「代表 roleId」把手；交付總數＝該流程協作專家 deliverables 去重彙整
+        const flow = (typeof ROLE_DATA !== 'undefined' && ROLE_DATA.flowByRep) ? ROLE_DATA.flowByRep[a.role_id] : null;
+        if (!flow) return;  // 只計 4 大流程節點（略過任何舊角色殘留）
+        const _seen = new Set(); flow.collaborators.forEach(id => { const rr = ROLE_DATA.roles.find(r => r.id === id); (rr ? rr.deliverables : []).forEach(d => _seen.add(d)); });
+        const total = _seen.size;
         const run = sk ? rmap[a.member_id + '|' + (sk + '#' + a.role_id)] : null;
         const cov = (run && Array.isArray(run.coverage)) ? run.coverage : [];
         const covered = cov.filter(c => c && c.status === 'covered').length;

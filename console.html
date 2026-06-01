@@ -261,7 +261,7 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
 <body>
 <script src="members.js"></script>
 <script src="ips.js"></script>
-<script src="roles-data.js"></script>
+<script src="roles-data.js?v=2"></script>
 <!-- 方案 C / P1 登入層（草稿，未啟用前不影響運作） -->
 <script src="vendor/supabase.js"></script>
 <script src="auth.js?v=11"></script>
@@ -275,7 +275,7 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
   <header class="top">
     <div>
       <h1>MX-IP-Studio · 主控台<span class="sync-dot" id="syncDot" title="Supabase 連線中"></span></h1>
-      <p class="subtitle">管理 6 個 IP × 11 個成員 × 22 個角色,進度/矩陣/邀請一頁解決</p>
+      <p class="subtitle">管理 6 個 IP × 11 個成員 × 4 大流程（22 專業角色協作）,進度/矩陣/邀請一頁解決</p>
     </div>
     <div class="ip-picker">
       <label for="ipSelect">IP</label>
@@ -314,7 +314,7 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
   </div>
 
   <div class="tabs">
-    <button class="tab-btn active" data-tab="roles">📋 角色指派</button>
+    <button class="tab-btn active" data-tab="roles">📋 流程指派</button>
     <button class="tab-btn" data-tab="skills">📦 Skill 版本管理</button>
     <button class="tab-btn" data-tab="engines">🤖 AI 引擎管理</button>
     <button class="tab-btn" data-tab="projects">🗂️ IP 專案</button>
@@ -329,7 +329,7 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
 
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px;margin-bottom:18px">
     <section class="block" style="margin:0">
-      <h2>⚠ 還沒人認領的角色</h2>
+      <h2>⚠ 還沒人參與的流程</h2>
       <div class="vacant-list" id="vacantList"></div>
     </section>
     <section class="block" style="margin:0">
@@ -340,7 +340,7 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
   </div>
 
   <section class="block">
-    <h2>🎯 角色 × 成員矩陣</h2>
+    <h2>🎯 流程 × 成員矩陣</h2>
     <p class="lead">點任一格切換指派狀態(直接寫 Supabase,即時同步給所有人)。同色直欄代表同一階段。</p>
     <div class="matrix-wrap">
       <table class="matrix" id="matrixTable"></table>
@@ -550,65 +550,63 @@ function updateIpStatusPill() {
 
 // ── 渲染:進度 ──
 function renderProgress() {
-  const filled = ROLE_DATA.roles.filter(r => (assignments[r.id] || []).length > 0).length;
-  const total  = ROLE_DATA.roles.length;
+  const flows = ROLE_DATA.flows;
+  const filled = flows.filter(f => (assignments[f.repId] || []).length > 0).length;
+  const total  = flows.length;
   const vacant = total - filled;
   const pct = Math.round(filled / total * 100);
-  const totalAssignments = Object.values(assignments).reduce((sum, arr) => sum + arr.length, 0);
+  const totalAssignments = flows.reduce((sum, f) => sum + (assignments[f.repId] || []).length, 0);
 
   document.getElementById('progressStats').innerHTML = `
-    <div class="progress-stat"><span class="num">${filled}/${total}</span><span class="label">已認領</span></div>
-    <div class="progress-stat"><span class="num" style="color:#ff8b73">${vacant}</span><span class="label">空缺</span></div>
-    <div class="progress-stat"><span class="num">${totalAssignments}</span><span class="label">總指派數</span></div>
-    <div class="progress-stat"><span class="num">${pct}%</span><span class="label">完成率</span></div>
+    <div class="progress-stat"><span class="num">${filled}/${total}</span><span class="label">有人參與的流程</span></div>
+    <div class="progress-stat"><span class="num" style="color:#ff8b73">${vacant}</span><span class="label">沒人的流程</span></div>
+    <div class="progress-stat"><span class="num">${totalAssignments}</span><span class="label">總參與人次</span></div>
+    <div class="progress-stat"><span class="num">${pct}%</span><span class="label">流程覆蓋率</span></div>
   `;
   document.getElementById('progressBarFill').style.width = pct + '%';
 }
 
-// ── 渲染:空缺清單 ──
+// ── 渲染:沒人參與的流程 ──
 function renderVacant() {
-  const vacantRoles = ROLE_DATA.roles.filter(r => (assignments[r.id] || []).length === 0);
+  const vacant = ROLE_DATA.flows.filter(f => (assignments[f.repId] || []).length === 0);
   const el = document.getElementById('vacantList');
-  if (vacantRoles.length === 0) {
-    el.innerHTML = `<span class="vacant-empty">✅ 全員到齊,22 個角色都有人認領了!</span>`;
+  if (vacant.length === 0) {
+    el.innerHTML = `<span class="vacant-empty">✅ 4 大流程都有人參與了！</span>`;
     return;
   }
-  el.innerHTML = vacantRoles.map(r =>
-    `<span class="vacant-item">${String(r.id).padStart(2,'0')} ${r.name}</span>`
+  el.innerHTML = vacant.map(f =>
+    `<span class="vacant-item">${f.emoji} ${f.zh}</span>`
   ).join('');
 }
 
 // ── 渲染:矩陣 ──
 function renderMatrix() {
   const table = document.getElementById('matrixTable');
-  // 用 groups 順序排列 role(同階段相鄰)
-  const orderedRoles = [];
-  ROLE_DATA.groups.forEach(([phase, ids]) => ids.forEach(id => orderedRoles.push(roleById.get(id))));
+  const flows = ROLE_DATA.flows;
 
   // header
   const memberHeaders = MEMBERS.map(m => `<th title="${m.name}">${m.short}</th>`).join('');
   const headHTML = `<thead><tr>
-    <th>角色</th>${memberHeaders}<th class="total-cell">小計</th>
+    <th>流程</th>${memberHeaders}<th class="total-cell">小計</th>
   </tr></thead>`;
 
-  // body
-  const rows = orderedRoles.map(r => {
-    const c = phaseColor(r.phase);
-    const assigned = assignments[r.id] || [];
+  // body：4 大流程 × 成員
+  const rows = flows.map(f => {
+    const assigned = assignments[f.repId] || [];
     const cells = MEMBERS.map(m => {
       const on = assigned.includes(m.id);
-      return `<td class="member-cell ${on ? 'on' : ''}" data-role="${r.id}" data-member="${m.id}" title="${m.name} × ${r.name}">${on ? '✓' : ''}</td>`;
+      return `<td class="member-cell ${on ? 'on' : ''}" data-role="${f.repId}" data-member="${m.id}" title="${m.name} × ${f.zh}">${on ? '✓' : ''}</td>`;
     }).join('');
     return `<tr>
-      <td class="role-cell" style="--c:${c}"><span class="role-num">${String(r.id).padStart(2,'0')}</span>${r.name}</td>
+      <td class="role-cell" style="--c:${f.color}"><span class="role-num">${f.emoji}</span>${f.zh}</td>
       ${cells}
       <td class="total-cell">${assigned.length}</td>
     </tr>`;
   }).join('');
 
-  // footer:每人的總數
+  // footer:每人參與幾個流程
   const memberTotals = MEMBERS.map(m => {
-    const count = ROLE_DATA.roles.filter(r => (assignments[r.id] || []).includes(m.id)).length;
+    const count = ROLE_DATA.flows.filter(f => (assignments[f.repId] || []).includes(m.id)).length;
     return `<th>${count}</th>`;
   }).join('');
   const footHTML = `<tfoot><tr><th>每人小計</th>${memberTotals}<th></th></tr></tfoot>`;
@@ -647,7 +645,7 @@ function updateMatrixTotals() {
   // 每人小計
   const footCells = document.querySelectorAll('#matrixTable tfoot th');
   MEMBERS.forEach((m, i) => {
-    const count = ROLE_DATA.roles.filter(r => (assignments[r.id] || []).includes(m.id)).length;
+    const count = ROLE_DATA.flows.filter(f => (assignments[f.repId] || []).includes(m.id)).length;
     if (footCells[i+1]) footCells[i+1].textContent = count;
   });
 }
@@ -672,13 +670,13 @@ function urlFor(memberId) {
 
 function slackMessage(member) {
   const ip = ipById.get(currentIpId);
-  return `Hi ${member.name},請幫忙在「${ip.name}」的 22 個專業角色裡選你要負責的(一人可多選):\n${urlFor(member.id)}`;
+  return `Hi ${member.name},請幫忙在「${ip.name}」選你要參與的 4 大流程(一人可多選):\n${urlFor(member.id)}`;
 }
 
 function allMembersMessage() {
   const ip = ipById.get(currentIpId);
   const lines = MEMBERS.map(m => `• @${m.id}  ${urlFor(m.id)}`).join('\n');
-  return `Hi 大家,請幫忙在「${ip.name}」的 22 個專業角色裡選你要負責的(一人可多選):\n\n${lines}`;
+  return `Hi 大家,請幫忙在「${ip.name}」選你要參與的 4 大流程(一人可多選):\n\n${lines}`;
 }
 
 async function copyToClipboard(text, btn, successText='✓ 已複製') {

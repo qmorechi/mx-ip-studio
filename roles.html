@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IP 全流程 22 個專業角色互動節點圖</title>
+<title>IP 全流程 — 選擇你參與的 4 大流程</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#0d0d0f;color:#e8e6e0;font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;}
@@ -116,7 +116,7 @@ li{margin:.35em 0}
 <body>
 <script src="members.js"></script>
 <script src="ips.js"></script>
-<script src="roles-data.js"></script>
+<script src="roles-data.js?v=2"></script>
 <!-- 方案 C / P1 登入層（草稿，未啟用前不影響運作） -->
 <script src="vendor/supabase.js"></script>
 <script src="auth.js?v=11"></script>
@@ -129,9 +129,17 @@ li{margin:.35em 0}
   <main class="map">
     <header>
       <div>
-        <h1>IP 建立全流程：22 個專業角色互動節點圖<span class="sync-dot" id="syncDot" title="Supabase 連線中"></span></h1>
-        <p class="lead">四大流程從品牌核心、角色聖經、故事企劃到分鏡輸出；社群與商業角色會在企劃與輸出階段介入。點擊任一節點可查看該角色的專業權責。</p>
+        <h1>IP 建立全流程：選擇你參與的 4 大流程<span class="sync-dot" id="syncDot" title="Supabase 連線中"></span></h1>
+        <p class="lead">四大流程：品牌核心 → 角色聖經 → 故事企劃 → 分鏡輸出。你只要選「參與哪幾個流程」即可；每個流程旁列出會進來協作的專業角色。進 Skill Runner 後，AI 顧問會以該流程的「專家小組」帶你一次做完、產出整合成果。</p>
         <div class="legend" id="legend"></div>
+        <details style="margin:14px 0 0;background:#161a21;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:12px 16px">
+          <summary style="cursor:pointer;font-weight:900;color:#c5a46b;font-size:14px;list-style:none">📖 新手必看：這頁怎麼運作（3 步）</summary>
+          <ol style="margin:12px 0 2px;padding-left:1.3em;color:#cfc7bb;font-size:14px;line-height:1.7">
+            <li><b>選流程</b>：在下面 4 張流程卡點「＋ 參與這個流程」，挑你要做的（可多選）。不用再從 22 個角色裡逐一勾。</li>
+            <li><b>看協作專家</b>：每張卡列出這條流程會用到的專業角色，那是 AI 顧問會內部帶你走的「專家小組」，不是要你一個個扮演。</li>
+            <li><b>進 Skill Runner 開工</b>：選好流程後到 <a href="skill-runner.html" style="color:#8dd3ff;text-decoration:none">Skill Runner</a>，AI 顧問會以該流程的專家小組帶你一次對談、產出整合成果。</li>
+          </ol>
+        </details>
         <div id="identity"></div>
         <div id="myPanel"></div>
       </div>
@@ -142,6 +150,22 @@ li{margin:.35em 0}
 </div>
 <button class="detail-toggle" id="detailToggle" title="收合/展開右側角色詳情，避免在筆電上遮住角色欄" onclick="(function(b){var a=document.querySelector('.app');var c=a.classList.toggle('detail-collapsed');b.textContent=c?'⟨ 展開詳情':'⟩ 收合詳情';try{localStorage.setItem('mxip_roles_detail_collapsed',c?'1':'0')}catch(e){}})(this)">⟩ 收合詳情</button>
 <script>try{if(localStorage.getItem('mxip_roles_detail_collapsed')==='1'){document.querySelector('.app').classList.add('detail-collapsed');var _b=document.getElementById('detailToggle');if(_b)_b.textContent='⟨ 展開詳情';}}catch(e){}</script>
+<style>
+/* ── 4 大流程卡（取代 22 節點選擇）── */
+.flow-card{min-height:auto}
+.flow-card.mine{box-shadow:0 0 0 2px color-mix(in srgb,var(--c),transparent 55%),0 20px 60px rgba(0,0,0,.28)}
+.flow-emoji{font-size:22px;margin-right:6px;vertical-align:middle}
+.flow-join{appearance:none;font-family:inherit;width:100%;margin:6px 0 4px;padding:12px 14px;border-radius:12px;border:1px solid var(--c);background:color-mix(in srgb,var(--c),transparent 86%);color:var(--c);font-weight:900;font-size:15px;cursor:pointer;transition:.15s transform,.15s background}
+.flow-join:hover{transform:translateY(-1px);background:color-mix(in srgb,var(--c),transparent 78%)}
+.flow-join.joined{background:var(--c);color:#111318;border-color:transparent}
+.flow-readonly{font-size:12.5px;color:#a3a097;margin:6px 0 2px;line-height:1.5}
+.flow-section-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#a3a097;font-weight:900;margin:16px 0 8px}
+.expert-chips{display:flex;flex-wrap:wrap;gap:6px}
+.expert-chip{display:inline-flex;align-items:center;background:color-mix(in srgb,var(--c),#20242c 80%);border:1px solid color-mix(in srgb,var(--c),transparent 55%);border-radius:999px;padding:4px 10px;font-size:12px;color:#e8e6e0;font-weight:700;line-height:1.3}
+.flow-detail-btn{appearance:none;font-family:inherit;margin-top:16px;background:transparent;border:0;color:#a3a097;font-size:12.5px;font-weight:800;cursor:pointer;padding:4px 0}
+.flow-detail-btn:hover{color:var(--c)}
+.flow-card .node-members{margin:0;min-height:0}
+</style>
 <script>
 // ── Supabase 設定 ──
 const SB_URL  = 'https://cpzbwxgokmvayhzrvkqm.supabase.co';
@@ -274,8 +298,8 @@ function getAssigned(roleId) { return assignments[roleId] || []; }
 
 // ── render legend ──
 function renderLegend() {
-  document.getElementById('legend').innerHTML = Object.entries(DATA.phaseMeta).map(([k,m]) =>
-    `<span class="chip"><span style="color:${m.color}">●</span> ${m.zh}</span>`
+  document.getElementById('legend').innerHTML = DATA.flows.map(f =>
+    `<span class="chip"><span style="color:${f.color}">●</span> ${f.emoji} ${f.zh}</span>`
   ).join('');
 }
 
@@ -298,245 +322,128 @@ function renderIdentityBadge() {
   }
 }
 
-// ── render flow ──
+// ── render 4 大流程卡（取代 22 節點選擇）──
 function renderFlow() {
   const el = document.getElementById('flow');
-  el.innerHTML = DATA.groups.map(([phase,ids],idx) => {
-    const meta = DATA.phaseMeta[phase];
-    return `<article class="phase" style="--c:${meta.color}">
-      <h2><span style="color:${meta.color}">0${idx+1}</span> ${meta.zh}</h2>
-      <p>${meta.desc}</p>
-      <div class="arrow"></div>
-      <div class="nodes">${ids.map(id => nodeHTML(roleById.get(id))).join('')}</div>
-    </article>`;
-  }).join('');
-
-  document.querySelectorAll('#flow .node-wrap').forEach(bindWrapHandlers);
+  el.innerHTML = DATA.flows.map(flowCardHTML).join('');
+  document.querySelectorAll('#flow .flow-card').forEach(bindFlowCard);
 }
 
-// 單一 node-wrap 的事件綁定(re-render 時也用)
-function bindWrapHandlers(wrap) {
-  const nodeBtn = wrap.querySelector('.node-btn');
-  if (nodeBtn) nodeBtn.addEventListener('click', () => selectRole(Number(nodeBtn.dataset.id)));
-
-  // 「+ 申請加入」tag 在 .node-btn 內,要 stopPropagation 不然會觸發 selectRole
-  // 只有個人模式(?u=xxx)會出現,唯讀模式沒有這顆
-  const applyTag = wrap.querySelector('.apply-tag');
-  if (applyTag) {
-    applyTag.addEventListener('click', async e => {
-      e.stopPropagation();
-      e.preventDefault();
-      const roleId   = Number(applyTag.dataset.roleId);
-      const memberId = applyTag.dataset.memberId;
-      await addMember(roleId, memberId);
-      rerenderNodeWrap(roleId);
-      const activeBtn = document.querySelector('.node-btn.active');
-      if (activeBtn && Number(activeBtn.dataset.id) === roleId) updateSideMembers(roleId);
-      renderMyPanel();
-    });
-  }
+function flowCardHTML(f) {
+  const assigned = getAssigned(f.repId);
+  const mine = myUser && assigned.includes(myUser.id);
+  const avatars = assigned.length
+    ? assigned.map(mid => {
+        const m = memberById.get(mid); if (!m) return '';
+        const canRemove = myUser && mid === myUser.id;
+        return `<span class="member-tag" style="--c:${f.color}">${m.name}${canRemove ? `<span class="remove-btn" data-role="${f.repId}" data-member="${mid}" title="退出">✕</span>` : ''}</span>`;
+      }).join('')
+    : '<span class="no-member">尚未有人參與</span>';
+  const chips = f.collaborators.map(id => { const r = roleById.get(id); return r ? `<span class="expert-chip">${r.name}</span>` : ''; }).join('');
+  const control = myUser
+    ? `<button class="flow-join${mine ? ' joined' : ''}" data-rep="${f.repId}" data-flow="${f.key}">${mine ? '✓ 我參與中（點此退出）' : '＋ 參與這個流程'}</button>`
+    : `<div class="flow-readonly">唯讀模式 — 要參與請從 Slack 收到的個人邀請信進入</div>`;
+  return `<article class="phase flow-card${mine ? ' mine' : ''}" id="flow-card-${f.key}" data-flow="${f.key}" style="--c:${f.color}">
+    <h2><span class="flow-emoji">${f.emoji}</span>${f.zh}</h2>
+    <p>${f.desc}</p>
+    ${control}
+    <div class="flow-section-label">這個流程的協作專家（${f.collaborators.length}）</div>
+    <div class="expert-chips">${chips}</div>
+    <div class="flow-section-label">參與成員</div>
+    <div class="node-members">${avatars}</div>
+    <button class="flow-detail-btn" data-flow="${f.key}">查看流程細節與專家權責 →</button>
+  </article>`;
 }
 
-// 個人模式:加/移除自己後需要整個 wrap 重 render(因為「+加我」按鈕要消失/出現)
-function rerenderNodeWrap(roleId) {
-  const oldWrap = document.getElementById(`node-wrap-${roleId}`);
-  if (!oldWrap) return;
-  const wasActive = oldWrap.querySelector('.node-btn.active') !== null;
-  const r = roleById.get(roleId);
-  const tmp = document.createElement('div');
-  tmp.innerHTML = nodeHTML(r);
-  const newWrap = tmp.firstElementChild;
-  if (wasActive) newWrap.querySelector('.node-btn')?.classList.add('active');
-  oldWrap.replaceWith(newWrap);
-  bindWrapHandlers(newWrap);
+function bindFlowCard(card) {
+  const key = card.dataset.flow;
+  const joinBtn = card.querySelector('.flow-join');
+  if (joinBtn) joinBtn.addEventListener('click', async () => {
+    const rep = Number(joinBtn.dataset.rep);
+    if (getAssigned(rep).includes(myUser.id)) await removeMember(rep, myUser.id);
+    else await addMember(rep, myUser.id);
+    renderFlow(); renderMyPanel(); selectFlow(key);
+  });
+  const detailBtn = card.querySelector('.flow-detail-btn');
+  if (detailBtn) detailBtn.addEventListener('click', () => selectFlow(key));
 }
 
-function nodeHTML(r) {
-  const c = phaseColor(r.phase);
-  const assigned = getAssigned(r.id);
-  // tags 依加入順序;✕ 只在「自己的 tag 上」顯示,管理動作改去 console 做
-  const memberTags = assigned.map(mid => {
-    const m = memberById.get(mid);
-    if (!m) return '';
-    const canRemove = myUser && mid === myUser.id;
-    return `<span class="member-tag" data-role="${r.id}" data-member="${mid}">
-      ${m.name}${canRemove ? `<span class="remove-btn" data-role="${r.id}" data-member="${mid}" title="移除">✕</span>` : ''}
-    </span>`;
-  }).join('');
-
-  // 「申請加入」末尾彩色 tag — 只在個人模式下顯示;沒 ?u= = 唯讀,不顯示任何 add 控制
-  let applyTag = '';
-  if (myUser && !assigned.includes(myUser.id)) {
-    applyTag = `<span class="apply-tag apply-me" data-role-id="${r.id}" data-member-id="${myUser.id}" title="把我加進這個角色">+ 申請加入</span>`;
-  }
-
-  return `<div class="node-wrap" id="node-wrap-${r.id}" style="--c:${c}">
-    <button class="node node-btn${(myUser && assigned.includes(myUser.id)) ? ' mine' : ''}" data-id="${r.id}" style="--c:${c}">
-      <span class="num">${String(r.id).padStart(2,'0')}</span>
-      <span class="node-title">${r.name}</span>
-      <span class="node-en">${r.en}</span>
-      <div class="node-members" id="node-members-${r.id}">${memberTags}${applyTag}</div>
-    </button>
-  </div>`;
+// 流程的整合交付清單 = 該流程所有協作專家 deliverables 去重彙整
+function flowDeliverables(f) {
+  const seen = new Set(); const out = [];
+  f.collaborators.forEach(id => { const r = roleById.get(id); (r ? r.deliverables : []).forEach(d => { if (!seen.has(d)) { seen.add(d); out.push(d); } }); });
+  return out;
 }
 
-function refreshNode(roleId) {
-  const assigned = getAssigned(roleId);
-  const memberArea = document.getElementById(`node-members-${roleId}`);
-  if (!memberArea) return;
-  memberArea.innerHTML = assigned.map(mid => {
-    const m = memberById.get(mid);
-    if (!m) return '';
-    const canRemove = myUser && mid === myUser.id;
-    return `<span class="member-tag">
-      ${m.name}${canRemove ? `<span class="remove-btn" data-role="${roleId}" data-member="${mid}" title="移除">✕</span>` : ''}
-    </span>`;
-  }).join('');
-  const _btn = document.querySelector('#node-wrap-' + roleId + ' .node-btn');
-  if (_btn) _btn.classList.toggle('mine', !!(myUser && assigned.includes(myUser.id)));
-}
-
-function updateSideMembers(roleId) {
-  const el = document.getElementById('side-members');
-  if (!el) return;
-  const assigned = getAssigned(roleId);
-  const c = phaseColor(roleById.get(roleId).phase);
-  el.innerHTML = assigned.length === 0
-    ? `<span class="no-member">尚未指派成員</span>`
-    : assigned.map(mid => {
-        const m = memberById.get(mid);
-        if (!m) return '';
-        return `<span class="side-member-tag" style="--c:${c}">
-          <span class="side-member-avatar">${m.short}</span>${m.name}
-        </span>`;
-      }).join('');
-}
-
-function selectRole(id) {
-  const r = roleById.get(id);
-  if (!r) return;
-  document.querySelectorAll('.node-btn').forEach(b => b.classList.toggle('active', Number(b.dataset.id) === id));
-  const meta = DATA.phaseMeta[r.phase];
+function selectFlow(key) {
+  const f = DATA.flows.find(x => x.key === key); if (!f) return;
+  document.querySelectorAll('.flow-card').forEach(c => c.style.outline = (c.dataset.flow === key ? '2px solid ' + f.color : 'none'));
   const detail = document.getElementById('detail');
-  detail.style.setProperty('--c', meta.color);
-  const assigned = getAssigned(id);
+  detail.style.setProperty('--c', f.color);
+  const assigned = getAssigned(f.repId);
   const memberHTML = assigned.length === 0
-    ? `<span class="no-member">尚未指派成員</span>`
+    ? `<span class="no-member">尚未有人參與</span>`
     : assigned.map(mid => {
         const m = memberById.get(mid);
-        return m ? `<span class="side-member-tag" style="--c:${meta.color}">
-          <span class="side-member-avatar">${m.short}</span>${m.name}
-        </span>` : '';
+        return m ? `<span class="side-member-tag" style="--c:${f.color}"><span class="side-member-avatar">${m.short}</span>${m.name}</span>` : '';
       }).join('');
+  const experts = f.collaborators.map(id => {
+    const r = roleById.get(id); if (!r) return '';
+    return `<div style="margin:12px 0;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.08)">
+      <div style="font-weight:900;color:#e8e6e0">${r.name} <span style="color:#b9c2cf;font-weight:700;font-size:12px">${r.en}</span></div>
+      <div class="scope" style="font-size:14px;margin-top:3px">${r.scope}</div></div>`;
+  }).join('');
+  const deliv = flowDeliverables(f);
+  const chap = f.chapter ? `（${f.chapter === 'story' ? '故事章節' : '分鏡章節'}）` : '';
 
   detail.innerHTML = `
-    <p class="panel-kicker">Role Detail</p>
-    <h2>${String(r.id).padStart(2,'0')}｜${r.name}</h2>
-    <div class="en">${r.en}</div>
-    <div class="badge"><span class="dot"></span>${meta.zh}</div>
-    <div class="section-title">負責成員</div>
-    <div class="side-members" id="side-members">${memberHTML}</div>
-    <div class="section-title">專業權責</div>
-    <div class="scope">${r.scope}</div>
-    <div class="section-title">主要產出</div>
-    <ul>${r.deliverables.map(x=>`<li>${x}</li>`).join('')}</ul>
-    <div class="section-title">常見風險 / 為何需要它</div>
-    <div class="risk">${r.risk}</div>
-    <p class="hint">提示：這張圖以「四大流程」呈現，但社群與商業角色會依需求在故事企劃、分鏡、輸出階段交叉介入。</p>`;
+    <p class="panel-kicker">Flow Detail</p>
+    <h2>${f.emoji}｜${f.zh}</h2>
+    <div class="en">${f.skill}${chap}</div>
+    <div class="badge"><span class="dot"></span>${f.zh}</div>
+    <div class="section-title">參與成員</div>
+    <div class="side-members">${memberHTML}</div>
+    <div class="section-title">這個流程的整合交付</div>
+    <ul>${deliv.map(x=>`<li>${x}</li>`).join('')}</ul>
+    <div class="section-title">協作專家權責（顧問對談裡會內部切換這些視角）</div>
+    ${experts}
+    <p class="hint">提示：你只要選「參與這個流程」就好。進 Skill Runner 後，AI 顧問會以這條流程的「專家小組」身分，一次對談把整條流程帶完、產出整合成果，不用分別跟這些專家各開一次會。</p>`;
 }
 
-// ── 我的角色（個人模式）→ 過載指標 + 職能模板 ──
-function myRoleIds() {
+// ── 我的流程參與（個人模式）→ 過載指標改「跨幾個流程」──
+function myFlowKeys() {
   if (!myUser) return [];
-  return DATA.roles.filter(r => getAssigned(r.id).includes(myUser.id)).map(r => r.id);
-}
-
-function computeMyOverload() {
-  const ids = myRoleIds();
-  const keys = new Set();
-  ids.forEach(id => { const k = roleChannel.get(id); if (k) keys.add(k); });
-  return { roleCount: ids.length, channelKeys: [...keys] };
+  return DATA.flows.filter(f => getAssigned(f.repId).includes(myUser.id)).map(f => f.key);
 }
 
 function renderMyPanel() {
   const el = document.getElementById('myPanel');
   if (!el) return;
   if (!myUser) { el.innerHTML = ''; return; }   // 唯讀模式不顯示
-
-  const tplBtns = TEMPLATES.map(t =>
-    `<button class="tpl-btn" data-tpl="${t.key}">
-      <span class="tpl-emoji">${t.emoji}</span>${t.label}<span class="tpl-count">${t.ids.length} 角色</span>
-    </button>`).join('');
-
-  const { roleCount, channelKeys } = computeMyOverload();
-  const ch = channelKeys.length;
-  let pillCls = 'warn-empty', pillTxt = '⚪ 尚未選擇';
-  if (ch >= 4)       { pillCls = 'warn-high'; pillTxt = `🛑 強提醒 · 跨 ${ch} 個主頻道`; }
-  else if (ch === 3) { pillCls = 'warn-mid';  pillTxt = '⚠️ 輕提醒 · 跨 3 個主頻道'; }
-  else if (ch >= 1)  { pillCls = 'warn-ok';   pillTxt = '🟢 正常'; }
-
-  const chanChips = channelKeys
-    .map(k => channelByKey.get(k))
-    .filter(Boolean)
-    .map(c => `<span class="ov-chan" style="--cc:${c.color}">${c.zh}</span>`)
-    .join('');
-
+  const mine = myFlowKeys();
+  const n = mine.length;
+  let pillCls = 'warn-empty', pillTxt = '⚪ 尚未選擇流程';
+  if (n >= 3)       { pillCls = 'warn-high'; pillTxt = `🛑 你跨了 ${n} 個流程，負荷偏高`; }
+  else if (n === 2) { pillCls = 'warn-mid';  pillTxt = '⚠️ 跨 2 個流程'; }
+  else if (n === 1) { pillCls = 'warn-ok';   pillTxt = '🟢 專注單一流程'; }
+  const chips = mine.map(k => { const f = DATA.flows.find(x => x.key === k); return `<span class="ov-chan" style="--cc:${f.color}">${f.emoji} ${f.zh}</span>`; }).join('');
   el.innerHTML = `
-    <div class="mp-label">快速套用職能模板（點一下換成這組角色，可再微調）</div>
-    <div class="mp-templates">
-      ${tplBtns}
-      <button class="tpl-btn tpl-clear" data-tpl="__clear__">⟲ 清空我的角色</button>
-    </div>
+    <div class="mp-label">你的流程參與（在下方流程卡點「參與這個流程」加入，可多選；負荷越專注越好）</div>
     <div class="mp-overload">
-      <div class="ov-stat"><span class="ov-num">${roleCount}</span> 角色<span class="ov-of">/22</span></div>
-      <div class="ov-stat"><span class="ov-num">${ch}</span><span class="ov-of">/5</span> 主頻道</div>
+      <div class="ov-stat"><span class="ov-num">${n}</span> 流程<span class="ov-of">/4</span></div>
       <span class="warn-pill ${pillCls}">${pillTxt}</span>
-      <div class="ov-channels">${chanChips}</div>
+      <div class="ov-channels">${chips}</div>
     </div>`;
-
-  el.querySelectorAll('.tpl-btn').forEach(b =>
-    b.addEventListener('click', () => applyTemplate(b.dataset.tpl)));
 }
 
-// 套用模板：把「我」的角色換成模板那組（diff 寫入，只動自己）。清空＝移除全部。
-async function applyTemplate(key) {
-  if (!myUser) return;
-  const target    = key === '__clear__' ? [] : (TEMPLATES.find(t => t.key === key)?.ids || []);
-  const current   = myRoleIds();
-  const targetSet = new Set(target);
-  const toAdd     = target.filter(id => !current.includes(id));
-  const toRemove  = current.filter(id => !targetSet.has(id));
-  if (toAdd.length === 0 && toRemove.length === 0) return;
-
-  if (toRemove.length > 0) {
-    const label = key === '__clear__' ? '清空我的角色' : TEMPLATES.find(t => t.key === key)?.label;
-    const ok = confirm(`套用「${label}」會把你目前的 ${current.length} 個角色換成 ${target.length} 個（移除 ${toRemove.length}、新增 ${toAdd.length}）。確定？`);
-    if (!ok) return;
-  }
-
-  for (const id of toRemove) await removeMember(id, myUser.id);
-  for (const id of toAdd)    await addMember(id, myUser.id);
-
-  const activeBtn = document.querySelector('.node-btn.active');
-  const keep = activeBtn ? Number(activeBtn.dataset.id) : null;
-  renderFlow();
-  renderMyPanel();
-  if (keep != null) selectRole(keep);
-}
-
-// ── 全域 remove 事件委派 ──
+// ── 全域 remove（流程卡上的 ✕ 退出）事件委派 ──
 document.addEventListener('click', async e => {
   if (e.target.classList.contains('remove-btn')) {
     e.stopPropagation();
-    const roleId = Number(e.target.dataset.role);
+    const rep = Number(e.target.dataset.role);
     const memberId = e.target.dataset.member;
-    await removeMember(roleId, memberId);
-    // 個人模式:重 render 整個 wrap(因為「+加我」要重新出現)
-    if (myUser) rerenderNodeWrap(roleId);
-    else refreshNode(roleId);
-    const activeBtn = document.querySelector('.node-btn.active');
-    if (activeBtn && Number(activeBtn.dataset.id) === roleId) updateSideMembers(roleId);
-    renderMyPanel();
+    await removeMember(rep, memberId);
+    renderFlow(); renderMyPanel();
   }
 });
 
@@ -545,13 +452,13 @@ renderLegend();
 renderIdentityBadge();
 renderFlow();
 renderMyPanel();
-selectRole(1);
+selectFlow('brand');
 function reloadAndRender() {
   resolveIdentity();   // 依登入帳號更新「你是誰」（登入→該帳號、登出→null）
   return loadAllAssignments().then(() => {
     renderFlow(); renderMyPanel(); renderIdentityBadge();
-    const a = document.querySelector('.node-btn.active');
-    selectRole(a ? Number(a.dataset.id) : 1);
+    const sel = document.querySelector('.flow-card[style*="outline"]');
+    selectFlow(sel ? sel.dataset.flow : 'brand');
   });
 }
 // gate:'overlay' = 不把人導回 index，原地壓暗 + 置中登入卡（Slack 邀請落地頁體驗）。

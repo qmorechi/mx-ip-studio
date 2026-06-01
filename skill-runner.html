@@ -164,14 +164,14 @@
 <nav class="breadcrumb"><a href="index.html">MX IP STUDIO</a> <span class="sep">›</span> <span class="current">Skill Runner</span></nav>
 <header>
   <h1>MX IP <span>STUDIO</span> · Skill Runner</h1>
-  <div class="sub">你選的協作角色都在這。點一張磚塊，AI 顧問只帶你做那個角色那塊 —— 不是空白表單。</div>
+  <div class="sub">你參與的流程都在這。點一張磚塊，AI 顧問會以該流程的「專家小組」帶你一次做完、產出整合成果 —— 不是空白表單。</div>
 </header>
 
 <div class="banner hidden" id="banner"></div>
 
 <div class="picker">
   <div class="field"><label>IP 計畫</label><select id="ipSel"></select></div>
-  <button id="rolesLink" style="margin-left:auto" title="一次性選你負責的角色；之後隨時回來檢索或調整">🗂 角色選擇 / 總覽</button>
+  <button id="rolesLink" style="margin-left:auto" title="選你要參與的流程；之後隨時回來檢索或調整">🗂 流程選擇 / 總覽</button>
 </div>
 
 <div id="runnerArea" style="flex:1 1 auto; min-height:0; display:flex; flex-direction:column;"></div>
@@ -180,7 +180,7 @@
 <script src="vendor/supabase.js"></script>
 <script src="auth.js?v=11"></script>
 <script src="ips.js"></script>
-<script src="roles-data.js"></script>
+<script src="roles-data.js?v=2"></script>
 <script src="skill-flows.js"></script>
 <script>
 'use strict';
@@ -252,37 +252,38 @@ async function renderHome(){
   const area=$('runnerArea');
   area.innerHTML='<div class="empty">載入中…</div>';
   if(!T.ip){ area.innerHTML='<div class="empty">請先選 IP。</div>'; return; }
-  const roleIds = T.isAdmin ? ROLE_DATA.roles.map(r=>r.id) : await rolesForIp(T.ip);
+  const reps = T.isAdmin ? ROLE_DATA.flows.map(f=>f.repId) : (await rolesForIp(T.ip)).filter(id=>ROLE_DATA.flowByRep[id]);
   const runs = await myRunsForIp(T.ip);
   const rmap={}; runs.forEach(x=>{ rmap[x.skill_id]=x; });
   if(!T.online) showBanner('⚠️ 連不到雲端，進度與對話暫時只存本機，恢復後自動同步。'); else showBanner('');
   const wk=Date.now()-7*864e5;
-  // 累積式 + 真實覆蓋率：狀態與完成度都看 AI 評的交付項覆蓋率，而非自填。
+  // 累積式 + 真實覆蓋率：狀態與完成度都看 AI 評的「流程彙整交付項」覆蓋率，而非自填。
   function covOf(id){ const sk=ROLE_SKILL[id]; const run=sk?rmap[sk+'#'+id]:null;
-    const r=roleById(id); const total=(r&&r.deliverables)?r.deliverables.length:0;
+    const f=ROLE_DATA.flowByRep[id]; const total=f?flowDeliverables(f).length:0;
     const cov=(run&&Array.isArray(run.coverage))?run.coverage:[];
     const covered=cov.filter(c=>c&&c.status==='covered').length;
     const partial=cov.filter(c=>c&&c.status==='partial').length;
     let s='todo'; if(total&&covered>=total) s='done'; else if(covered>0||partial>0||run) s='doing';
     const up=run&&run.updated_at?new Date(run.updated_at):null;
     return { s:s, covered:covered, partial:partial, total:total, wk:!!(up&&up.getTime()>=wk) }; }
-  if(!roleIds.length){
-    area.innerHTML='<div class="home"><div class="empty">你在這個 IP 還沒有指定角色。<br>請先到 <a href="roles.html?u='+esc(memberId())+'&ip='+esc(T.ip)+'">角色選擇頁</a> 選好你的角色，再回來。</div></div>';
+  if(!reps.length){
+    area.innerHTML='<div class="home"><div class="empty">你在這個 IP 還沒選流程。<br>請先到 <a href="roles.html?ip='+esc(T.ip)+'">流程選擇頁</a> 選好你要參與的流程，再回來。</div></div>';
     return;
   }
-  const ids=roleIds.slice().sort((a,b)=>a-b);
+  const ids=ROLE_DATA.flows.filter(f=>reps.includes(f.repId)).map(f=>f.repId);
   const cmap={}; ids.forEach(id=>{ cmap[id]=covOf(id); });
   let sumCov=0,sumTot=0,done=0; ids.forEach(id=>{ const c=cmap[id]; sumCov+=c.covered+0.5*c.partial; sumTot+=c.total; if(c.s==='done')done++; });
   const pct=sumTot?Math.round(sumCov/sumTot*100):0;
   let html='<div class="home"><div class="home-top">'
-    +'<div class="pbar-wrap"><div class="pbar-top"><span>'+(T.isAdmin?'全部角色':'我的協作角色')+'　實質完成度（交付項覆蓋率）</span><span><b>'+pct+'%</b>　完成角色 '+done+' / '+ids.length+'</span></div><div class="pbar"><i style="width:'+pct+'%"></i></div></div>'
+    +'<div class="pbar-wrap"><div class="pbar-top"><span>'+(T.isAdmin?'全部流程':'我參與的流程')+'　實質完成度（交付項覆蓋率）</span><span><b>'+pct+'%</b>　完成流程 '+done+' / '+ids.length+'</span></div><div class="pbar"><i style="width:'+pct+'%"></i></div></div>'
     + '<button id="digestBtn">📋 本週成果</button>'
     + (T.isAdmin?'<button id="teamBtn">📊 全 IP 進度表</button>':'')
     + '</div><div id="myTodos"></div><div class="tiles">'
-    + ids.map(id=>{ const r=roleById(id); if(!r) return ''; const c=cmap[id]; const sk=ROLE_SKILL[id];
+    + ids.map(id=>{ const f=ROLE_DATA.flowByRep[id]; if(!f) return ''; const c=cmap[id]; const sk=ROLE_SKILL[id];
         const tp=c.total?Math.round((c.covered+0.5*c.partial)/c.total*100):0;
-        return '<div class="tile" data-id="'+id+'"><div class="rn">'+pad2(id)+'　'+esc(SKILL_FLOWS[sk].label)+'</div>'
-          +'<div class="rname">'+esc(r.name)+'</div><div class="rscope">'+esc(r.scope)+'</div>'
+        const chap=f.chapter?('（'+(f.chapter==='story'?'故事章節':'分鏡章節')+'）'):'';
+        return '<div class="tile" data-id="'+id+'"><div class="rn">'+esc(f.emoji+' '+f.zh)+chap+'</div>'
+          +'<div class="rname">'+esc(SKILL_FLOWS[sk].label)+'</div><div class="rscope">'+esc(f.desc)+'</div>'
           +'<div class="tbar"><i style="width:'+tp+'%"></i></div>'
           +'<div class="tstat"><span class="pstat s-'+c.s+'">'+LBL[c.s]+'</span><span style="font-size:11px;color:var(--dim)">'+tp+'%・涵蓋 '+c.covered+'/'+c.total+'</span>'+(c.wk?'<span class="wk">● 本週</span>':'')+'</div></div>';
       }).join('')
@@ -332,7 +333,7 @@ async function loadGallery(){
   runs.forEach(run=>{
     const ch=(run.responses&&run.responses.__chat)||[];
     const rid=(run.skill_id&&run.skill_id.indexOf('#')>=0)?+run.skill_id.split('#')[1]:null;
-    const roleName=rid?((roleById(rid)||{}).name||('角色'+rid)):((SKILL_FLOWS[run.skill_id]||{}).label||run.skill_id);
+    const roleName=rid?repName(rid):((SKILL_FLOWS[run.skill_id]||{}).label||run.skill_id);
     ch.forEach(m=>{ if(m.images&&m.images.length){ const ts=m.ts||(run.updated_at?new Date(run.updated_at).getTime():Date.now());
       m.images.forEach(src=>{ if(src) items.push({src:src,ts:ts,role:roleName,member:run.member_id}); }); } });
   });
@@ -378,9 +379,9 @@ async function renderWeeklyDigest(){
   const ws=weekStart(Date.now());
   const rows=runs.map(run=>{
     const rid=(run.skill_id&&run.skill_id.indexOf('#')>=0)?+run.skill_id.split('#')[1]:null;
-    const role=rid?((roleById(rid)||{}).name||('角色'+rid)):((SKILL_FLOWS[run.skill_id]||{}).label||run.skill_id);
+    const role=rid?repName(rid):((SKILL_FLOWS[run.skill_id]||{}).label||run.skill_id);
     const upMs=run.updated_at?new Date(run.updated_at).getTime():0;
-    const rd=rid?roleById(rid):null; const items=(rd&&rd.deliverables)||[]; const cov=(run.responses&&run.responses.__coverage)||[];
+    const items=rid?repDeliverables(rid):[]; const cov=(run.responses&&run.responses.__coverage)||[];
     const covered=items.filter((d,i)=>cov[i]&&cov[i].status==='covered').length;
     const pct=items.length?Math.round(covered/items.length*100):0;
     const chat=(run.responses&&run.responses.__chat)||[];
@@ -388,7 +389,7 @@ async function renderWeeklyDigest(){
     return {rid:rid, role:role, member:run.member_id, st:st, pct:pct, covered:covered, total:items.length, upMs:upMs, thisWeek:upMs>=ws, chat:chat};
   }).filter(x=>x.chat.filter(m=>!m.kickoff).length>0).sort((a,b)=>(b.thisWeek-a.thisWeek)||(b.upMs-a.upMs));
   const wkCount=rows.filter(r=>r.thisWeek).length;
-  let html='<div class="home"><div class="home-top"><button id="backBtnD">← 我的角色</button>'
+  let html='<div class="home"><div class="home-top"><button id="backBtnD">← 我的流程</button>'
     +'<div style="font-size:15px;font-weight:700;align-self:center">📋 本週成果 · '+esc(ipName(T.ip))+'　<span style="font-size:11px;color:var(--dim);font-weight:400">'+esc(weekLabel(ws))+'　本週更新 '+wkCount+' 項</span></div></div>';
   if(!rows.length){ html+='<div class="empty">這個 IP 還沒有任何產出。大家在 Skill Runner 跟顧問對談後，成果就會彙整到這裡。</div></div>'; area.innerHTML=html; $('backBtnD').onclick=()=>renderHome(); return; }
   html+='<div class="digest">'+rows.map((x,i)=>'<div class="dcard"><div class="dhead" data-i="'+i+'">'
@@ -417,16 +418,16 @@ async function renderTeamTable(){
   }catch(e){}
   const rmap={}; runs.forEach(x=>{ rmap[x.member_id+'|'+x.skill_id]=x; });
   const wk=Date.now()-7*864e5; let done=0;
-  const rows=assigns.map(a=>{ const sk=ROLE_SKILL[a.role_id]; const run=sk?rmap[a.member_id+'|'+(sk+'#'+a.role_id)]:null;
+  const rows=assigns.filter(a=>ROLE_DATA.flowByRep[a.role_id]).map(a=>{ const sk=ROLE_SKILL[a.role_id]; const run=sk?rmap[a.member_id+'|'+(sk+'#'+a.role_id)]:null;
     let s='todo'; if(run) s=run.status==='done'?'done':(run.status==='in_review'?'review':'doing'); if(s==='done')done++;
     const up=run&&run.updated_at?new Date(run.updated_at):null;
-    return { rid:a.role_id, role:roleById(a.role_id), member:a.member_id, s:s, wk:!!(up&&up.getTime()>=wk), up:up }; }).sort((x,y)=>x.rid-y.rid);
-  const total=assigns.length, pct=total?Math.round(done/total*100):0;
-  let html='<div class="home"><div class="home-top"><button id="backBtn2">← 我的角色</button>'
-    +'<div class="pbar-wrap"><div class="pbar-top"><span>全 IP 團隊完成度（已完成 ÷ 已指派）</span><span><b>'+pct+'%</b>　'+done+' / '+total+'</span></div><div class="pbar"><i style="width:'+pct+'%"></i></div></div></div>';
-  if(!total){ html+='<div class="empty">這個 IP 還沒有人被指派角色。</div></div>'; area.innerHTML=html; $('backBtn2').onclick=()=>renderHome(); return; }
-  html+='<table class="ptable"><thead><tr><th>角色</th><th>負責成員</th><th>狀態</th><th>本週</th><th>最後更新</th></tr></thead><tbody>'
-    + rows.map(r=>'<tr><td>'+(r.role?esc(pad2(r.rid)+' '+r.role.name):r.rid)+'</td><td>'+esc(r.member)+'</td>'
+    return { rid:a.role_id, flow:ROLE_DATA.flowByRep[a.role_id], member:a.member_id, s:s, wk:!!(up&&up.getTime()>=wk), up:up }; }).sort((x,y)=>x.rid-y.rid);
+  const total=rows.length, pct=total?Math.round(done/total*100):0;
+  let html='<div class="home"><div class="home-top"><button id="backBtn2">← 我的流程</button>'
+    +'<div class="pbar-wrap"><div class="pbar-top"><span>全 IP 團隊完成度（已完成 ÷ 已參與流程）</span><span><b>'+pct+'%</b>　'+done+' / '+total+'</span></div><div class="pbar"><i style="width:'+pct+'%"></i></div></div></div>';
+  if(!total){ html+='<div class="empty">這個 IP 還沒有人選流程。</div></div>'; area.innerHTML=html; $('backBtn2').onclick=()=>renderHome(); return; }
+  html+='<table class="ptable"><thead><tr><th>流程</th><th>負責成員</th><th>狀態</th><th>本週</th><th>最後更新</th></tr></thead><tbody>'
+    + rows.map(r=>'<tr><td>'+(r.flow?esc(r.flow.emoji+' '+r.flow.zh):r.rid)+'</td><td>'+esc(r.member)+'</td>'
         +'<td><span class="pstat s-'+r.s+'">'+LBL[r.s]+'</span></td><td>'+(r.wk?'<span class="wk">●</span>':'')+'</td>'
         +'<td style="color:var(--dim)">'+(r.up?r.up.toLocaleDateString('zh-TW'):'—')+'</td></tr>').join('')
     + '</tbody></table></div>';
@@ -488,14 +489,26 @@ function buildBrief(){
   return { id:T.skill, label:f.label, summary:f.summary, outputs:f.outputs,
     stages:f.stages.map(s=>({ cmd:s.cmd, title:s.title, intro:s.intro||'', optional:!!s.optional, repeatable:!!s.repeatable, fields:s.fields.map(fl=>fl.label+(fl.required?'*':'')) })) };
 }
+// ── 流程為單位（T.roleId 是流程的「代表 roleId」把手）──
+function flowDeliverables(f){ const seen=new Set(),out=[]; ((f&&f.collaborators)||[]).forEach(id=>{ const r=roleById(id); (r?r.deliverables:[]).forEach(d=>{ if(!seen.has(d)){seen.add(d);out.push(d);} }); }); return out; }
+function curFlow(){ return T.roleId ? ((ROLE_DATA.flowByRep&&ROLE_DATA.flowByRep[T.roleId])||null) : null; }
+function curName(){ const f=curFlow(); return f?f.zh:((roleById(T.roleId)||{}).name||''); }
+function curDeliverables(){ const f=curFlow(); return f?flowDeliverables(f):((roleById(T.roleId)||{}).deliverables||[]); }
 function buildRoleFocus(){ if(!T.roleId) return null; const r=roleById(T.roleId); if(!r) return null;
   return { id:r.id, name:r.name, en:r.en, scope:r.scope, deliverables:r.deliverables, risk:r.risk }; }
+// 流程「專家小組」聚焦：把該流程所有協作專家的 scope/risk + 彙整交付清單送後端。
+function buildFlowFocus(){ const f=curFlow(); if(!f) return null;
+  const experts=(f.collaborators||[]).map(id=>{ const r=roleById(id); return r?{name:r.name,en:r.en,scope:r.scope,risk:r.risk}:null; }).filter(Boolean);
+  return { flowKey:f.key, flowName:f.zh, skill:f.skill, chapter:f.chapter||null, experts:experts, deliverables:flowDeliverables(f) }; }
+// 由 skill_id 的 rep id 反查流程名/流程交付（admin 彙整視圖用）。
+function repFlow(rid){ return (ROLE_DATA.flowByRep&&ROLE_DATA.flowByRep[rid])||null; }
+function repName(rid){ const f=repFlow(rid); return f?(f.emoji+' '+f.zh):((roleById(rid)||{}).name||('角色'+rid)); }
+function repDeliverables(rid){ const f=repFlow(rid); return f?flowDeliverables(f):((roleById(rid)||{}).deliverables||[]); }
 // 交件通知（單向推 Slack 戰報；fire-and-forget，不阻塞 UI）
 async function notifyDone(){
   try{
-    const r=T.roleId?roleById(T.roleId):null;
-    const role=r?r.name:((SKILL_FLOWS[T.skill]||{}).label||T.skill);
-    const items=(r&&r.deliverables)||[]; const cov=(T.run&&T.run.responses&&T.run.responses.__coverage)||[];
+    const role=curName()||((SKILL_FLOWS[T.skill]||{}).label||T.skill);
+    const items=curDeliverables(); const cov=(T.run&&T.run.responses&&T.run.responses.__coverage)||[];
     const covered=items.filter((d,i)=>cov[i]&&cov[i].status==='covered').length;
     const pct=items.length?Math.round(covered/items.length*100):100;
     await fetch(CONSULT_URL,{ method:'POST', headers:MXIPAuth.authHeaders(),
@@ -508,7 +521,7 @@ async function callConsult(){
   const last=arr[arr.length-1];
   const images=(last&&last.role==='user'&&Array.isArray(last.images))?last.images.map(toPayload).filter(Boolean):[];
   const docs=Array.isArray(T.lastDocs)?T.lastDocs.map(d=>({name:d.name,data:d.data})):[]; T.lastDocs=null;
-  const r=await fetch(CONSULT_URL,{ method:'POST', headers:MXIPAuth.authHeaders(), body:JSON.stringify({ skillBrief:buildBrief(), roleFocus:buildRoleFocus(), roster:T.roster, messages:msgs, images:images, docs:docs }) });
+  const r=await fetch(CONSULT_URL,{ method:'POST', headers:MXIPAuth.authHeaders(), body:JSON.stringify({ skillBrief:buildBrief(), flowFocus:buildFlowFocus(), roleFocus:buildRoleFocus(), roster:T.roster, messages:msgs, images:images, docs:docs }) });
   let data={}; try{ data=await r.json(); }catch(e){}
   if(!r.ok || data.error){ const d=data.error||('HTTP '+r.status); throw new Error(typeof d==='string'?d:JSON.stringify(d)); }
   return { text:(data.text||'').trim()||'（顧問沒有回覆內容，請再試一次）', coverage:(Array.isArray(data.coverage)?data.coverage:null), roster:(Array.isArray(data.roster)?data.roster:null) };
@@ -517,12 +530,12 @@ async function callConsult(){
 // ── 對談渲染 ──
 function renderCovBox(){
   if(!T.roleId) return '';
-  const r=roleById(T.roleId); const items=(r&&r.deliverables)||[];
+  const items=curDeliverables();
   if(!items.length) return '';
   const cov=(T.run&&T.run.responses&&T.run.responses.__coverage)||[];
   const ic={covered:'<span style="color:var(--ok)">✓</span>',partial:'<span style="color:var(--warn)">◑</span>',todo:'<span style="color:var(--dim)">○</span>'};
   const covered=items.filter((d,i)=>cov[i]&&cov[i].status==='covered').length;
-  return '<div class="covbox"><h3>你的交付項覆蓋率（'+covered+'/'+items.length+'）</h3>'
+  return '<div class="covbox"><h3>這條流程的交付項覆蓋率（'+covered+'/'+items.length+'）</h3>'
     + items.map((d,i)=>{ const st=(cov[i]&&cov[i].status)||'todo'; return '<div class="covrow">'+(ic[st]||ic.todo)+' '+esc(d)+'</div>'; }).join('')
     + '</div>';
 }
@@ -562,7 +575,7 @@ function renderPrompts(){
 }
 function renderGuide(){
   const f=SKILL_FLOWS[T.skill];
-  const focus = T.roleId ? ('★ 你的角色：'+esc(roleById(T.roleId).name)+'　顧問只帶你做這塊，其餘階段是上下游脈絡') : '';
+  const focus = T.roleId ? ('★ 你參與的流程：'+esc(curName())+'　顧問會以這條流程的「專家小組」帶你一次做完整條流程、產出整合成果') : '';
   return '<div class="guide">'+renderDeliverable()+renderPrompts()+renderCovBox()+renderLinks()+'<h3>流程全貌（'+f.stages.length+' 階段）</h3>'+(focus?'<div class="focus">'+focus+'</div>':'')
     + f.stages.map((s,i)=>'<div class="gstep"><span class="n">'+(i+1)+'</span><span><div>'+esc(s.title)+'</div><div class="cmd">'+esc(s.cmd)+'</div></span></div>').join('')+'</div>';
 }
@@ -576,13 +589,15 @@ function bubbles(){
 function renderChat(){
   const area=$('runnerArea');
   if(!T.skill){ renderHome(); return; }
-  const r=T.roleId?roleById(T.roleId):null; const f=SKILL_FLOWS[T.skill];
-  const _items=(r&&r.deliverables)||[]; const _cov=(T.run&&T.run.responses&&T.run.responses.__coverage)||[];
+  const f=SKILL_FLOWS[T.skill]; const fl=curFlow();
+  const _items=curDeliverables(); const _cov=(T.run&&T.run.responses&&T.run.responses.__coverage)||[];
   const _covd=_items.filter((d,i)=>_cov[i]&&_cov[i].status==='covered').length;
   const _cpct=_items.length?Math.round(_covd/_items.length*100):0;
-  area.innerHTML='<div class="chat-head"><button id="backBtn">← 我的角色</button>'
-    +'<div class="chat-role">'+(r?'<b>'+esc(r.name)+'</b>（'+esc(r.en)+'）<span class="pill">'+esc(f.label)+'</span>':'<b>'+esc(f.label)+'</b>')+'</div>'
-    +(r?'<div class="chat-prog"><span>覆蓋率 '+_cpct+'%・'+_covd+'/'+_items.length+'</span><div class="cbar"><i style="width:'+_cpct+'%"></i></div></div>':'')
+  const _title=fl?esc(fl.emoji+' '+fl.zh):esc(f.label);
+  const _chap=(fl&&fl.chapter)?('（'+(fl.chapter==='story'?'故事章節':'分鏡章節')+'）'):'';
+  area.innerHTML='<div class="chat-head"><button id="backBtn">← 我的流程</button>'
+    +'<div class="chat-role"><b>'+_title+'</b>'+_chap+' <span class="pill">'+esc(f.label)+'</span></div>'
+    +(_items.length?'<div class="chat-prog"><span>覆蓋率 '+_cpct+'%・'+_covd+'/'+_items.length+'</span><div class="cbar"><i style="width:'+_cpct+'%"></i></div></div>':'')
     +'</div>'
     +'<div class="runner">'+renderGuide()+'<div class="chat">'
     +'<div class="msgs" id="msgs">'+bubbles()+(T.busy?'<div class="typing">顧問思考中…</div>':'')+'</div>'
@@ -640,14 +655,14 @@ function wire(){
   if($('restartBtn')) $('restartBtn').onclick=restart;
   if($('statusSel')) $('statusSel').onchange=(e)=>{ const prev=T.run.status; T.run.status=e.target.value; saveRun(); if(e.target.value==='done'&&prev!=='done') notifyDone(); };
 }
-// 依「這個角色 skill 定義的交付清單」結構化彙整指令 → 全公司提案格式統一
+// 依「這條流程彙整的交付清單」結構化彙整指令 → 全公司提案格式統一
 function deliverInstr(){
-  const r=roleById(T.roleId); const items=(r&&r.deliverables)||[];
+  const items=curDeliverables();
   const spec = items.length
-    ? '\n\n請**嚴格依這個角色的交付清單逐項組織**（每一項用一個 `## 小標題`，內容寫該項的具體產出；尚未完成的標「（待補）」），讓所有人的提案格式一致：\n- '+items.join('\n- ')
+    ? '\n\n請**嚴格依這條流程的交付清單逐項組織**（每一項用一個 `## 小標題`，內容寫該項的具體產出；尚未完成的標「（待補）」），讓所有人的提案格式一致：\n- '+items.join('\n- ')
     : '';
-  const promptAsk = '\n\n若你這個角色的產出**需要 AI 生圖**（角色設定圖、分鏡畫面、視覺稿等），請在 deliverable 之後**另起一行 `===PROMPTS===`**，接一個 JSON 陣列，每個生圖需求一筆：{"tool":"gemini" 或 "gpt-image","use":"用途/這張要畫什麼","prompt":"完整、可直接貼去生圖的 prompt（英文佳）","negative":"防漂移/負面控制"}。**同一個畫面若 Gemini 與 ChatGPT 都適用，就各出一筆**，讓成員自己選要用哪版。沒有生圖需求就完全不要這段。';
-  return '請把我這個角色目前累積的成果，彙整成一份「正式提案」deliverable：乾淨、可直接交付的 Markdown，開頭一行標題寫「'+(r?r.name:'')+' · '+ipName(T.ip)+'」。'+spec+promptAsk;
+  const promptAsk = '\n\n若這條流程的產出**需要 AI 生圖**（角色設定圖、分鏡畫面、視覺稿等），請在 deliverable 之後**另起一行 `===PROMPTS===`**，接一個 JSON 陣列，每個生圖需求一筆：{"tool":"gemini" 或 "gpt-image","use":"用途/這張要畫什麼","prompt":"完整、可直接貼去生圖的 prompt（英文佳）","negative":"防漂移/負面控制"}。**同一個畫面若 Gemini 與 ChatGPT 都適用，就各出一筆**，讓成員自己選要用哪版。沒有生圖需求就完全不要這段。';
+  return '請把我這條流程目前累積的成果，彙整成一份「正式提案」deliverable：乾淨、可直接交付的 Markdown，開頭一行標題寫「'+curName()+' · '+ipName(T.ip)+'」。'+spec+promptAsk;
 }
 async function doSend(forced, asDeliverable){
   if(T.busy) return;
@@ -677,11 +692,11 @@ async function startIfEmpty(){
   catch(e){ chat().push({ role:'assistant', content:'⚠️ 顧問暫時連不上：'+e.message+'\n\n（後端可能尚未部署完成，稍後按「↻ 重新開始」再試。）' }); }
   T.busy=false; renderChat(); saveRun();
 }
-function restart(){ if(!confirm('重新開始會清空這個角色的對話，確定？')) return; T.run.responses.__chat=[]; saveRun(); startIfEmpty(); }
+function restart(){ if(!confirm('重新開始會清空這條流程的對話，確定？')) return; T.run.responses.__chat=[]; saveRun(); startIfEmpty(); }
 
 // ── 匯出 ──
 function buildMarkdown(){
-  const f=SKILL_FLOWS[T.skill]; const who=T.roleId?roleById(T.roleId).name:f.label;
+  const f=SKILL_FLOWS[T.skill]; const who=curName()||f.label;
   let md='# '+who+' — '+ipName(T.ip)+'\n\n> 成員：'+memberId()+'　·　流程：'+f.label+'　·　'+new Date().toLocaleString('zh-TW')+'\n\n';
   chat().filter(m=>!m.kickoff).forEach(m=>{ md+=(m.role==='assistant'?'**AI 顧問**：\n':'**你**：\n')+m.content+'\n\n---\n\n'; });
   return md;
