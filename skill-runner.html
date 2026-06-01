@@ -354,12 +354,31 @@ function galleryHTML(items, big){
   const grid='<div class="gimgs'+(big?'':' refgrid')+'">'+sel.map(it=>'<div class="gitem"><img src="'+it.src+'" loading="lazy" title="點擊放大"><div class="gcap">'+esc(it.role)+'　'+esc(it.member)+'　'+new Date(it.ts).toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'})+'</div></div>').join('')+'</div>';
   return tabs+grid;
 }
+// 📌 既有素材（正典）：從 brand-core run 的 responses.__refassets 撈（seed 進去的最新發展圖），
+// 跨流程共享、一進 SIPAI 就看到「現在長這樣」。與每週對談上傳的參考圖分開顯示。
+async function loadRefAssets(){
+  if(T.refAssets && T.refAssets.ip===T.ip) return T.refAssets.items;
+  let items=[];
+  try{
+    const r=await fetch(SB+'/rest/v1/skill_runs?ip_id=eq.'+encodeURIComponent(T.ip)+'&skill_id=like.brand-core*&select=refs:responses->__refassets',{headers:MXIPAuth.authHeaders()});
+    if(r.ok){ const rows=await r.json(); for(const row of rows){ if(Array.isArray(row.refs)&&row.refs.length){ items=row.refs; break; } } }
+  }catch(e){}
+  T.refAssets={ip:T.ip, items:items};
+  return items;
+}
+function refAssetsHTML(items, big){
+  if(!items||!items.length) return '';
+  const grid='<div class="gimgs'+(big?'':' refgrid')+'">'+items.map(a=>'<div class="gitem"><img src="'+a.src+'" loading="lazy" title="'+esc(a.label||'點擊放大')+'"><div class="gcap">'+esc(a.label||'')+'</div></div>').join('')+'</div>';
+  return '<div class="ref-h" style="color:var(--gold)">📌 既有素材・最新發展（來自正典）</div>'+grid
+    +'<div style="border-bottom:1px solid var(--line);margin:8px 0 14px"></div>';
+}
 async function fillGallery(elId, big){
   if(!$(elId)) return;
   $(elId).innerHTML='<div class="empty" style="padding:16px">參考圖載入中…</div>';
-  const items=await loadGallery();
+  const [refs, items]=await Promise.all([loadRefAssets(), loadGallery()]);
   if(!$(elId)) return;
-  $(elId).innerHTML=(big?'<div class="ref-h">🖼 參考圖牆（以週瀏覽・邊看邊協作）</div>':'<div class="ref-h">🖼 參考圖（以週瀏覽）</div>')+galleryHTML(items, big);
+  $(elId).innerHTML=refAssetsHTML(refs, big)
+    +(big?'<div class="ref-h">🖼 參考圖牆（以週瀏覽・邊看邊協作）</div>':'<div class="ref-h">🖼 參考圖（以週瀏覽）</div>')+galleryHTML(items, big);
   $(elId).querySelectorAll('.wktab').forEach(b=>{ b.onclick=()=>{ T.galWeek=+b.dataset.wk; fillGallery(elId, big); }; });
   $(elId).querySelectorAll('.gitem img').forEach(img=>{ img.onclick=()=>openLightbox(img.src); });
 }
