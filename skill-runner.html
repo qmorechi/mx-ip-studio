@@ -75,6 +75,10 @@
   .s-review{ background:rgba(242,179,94,.16); color:var(--warn); }
   .s-done{ background:rgba(113,209,194,.18); color:var(--ok); }
   .wk { color:var(--ok); font-weight:700; font-size:11px; }
+  /* 未參與的流程：壓暗、不可點（依個人選了幾個流程，其餘自動壓暗） */
+  .tile.dim { opacity:.4; filter:saturate(.45); cursor:default; }
+  .tile.dim:hover { border-color:var(--line); border-top-color:var(--line); transform:none; box-shadow:none; }
+  .s-locked { background:rgba(122,120,112,.14); color:var(--dim); }
   .digest { display:flex; flex-direction:column; gap:10px; max-width:960px; }
   .dcard { border:1px solid var(--line); border-radius:10px; background:var(--panel); overflow:hidden; }
   .dhead { display:flex; align-items:center; gap:8px; padding:11px 14px; cursor:pointer; font-size:14px; }
@@ -252,7 +256,9 @@ async function renderHome(){
   const area=$('runnerArea');
   area.innerHTML='<div class="empty">載入中…</div>';
   if(!T.ip){ area.innerHTML='<div class="empty">請先選 IP。</div>'; return; }
-  const reps = T.isAdmin ? ROLE_DATA.flows.map(f=>f.repId) : (await rolesForIp(T.ip)).filter(id=>ROLE_DATA.flowByRep[id]);
+  // 個人選的流程（admin 也照個人選擇算）；未選的流程仍在磚牆上顯示但壓暗、不可點。
+  const myReps = (await rolesForIp(T.ip)).filter(id=>ROLE_DATA.flowByRep[id]);
+  const allReps = ROLE_DATA.flows.map(f=>f.repId);
   const runs = await myRunsForIp(T.ip);
   const rmap={}; runs.forEach(x=>{ rmap[x.skill_id]=x; });
   if(!T.online) showBanner('⚠️ 連不到雲端，進度與對話暫時只存本機，恢復後自動同步。'); else showBanner('');
@@ -266,30 +272,33 @@ async function renderHome(){
     let s='todo'; if(total&&covered>=total) s='done'; else if(covered>0||partial>0||run) s='doing';
     const up=run&&run.updated_at?new Date(run.updated_at):null;
     return { s:s, covered:covered, partial:partial, total:total, wk:!!(up&&up.getTime()>=wk) }; }
-  if(!reps.length){
-    area.innerHTML='<div class="home"><div class="empty">你在這個 IP 還沒選流程。<br>請先到 <a href="roles.html?ip='+esc(T.ip)+'">流程選擇頁</a> 選好你要參與的流程，再回來。</div></div>';
-    return;
-  }
-  const ids=ROLE_DATA.flows.filter(f=>reps.includes(f.repId)).map(f=>f.repId);
-  const cmap={}; ids.forEach(id=>{ cmap[id]=covOf(id); });
+  const cmap={}; allReps.forEach(id=>{ cmap[id]=covOf(id); });   // 全部流程都算覆蓋率（壓暗的也要顯示）
+  const ids=ROLE_DATA.flows.filter(f=>myReps.includes(f.repId)).map(f=>f.repId);   // 完成度分母＝我參與的流程
   let sumCov=0,sumTot=0,done=0; ids.forEach(id=>{ const c=cmap[id]; sumCov+=c.covered+0.5*c.partial; sumTot+=c.total; if(c.s==='done')done++; });
   const pct=sumTot?Math.round(sumCov/sumTot*100):0;
+  const noneJoined=ids.length===0;
   let html='<div class="home"><div class="home-top">'
-    +'<div class="pbar-wrap"><div class="pbar-top"><span>'+(T.isAdmin?'全部流程':'我參與的流程')+'　實質完成度（交付項覆蓋率）</span><span><b>'+pct+'%</b>　完成流程 '+done+' / '+ids.length+'</span></div><div class="pbar"><i style="width:'+pct+'%"></i></div></div>'
+    +'<div class="pbar-wrap"><div class="pbar-top"><span>我參與的流程　實質完成度（交付項覆蓋率）</span><span><b>'+pct+'%</b>　完成流程 '+done+' / '+ids.length+'</span></div><div class="pbar"><i style="width:'+pct+'%"></i></div></div>'
     + '<button id="digestBtn">📋 本週成果</button>'
     + (T.isAdmin?'<button id="teamBtn">📊 全 IP 進度表</button>':'')
-    + '</div><div id="myTodos"></div><div class="tiles">'
-    + ids.map(id=>{ const f=ROLE_DATA.flowByRep[id]; if(!f) return ''; const c=cmap[id]; const sk=ROLE_SKILL[id];
+    + '</div>'
+    + (noneJoined?'<div class="empty" style="margin:10px 0">你在這個 IP 還沒選流程——下面四個流程都壓暗了。請先到 <a href="roles.html?ip='+esc(T.ip)+'">流程選擇頁</a> 選好你要參與的流程，再回來開工。</div>':'')
+    + '<div id="myTodos"></div><div class="tiles">'
+    + allReps.map(id=>{ const f=ROLE_DATA.flowByRep[id]; if(!f) return ''; const c=cmap[id]; const sk=ROLE_SKILL[id];
+        const joined=myReps.includes(id);
         const tp=c.total?Math.round((c.covered+0.5*c.partial)/c.total*100):0;
         const chap=f.chapter?('（'+(f.chapter==='story'?'故事章節':'分鏡章節')+'）'):'';
-        return '<div class="tile" data-id="'+id+'"><div class="rn">'+esc(f.emoji+' '+f.zh)+chap+'</div>'
+        const stat=joined
+          ? '<div class="tstat"><span class="pstat s-'+c.s+'">'+LBL[c.s]+'</span><span style="font-size:11px;color:var(--dim)">'+tp+'%・涵蓋 '+c.covered+'/'+c.total+'</span>'+(c.wk?'<span class="wk">● 本週</span>':'')+'</div>'
+          : '<div class="tstat"><span class="pstat s-locked">🔒 未參與</span><span style="font-size:11px;color:var(--dim)">到流程選擇頁加入</span></div>';
+        return '<div class="tile'+(joined?'':' dim')+'" data-id="'+id+'"'+(joined?'':' title="你沒有參與這個流程——到流程選擇頁加入後才會在這裡開工"')+'><div class="rn">'+esc(f.emoji+' '+f.zh)+chap+'</div>'
           +'<div class="rname">'+esc(SKILL_FLOWS[sk].label)+'</div><div class="rscope">'+esc(f.desc)+'</div>'
-          +'<div class="tbar"><i style="width:'+tp+'%"></i></div>'
-          +'<div class="tstat"><span class="pstat s-'+c.s+'">'+LBL[c.s]+'</span><span style="font-size:11px;color:var(--dim)">'+tp+'%・涵蓋 '+c.covered+'/'+c.total+'</span>'+(c.wk?'<span class="wk">● 本週</span>':'')+'</div></div>';
+          +'<div class="tbar"><i style="width:'+(joined?tp:0)+'%"></i></div>'
+          + stat + '</div>';
       }).join('')
     + '</div><div class="home-gallery" id="homeGallery"></div></div>';
   area.innerHTML=html;
-  document.querySelectorAll('.tile').forEach(t=>t.onclick=()=>openRole(+t.dataset.id));
+  document.querySelectorAll('.tile:not(.dim)').forEach(t=>t.onclick=()=>openRole(+t.dataset.id));
   if($('teamBtn')) $('teamBtn').onclick=()=>renderTeamTable();
   if($('digestBtn')) $('digestBtn').onclick=()=>renderWeeklyDigest();
   fillGallery('homeGallery', true);
