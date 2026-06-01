@@ -488,8 +488,8 @@ async function fetchIpRoster(ip){
 async function openRole(id){
   if(T.busy) return;
   T.roleId=id; T.skill=ROLE_SKILL[id]; T.view='chat';
-  // 故事/分鏡流程：帶入該 IP 由品牌核心產出的角色名冊，讓顧問「養完梗才選角」。
-  T.roster = (T.skill==='storyboard-workflow') ? await fetchIpRoster(T.ip) : null;
+  // 所有流程都帶入該 IP 既有角色名冊：讓顧問開場先講背景（已有哪些角色），不從零問起、不重複問已知的事。
+  T.roster = await fetchIpRoster(T.ip);
   await loadRun(); await startIfEmpty();
 }
 
@@ -725,9 +725,23 @@ async function doSend(forced, asDeliverable){
   catch(e){ chat().push({ role:'assistant', content:'⚠️ 顧問暫時連不上：'+e.message+'\n\n（可先重試；若持續，通知管理者。）' }); }
   T.busy=false; renderChat(); saveRun();
 }
+// 既有角色名冊 → 開場背景文字（A/B/C…＋一句描述）。沒有 roster 就回空字串。
+function rosterSummaryText(){
+  const r=T.roster;
+  if(!Array.isArray(r)||!r.length) return '';
+  const lines=r.map((c,i)=>String.fromCharCode(65+i)+'. '+(c.name||('角色'+(i+1)))+(c.dna?('：'+c.dna):''));
+  return '【這個 IP 目前已建立的角色（共 '+r.length+' 位）】\n'+lines.join('\n');
+}
+// 開場 kickoff：有既有角色時，要顧問先摘要背景＋指路既有素材＋說明怎麼給意見，再問第一題。
+function buildKickoff(){
+  const rs=rosterSummaryText();
+  if(!rs) return KICKOFF;   // 沒有既有資料就維持原本開場
+  return '在開始引導前，先讓參與者知道目前進度。以下是這個 IP 已建立的背景資料：\n\n'+rs+'\n\n'
+    +'請你（顧問）開場時做到三件事：①用 2–4 句**摘要上面這些既有角色與目前進度**——不要假裝從零開始、不要再問「這個角色叫什麼名字」這種已知的事；②告訴參與者「既有素材與發展圖可在右側『既有素材庫』直接看；完整角色設定在『品牌核心』流程的正式提案」，並說明可以怎麼幫忙給意見（例如補哪些缺口、挑哪個角色深化、哪裡還沒定）；③接著依我這條流程的職責，問**第一個、最該先決定**的問題（一次只問一件事）。';
+}
 async function startIfEmpty(){
   if(chat().length>0){ renderChat(); return; }
-  chat().push({ role:'user', content:KICKOFF, kickoff:true }); T.busy=true; renderChat(); saveRun();
+  chat().push({ role:'user', content:buildKickoff(), kickoff:true }); T.busy=true; renderChat(); saveRun();
   try{ const res=await callConsult(); chat().push({ role:'assistant', content:res.text }); if(res.coverage) T.run.responses.__coverage=res.coverage; if(res.roster && T.skill==='brand-core') T.run.responses.__roster=res.roster; }
   catch(e){ chat().push({ role:'assistant', content:'⚠️ 顧問暫時連不上：'+e.message+'\n\n（後端可能尚未部署完成，稍後按「↻ 重新開始」再試。）' }); }
   T.busy=false; renderChat(); saveRun();
