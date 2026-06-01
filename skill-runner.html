@@ -485,9 +485,21 @@ async function fetchIpRoster(ip){
     return null;
   }catch(e){ return null; }
 }
+// ── 流程路由（網址 hash）：記住目前開著的流程，重整後不跳回首頁 ──
+function setFlowRoute(roleId){
+  try{
+    const base=location.pathname+location.search;
+    history.replaceState(null,'', roleId==null ? base : base+'#flow='+encodeURIComponent(T.ip)+':'+roleId);
+  }catch(e){}
+}
+function parseFlowRoute(){
+  const m=/^#flow=([^:]+):(\d+)$/.exec(location.hash||'');
+  return m ? { ip:decodeURIComponent(m[1]), roleId:+m[2] } : null;
+}
 async function openRole(id){
   if(T.busy) return;
   T.roleId=id; T.skill=ROLE_SKILL[id]; T.view='chat';
+  setFlowRoute(id);   // 寫進網址 hash，瀏覽器重整後仍停在這條流程
   // 所有流程都帶入該 IP 既有角色名冊：讓顧問開場先講背景（已有哪些角色），不從零問起、不重複問已知的事。
   T.roster = await fetchIpRoster(T.ip);
   await loadRun(); await startIfEmpty();
@@ -659,7 +671,7 @@ function renderChat(){
 }
 function scrollMsgs(){ const m=$('msgs'); if(m) m.scrollTop=m.scrollHeight; }
 function wire(){
-  if($('backBtn')) $('backBtn').onclick=()=>{ if(!T.busy) renderHome(); };
+  if($('backBtn')) $('backBtn').onclick=()=>{ if(!T.busy){ setFlowRoute(null); renderHome(); } };
   if($('fileInput')) $('fileInput').onchange=(e)=>{ addFiles(e.target.files); e.target.value=''; };
   if($('docBtn')) $('docBtn').onclick=async ()=>{
     const u=(prompt('貼上 Google Doc / Drive 連結，把裡面的文字讀進來當素材：')||'').trim();
@@ -760,7 +772,7 @@ function download(name,text,mime){ const b=new Blob([text],{type:mime||'text/pla
 function exportMarkdown(){ download((runKey()+'_'+T.ip+'_'+memberId()).replace(/[^\w\-]/g,'-')+'.md', buildMarkdown(),'text/markdown;charset=utf-8'); }
 
 // ── 啟動 ──
-async function onIpChange(){ T.ip=$('ipSel').value; await renderHome(); }
+async function onIpChange(){ T.ip=$('ipSel').value; setFlowRoute(null); await renderHome(); }
 async function boot(){
   await MXIPAuth.init({ gate:'overlay' });   // 未登入：原地壓暗 + 置中登入卡（登入後 OAuth 整頁重載再 boot）
   if(!(MXIPAuth.currentUser() && MXIPAuth.isAllowed())) return;
@@ -776,6 +788,12 @@ async function boot(){
   if($('lightbox')) $('lightbox').onclick=()=>$('lightbox').classList.remove('on');
   document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ const l=$('lightbox'); if(l) l.classList.remove('on'); } });
   await renderHome();
+  // 重整還原：網址 hash 記著上次開的流程 → 直接重開那條流程（不停在首頁）。
+  const _route=parseFlowRoute();
+  if(_route && ROLE_DATA.flowByRep[_route.roleId] && Array.from($('ipSel').options).some(o=>o.value===_route.ip)){
+    if($('ipSel').value!==_route.ip){ $('ipSel').value=_route.ip; T.ip=_route.ip; }
+    await openRole(_route.roleId);
+  }
   MXIPAuth.onChange(s=>{ if(!(s&&s.user)) $('runnerArea').innerHTML='<div class="empty">已登出。</div>'; });
 }
 boot().catch(e=>{ console.error(e); $('runnerArea').innerHTML='<div class="empty">載入失敗：'+esc(e.message||e)+'</div>'; });
