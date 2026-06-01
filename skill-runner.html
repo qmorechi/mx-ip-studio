@@ -179,6 +179,11 @@
 </div>
 
 <div id="runnerArea" style="flex:1 1 auto; min-height:0; display:flex; flex-direction:column;"></div>
+<script>
+// 解析時就先判斷：若記得上次開的流程，第一筆畫面直接放「載入中」，
+// 不讓首頁（或瀏覽器殘留快照）在還原進流程前閃一下。
+try{ if(localStorage.getItem('mxip_runner_open_flow')){ document.getElementById('runnerArea').innerHTML='<div class="empty" style="padding:40px;color:#a3a097">載入你上次的流程中…</div>'; } }catch(e){}
+</script>
 <div class="lightbox" id="lightbox"><img id="lightboxImg" alt=""></div>
 
 <script src="vendor/supabase.js"></script>
