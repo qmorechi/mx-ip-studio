@@ -800,12 +800,15 @@ async function boot(){
   if($('rolesLink')) $('rolesLink').onclick=()=>{ location.href='roles.html?u='+encodeURIComponent(memberId())+'&ip='+encodeURIComponent(T.ip||''); };
   if($('lightbox')) $('lightbox').onclick=()=>$('lightbox').classList.remove('on');
   document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ const l=$('lightbox'); if(l) l.classList.remove('on'); } });
-  await renderHome();
-  // 重整還原：hash 或 localStorage 記著上次開的流程 → 直接重開那條流程（不停在首頁）。
+  // 重整還原：hash 或 localStorage 記著上次開的流程 → 直接重開那條流程。
+  // 先判斷再渲染：要還原就「不先渲染首頁」，避免重整時閃一下首頁再跳進流程。
   const _route=readOpenFlow();
   if(_route && ROLE_DATA.flowByRep[_route.roleId] && Array.from($('ipSel').options).some(o=>o.value===_route.ip)){
     if($('ipSel').value!==_route.ip){ $('ipSel').value=_route.ip; T.ip=_route.ip; }
+    $('runnerArea').innerHTML='<div class="empty">載入中…</div>';
     await openRole(_route.roleId);
+  } else {
+    await renderHome();
   }
   MXIPAuth.onChange(s=>{ if(!(s&&s.user)) $('runnerArea').innerHTML='<div class="empty">已登出。</div>'; });
 }
