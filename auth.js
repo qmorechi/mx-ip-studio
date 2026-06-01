@@ -206,6 +206,49 @@
     }
   }
 
+  // ── 置中登入浮層（壓暗背景）──
+  // 給「邀請落地頁」用（如 Slack 寄出的 roles 連結）：未登入時不把人導走、不顯示任何
+  // 指派資料，而是原地壓暗背景 + 在畫面正中央放登入卡。登入後自動移除、頁面接著載入資料。
+  // 比「閃一下內容又被踢回 index」直覺，符合「需要登入就置中壓暗、登入完即可開始作業」原則。
+  // 由 init({ gate:'overlay' }) 啟用；登入/登出狀態變更會自動重算（登入即移除）。
+  function renderLoginOverlay() {
+    const loggedIn = currentUser() && isAllowed();
+    let ov = document.getElementById('mxip-login-overlay');
+    if (loggedIn) { if (ov) ov.remove(); return; }   // 已登入：撤掉浮層
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'mxip-login-overlay';
+      // inset:0 全屏壓暗 + 置中；z-index 高於右上角登入列（9999），蓋住整頁、擋住互動。
+      ov.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;'
+        + 'justify-content:center;padding:24px;background:rgba(8,9,12,.82);'
+        + 'backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);'
+        + 'font:14px/1.6 system-ui,-apple-system,sans-serif';
+      document.body.appendChild(ov);
+    }
+    // 兩種狀態：① 完全未登入 → 引導登入；② 登入了但非公司帳號 → 引導換帳號。
+    const wrong = currentUser() && !isAllowed();
+    const c = wrong
+      ? { icon: '⚠️', title: '請改用 MX 公司帳號',
+          desc: '你登入的不是公司 Google 帳號（@' + ALLOWED_DOMAIN + '）。請換帳號後再開始。',
+          btn: '換帳號', handler: signOut }
+      : { icon: '🔐', title: '登入後開始選擇角色',
+          desc: '用 MX 公司的 Google 帳號登入，即可在這頁認領你負責的角色。',
+          btn: '用 MX 公司帳號登入', handler: signIn };
+    ov.innerHTML =
+      '<div style="max-width:360px;width:100%;text-align:center;background:#16161a;'
+      + 'border:1px solid rgba(197,164,107,.28);border-radius:16px;padding:32px 28px;'
+      + 'box-shadow:0 20px 60px rgba(0,0,0,.5)">'
+      + '<div style="font-size:40px;margin-bottom:12px">' + c.icon + '</div>'
+      + '<div style="font-size:18px;font-weight:600;color:#e8e6e0;margin-bottom:8px">' + c.title + '</div>'
+      + '<div style="color:#a3a097;margin-bottom:22px">' + c.desc + '</div>'
+      + '<button id="mxip-overlay-btn" style="cursor:pointer;border:0;border-radius:10px;'
+      + 'padding:11px 20px;width:100%;font:600 15px/1 system-ui,sans-serif;'
+      + 'background:#2d6cdf;color:#fff">' + c.btn + '</button>'
+      + '</div>';
+    const b = ov.querySelector('#mxip-overlay-btn');
+    if (b) b.onclick = c.handler;
+  }
+
   // 登入狀態變更通知：頁面註冊 callback，登入/登出時被呼叫（帶 session，登出為 null）。
   // 用途：未登入時頁面該清掉/不顯示敏感資料（如角色指派），登入後再載。
   const _changeListeners = [];
@@ -230,7 +273,9 @@
   async function init(opts) {
     opts = opts || {};
     await refreshSession();
-    if (opts.gate && !(currentUser() && isAllowed())) {
+    // gate:true     → 未登入導回 index 門面登入（單一入口，舊行為）。
+    // gate:'overlay' → 未登入原地壓暗 + 置中登入卡（邀請落地頁，不導走、不洩漏資料）。
+    if (opts.gate && opts.gate !== 'overlay' && !(currentUser() && isAllowed())) {
       rememberNext(location.pathname + location.search + location.hash);
       location.replace(HOME_URL);
       return _session;
@@ -247,6 +292,7 @@
     sb.auth.onAuthStateChange(function (_evt, session) {
       _session = session || null;
       renderBar();
+      if (opts.gate === 'overlay') renderLoginOverlay();   // 登入即撤浮層、登出即重壓暗
       resetIdle();              // 登入後開始計時、登出後清掉
       notifyChange();           // 通知頁面重載/清空資料
     });
@@ -254,12 +300,17 @@
     resetIdle();                // 若一進來就是登入態，立即起算
     if (document.body) renderBar();
     else document.addEventListener('DOMContentLoaded', renderBar);
+    // overlay 模式：未登入時立即壓暗 + 置中登入卡（登入態則 renderLoginOverlay 自會略過）。
+    if (opts.gate === 'overlay') {
+      if (document.body) renderLoginOverlay();
+      else document.addEventListener('DOMContentLoaded', renderLoginOverlay);
+    }
     return _session;
   }
 
   global.MXIPAuth = {
     init, signIn, signOut, requireLogin, guardWrite, authHeaders, onChange, consumeNext,
-    myRoles, hasAnyRole, showForbidden,
+    myRoles, hasAnyRole, showForbidden, renderLoginOverlay,
     currentUser, currentEmail, accessToken, isAllowed, refreshSession,
     SB_URL, SB_ANON, HOME_URL,
   };

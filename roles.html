@@ -119,7 +119,7 @@ li{margin:.35em 0}
 <script src="roles-data.js"></script>
 <!-- 方案 C / P1 登入層（草稿，未啟用前不影響運作） -->
 <script src="vendor/supabase.js"></script>
-<script src="auth.js?v=9"></script>
+<script src="auth.js?v=10"></script>
 <nav class="breadcrumb">
   <a href="index.html">MX IP STUDIO</a>
   <span class="sep">›</span>
@@ -554,7 +554,10 @@ function reloadAndRender() {
     selectRole(a ? Number(a.dataset.id) : 1);
   });
 }
-(window.MXIPAuth ? MXIPAuth.init({ gate: true }) : Promise.resolve())
+// gate:'overlay' = 不把人導回 index，原地壓暗 + 置中登入卡（Slack 邀請落地頁體驗）。
+// 22 角色在背後可預覽（非敏感，roles-data 本就在前端），指派資料仍由 loadAllAssignments 在
+// 未登入時隱藏；登入後 onChange→reloadAndRender 載入、auth.js 自動撤掉浮層即可開始認領。
+(window.MXIPAuth ? MXIPAuth.init({ gate: 'overlay' }) : Promise.resolve())
   .then(async () => { await loadIPs(); myIp = ipById.get(myIpId) || IPS[0]; })  // 動態 IP（支援新增的 IP）
   .then(reloadAndRender);
 // 登入/登出即時重繪：登出立刻清掉指派顯示，登入後載回。
