@@ -387,6 +387,7 @@ async function loadData(){
     SKILLS = [];
   }
   renderAll();
+  applyTypeFromUrl();   // 從 console 浮層開過來時，依 ?type= 預選類型（資料就緒後才生效）
 }
 
 function currentSkill(){ return SKILLS.find(s=>s.key===state.skillKey) || null; }
@@ -458,6 +459,21 @@ document.querySelectorAll('.type-card').forEach(card=>{
     renderAll();
   });
 });
+
+// 從 console「AI 引擎管理」分頁的浮層開過來時帶 ?type=engine → 自動預選引擎類型。
+// 重用上面的 type-card click handler（需 state.ready，故在 loadData 結束後呼叫）；只套一次，
+// 不覆蓋 Ray 之後手動切換。skill 為預設、不需處理。
+let _typeApplied = false;
+function applyTypeFromUrl(){
+  if(_typeApplied) return;
+  const t = new URLSearchParams(location.search).get('type');
+  if(t === 'engine'){
+    const card = document.querySelector('.type-card[data-type="engine"]');
+    if(card){ _typeApplied = true; card.click(); }
+  } else {
+    _typeApplied = true;   // skill 預設，標記已處理避免之後再跑
+  }
+}
 
 // ── Step 1：版本類型 ──
 document.querySelectorAll('.ver-type').forEach(el=>{
