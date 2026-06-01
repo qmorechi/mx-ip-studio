@@ -47,6 +47,7 @@
   });
 
   let _session = null;
+  let _overlayGate = false;   // init({gate:'overlay'}) 時為 true：登出（含閒置自動登出）原地重顯置中登入卡，不導回 index
 
   async function refreshSession() {
     const { data } = await sb.auth.getSession();
@@ -127,6 +128,10 @@
     await sb.auth.signOut();
     _session = null;
     if (_idleTimer) { clearTimeout(_idleTimer); _idleTimer = null; }
+    // overlay 頁（roles/skill-runner/console/ray-upload/timeline）：登出後原地重顯置中
+    // 登入卡，不導回 index。這樣閒置 30 分自動登出時，登入入口就在畫面正中央、不會讓人
+    // 以為要去右上角找（與「需要登入就置中壓暗」一致）。
+    if (_overlayGate) { renderBar(); renderLoginOverlay(); return; }
     // 單一入口：登出回首頁門面（除非已在首頁），並記住當前頁（localStorage），
     // 重新登入後由 index 自動送回。
     if (!/(^|\/)index\.html?($|\?|#)/.test(location.pathname) && location.pathname !== '/') {
@@ -244,6 +249,8 @@
       + '<button id="mxip-overlay-btn" style="cursor:pointer;border:0;border-radius:10px;'
       + 'padding:11px 20px;width:100%;font:600 15px/1 system-ui,sans-serif;'
       + 'background:#2d6cdf;color:#fff">' + c.btn + '</button>'
+      + '<div style="margin-top:14px;color:#8a877f;font-size:12px;line-height:1.5">'
+      + '登入帳號格式：name@' + ALLOWED_DOMAIN + '</div>'
       + '</div>';
     const b = ov.querySelector('#mxip-overlay-btn');
     if (b) b.onclick = c.handler;
@@ -272,6 +279,7 @@
   // 並把原本要去的網址記住（localStorage），登入後由 index 送回。
   async function init(opts) {
     opts = opts || {};
+    _overlayGate = (opts.gate === 'overlay');
     await refreshSession();
     // gate:true     → 未登入導回 index 門面登入（單一入口，舊行為）。
     // gate:'overlay' → 未登入原地壓暗 + 置中登入卡（邀請落地頁，不導走、不洩漏資料）。
