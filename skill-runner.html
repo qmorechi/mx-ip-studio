@@ -130,6 +130,15 @@
   .roster-card .rc-item { font-size:12.5px; line-height:1.5; color:#e8e6e0; }
   .roster-card .rc-letter { display:inline-grid; place-items:center; width:18px; height:18px; border-radius:5px; background:var(--gold); color:#111318; font-weight:900; font-size:11px; margin-right:7px; vertical-align:middle; }
   .roster-card .rc-dna { color:var(--dim); margin-left:6px; }
+  /* 本週優化重點卡（依會議結論，每週更新）；放在角色卡上方，顏色用青綠系區隔 */
+  .premise-card { flex:0 0 auto; border:1px solid rgba(91,168,158,.5); background:rgba(91,168,158,.09); border-radius:10px; padding:10px 12px; margin:0 0 10px; }
+  .premise-card .pc-h { font-size:12.5px; font-weight:900; color:var(--ok); margin-bottom:8px; display:flex; flex-wrap:wrap; gap:8px; align-items:baseline; }
+  .premise-card .pc-sub { font-size:11px; font-weight:600; color:var(--dim); }
+  .premise-card .pc-row { font-size:12.5px; line-height:1.55; color:#e8e6e0; margin:3px 0; }
+  .premise-card .pc-k { display:inline-block; font-size:10.5px; font-weight:900; color:#0d0d0f; background:var(--ok); border-radius:5px; padding:1px 7px; margin-right:7px; }
+  .premise-card .pc-issue .pc-k { background:var(--warn); }
+  /* 新一週優化開始的分隔訊息 */
+  .weekdiv { align-self:center; max-width:90%; text-align:center; white-space:pre-wrap; font-size:12px; line-height:1.6; color:var(--ok); font-weight:700; background:rgba(91,168,158,.1); border:1px dashed rgba(91,168,158,.5); border-radius:10px; padding:9px 14px; margin:6px 0; }
   .covbox { border:1px solid var(--line); border-radius:8px; background:var(--panel2); padding:9px 10px; margin:0 0 10px; }
   .covbox h3 { font-size:11px; color:var(--ok); margin:0 0 7px; letter-spacing:.03em; font-weight:600; }
   .covrow { font-size:12px; color:var(--dim); padding:3px 0; line-height:1.45; }
@@ -211,12 +220,12 @@ const SB = (window.MXIPAuth && MXIPAuth.SB_URL) || '';
 const CONSULT_URL = SB + '/functions/v1/' + CONSULT_SLUG;
 const DRIVE_URL = SB + '/functions/v1/' + DRIVE_SLUG;
 const KICKOFF = '請開始。依我這個「指定角色」的職責，用顧問的方式一步步帶我產出我這塊的 deliverable：先用一兩句說明你是我的什麼角色顧問、會怎麼帶我，然後直接問我第一個、最該先決定的問題。一次只問一件事。';
-// 開場版本：含背景（既有角色名冊）的新開場＝2。存進 responses.__kickoffV，
-// 用來判斷舊存檔的開場要不要自動升級（只升級「還沒實質進度」的對談）。
-const KICKOFF_VERSION = 2;
+// 開場版本：2＝含既有角色名冊；3＝再含「本週優化命題（上週結論→這週要優化什麼）」。
+// 存進 responses.__kickoffV，用來判斷舊存檔的開場要不要自動升級（只升級「還沒實質進度」的對談）。
+const KICKOFF_VERSION = 3;
 const LBL = { todo:'未開始', doing:'進行中', review:'送審', done:'完成' };
 
-const T = { ip:null, isAdmin:false, view:'home', skill:null, roleId:null, run:null, busy:false, online:true, pending:[], pendingDocs:[], lastDocs:null, roster:null, ipImages:null, galWeek:null };
+const T = { ip:null, isAdmin:false, view:'home', skill:null, roleId:null, run:null, busy:false, online:true, pending:[], pendingDocs:[], lastDocs:null, roster:null, premise:null, ipImages:null, galWeek:null };
 
 function $(id){ return document.getElementById(id); }
 function memberId(){ const e=MXIPAuth.currentEmail(); return e?e.split('@')[0]:null; }
@@ -501,6 +510,20 @@ async function fetchIpRoster(ip){
     return null;
   }catch(e){ return null; }
 }
+// 最新一次會議結論裡，這個 IP 的「本週優化命題」：下週重點(focus)/待解問題(issues)/本週進度(progress)+週次。
+// 每週會議貼結論寫進 meeting_notes 後，這裡就會讀到最新的 → 新一輪的開場命題自動更新。
+async function fetchLatestPremise(ip){
+  try{
+    const r=await fetch(SB+'/rest/v1/meeting_notes?select=week,meeting_date,summary,ip_updates&order=created_at.desc&limit=1',{headers:MXIPAuth.authHeaders()});
+    if(!r.ok) return null;
+    const rows=await r.json(); if(!rows.length) return null;
+    const n=rows[0]; const ups=Array.isArray(n.ip_updates)?n.ip_updates:[];
+    const mine=ups.find(u=>u&&u.ip_id===ip)||null;
+    if(!mine) return null;
+    return { week:n.week||'', date:n.meeting_date||'', summary:n.summary||'',
+             progress:mine.progress||'', issues:mine.issues||'', focus:mine.focus||'' };
+  }catch(e){ return null; }
+}
 // ── 流程路由：記住目前開著的流程，重整後不跳回首頁 ──
 // 同時寫網址 hash（可分享/可前進後退）與 localStorage（重整還原的真正依據，
 // 不怕 Supabase OAuth/detectSessionInUrl 在載入時清掉網址 hash）。
@@ -529,12 +552,16 @@ async function openRole(id){
   if(T.busy) return;
   T.roleId=id; T.skill=ROLE_SKILL[id]; T.view='chat';
   setFlowRoute(id);   // 寫進網址 hash，瀏覽器重整後仍停在這條流程
-  // 所有流程都帶入該 IP 既有角色名冊：讓顧問開場先講背景（已有哪些角色），不從零問起、不重複問已知的事。
-  T.roster = await fetchIpRoster(T.ip);
+  // 帶入既有角色名冊（背景）＋最新會議命題（本週優化方向）：開場先講背景與本週要優化什麼。
+  [T.roster, T.premise] = await Promise.all([fetchIpRoster(T.ip), fetchLatestPremise(T.ip)]);
   await loadRun();
-  // 舊版、還沒動過的開場 → 清掉，讓 startIfEmpty 用含背景的新開場重生（不影響有進度的對談）。
-  if(shouldUpgradeKickoff()) T.run.responses.__chat=[];
-  await startIfEmpty();
+  if(shouldUpgradeKickoff()){
+    // 還沒動過的對談：清掉舊開場，用含背景＋本週命題的新開場重生。
+    T.run.responses.__chat=[]; await startIfEmpty();
+  } else {
+    // 已有進度的對談：不重生開場，但若有新一週會議結論就插入「新一週優化開始」訊息。
+    await startIfEmpty(); await maybeInjectNewWeek();
+  }
 }
 
 // ── run 載入/儲存 ──
@@ -663,6 +690,16 @@ function renderGuide(){
   return '<div class="guide">'+renderDeliverable()+renderPrompts()+renderCovBox()+renderLinks()+'<h3>流程全貌（'+f.stages.length+' 階段）</h3>'+(focus?'<div class="focus">'+focus+'</div>':'')
     + f.stages.map((s,i)=>'<div class="gstep"><span class="n">'+(i+1)+'</span><span><div>'+esc(s.title)+'</div><div class="cmd">'+esc(s.cmd)+'</div></span></div>').join('')+'</div>';
 }
+// 本週優化重點卡：直接讀最新會議命題（下週重點/待解問題），釘在對話最上方，每週自動更新。
+function renderPremiseCard(){
+  const p=T.premise;
+  if(!p||(!p.focus&&!p.issues)) return '';
+  const wk=p.week?('依 '+esc(p.week)+' 會議結論'):'依上次會議結論';
+  return '<div class="premise-card"><div class="pc-h">🎯 本週優化重點（'+wk+'）<span class="pc-sub">這一輪要往這些方向優化／產出</span></div>'
+    + (p.focus?'<div class="pc-row"><span class="pc-k">本週要優化</span>'+esc(p.focus)+'</div>':'')
+    + (p.issues?'<div class="pc-row pc-issue"><span class="pc-k">待解問題</span>'+esc(p.issues)+'</div>':'')
+    + '</div>';
+}
 // 既有角色重點提示卡：直接從 roster 列出 A/B/C/D…＋一句描述（不依賴 AI 自述）。
 function renderRosterCard(){
   const r=T.roster;
@@ -672,6 +709,7 @@ function renderRosterCard(){
 }
 function bubbles(){
   return chat().filter(m=>!m.kickoff).map(m=>{
+    if(m.newweek) return '<div class="weekdiv">'+fmt(m.content)+'</div>';
     const imgs=(m.images&&m.images.length)?'<div class="bimgs">'+m.images.map(d=>'<img src="'+d+'">').join('')+'</div>':'';
     const docs=(m.docNames&&m.docNames.length)?'<div class="bdocs">'+m.docNames.map(n=>'<span class="doc-chip">📄 '+esc(n)+'</span>').join('')+'</div>':'';
     return '<div class="msg '+(m.role==='assistant'?'ai':'user')+'"><div class="who">'+(m.role==='assistant'?'AI 顧問':'你')+'</div>'+imgs+docs+fmt(m.content)+'</div>';
@@ -691,7 +729,7 @@ function renderChat(){
     +(_items.length?'<div class="chat-prog"><span>覆蓋率 '+_cpct+'%・'+_covd+'/'+_items.length+'</span><div class="cbar"><i style="width:'+_cpct+'%"></i></div></div>':'')
     +'</div>'
     +'<div class="runner">'+renderGuide()+'<div class="chat">'
-    +renderRosterCard()
+    +renderPremiseCard()+renderRosterCard()
     +'<div class="msgs" id="msgs">'+bubbles()+(T.busy?'<div class="typing">顧問思考中…</div>':'')+'</div>'
     +((T.pending.length||T.pendingDocs.length)?'<div class="attach-row">'
         +T.pending.map((d,i)=>'<div class="thumb"><img src="'+d+'"><button data-rm="'+i+'" title="移除">×</button></div>').join('')
@@ -784,32 +822,72 @@ function rosterSummaryText(){
   const lines=r.map((c,i)=>String.fromCharCode(65+i)+'. '+(c.name||('角色'+(i+1)))+(c.dna?('：'+c.dna):''));
   return '【這個 IP 目前已建立的角色（共 '+r.length+' 位）】\n'+lines.join('\n');
 }
-// 開場 kickoff：有既有角色時，要顧問先摘要背景＋指路既有素材＋說明怎麼給意見，再問第一題。
+// 最新會議命題 → 開場文字（上週結論＋本週要優化什麼）。沒有命題就回空字串。
+function premiseSummaryText(){
+  const p=T.premise;
+  if(!p||(!p.focus&&!p.issues)) return '';
+  let s='【上次會議（'+(p.week||'最近')+'）對這個 IP 的結論與本週方向】\n';
+  if(p.progress) s+='・本週進度：'+p.progress+'\n';
+  if(p.issues)   s+='・待解問題：'+p.issues+'\n';
+  if(p.focus)    s+='・這一輪要優化的重點：'+p.focus+'\n';
+  return s.trim();
+}
+function currentPremiseWeek(){ return (T.premise&&T.premise.week)||''; }
+// 這條對談是否已有實質進度（有使用者回覆或覆蓋率）→ 有進度就不重生開場、改用插入新一週訊息。
+function hasProgress(){
+  const userMsgs=chat().filter(m=>!m.kickoff&&!m.newweek&&m.role==='user').length;
+  const cov=(T.run&&T.run.responses&&T.run.responses.__coverage)||[];
+  const prog=Array.isArray(cov)?cov.filter(c=>c&&(c.status==='covered'||c.status==='partial')).length:0;
+  return userMsgs>0||prog>0;
+}
+// 開場 kickoff：先講本週命題（上週結論→這週優化什麼）＋既有角色背景，再問第一題。
 function buildKickoff(){
-  const rs=rosterSummaryText();
-  if(!rs) return KICKOFF;   // 沒有既有資料就維持原本開場
-  return '在開始引導前，先讓參與者知道目前進度。以下是這個 IP 已建立的背景資料：\n\n'+rs+'\n\n'
-    +'請你（顧問）開場時做到三件事：①用 2–4 句**摘要上面這些既有角色與目前進度**——不要假裝從零開始、不要再問「這個角色叫什麼名字」這種已知的事；②告訴參與者「既有素材與發展圖可在右側『既有素材庫』直接看；完整角色設定在『品牌核心』流程的正式提案」，並說明可以怎麼幫忙給意見（例如補哪些缺口、挑哪個角色深化、哪裡還沒定）；③接著依我這條流程的職責，問**第一個、最該先決定**的問題（一次只問一件事）。';
+  const rs=rosterSummaryText(), ps=premiseSummaryText();
+  if(!rs&&!ps) return KICKOFF;   // 沒有任何背景/命題就維持原本開場
+  let bg='在開始引導前，先讓參與者知道這一輪的命題與目前進度：\n\n';
+  if(ps) bg+=ps+'\n\n';
+  if(rs) bg+=rs+'\n\n';
+  let inst='請你（顧問）開場時：';
+  if(ps) inst+='①先用 1–2 句點出「上週結論 → 這一輪要優化什麼」，讓大家知道本週命題；';
+  if(rs) inst+='②用 2–4 句摘要既有角色與目前進度——不要假裝從零開始、不要再問「這個角色叫什麼」這種已知的事；';
+  inst+='③告訴參與者「既有素材在右側『既有素材庫』、完整設定在『品牌核心』正式提案」，並說明可以怎麼幫忙給意見；④再依這條流程的職責問第一個、最該先決定的問題（一次只問一件事）。';
+  return bg+inst;
 }
 async function startIfEmpty(){
   if(chat().length>0){ renderChat(); return; }
   chat().push({ role:'user', content:buildKickoff(), kickoff:true }); T.busy=true; renderChat(); saveRun();
-  try{ const res=await callConsult(); chat().push({ role:'assistant', content:res.text }); if(res.coverage) T.run.responses.__coverage=res.coverage; if(res.roster && T.skill==='brand-core') T.run.responses.__roster=res.roster; T.run.responses.__kickoffV=KICKOFF_VERSION; }
+  try{ const res=await callConsult(); chat().push({ role:'assistant', content:res.text }); if(res.coverage) T.run.responses.__coverage=res.coverage; if(res.roster && T.skill==='brand-core') T.run.responses.__roster=res.roster; T.run.responses.__kickoffV=KICKOFF_VERSION; T.run.responses.__premiseWeek=currentPremiseWeek(); }
   catch(e){ chat().push({ role:'assistant', content:'⚠️ 顧問暫時連不上：'+e.message+'\n\n（後端可能尚未部署完成，稍後按「↻ 重新開始」再試。）' }); }
   T.busy=false; renderChat(); saveRun();
 }
-// 舊存檔的開場要不要自動升級成「含背景」的新開場？
-// 條件：版本舊 + 還沒實質進度（沒有使用者回覆、沒有覆蓋率）+ 這個 IP 真的有背景可加。
-// 已經談到一半的對談一律不動，避免洗掉進度。
+// 舊存檔的開場要不要自動升級成「含背景／本週命題」的新開場？
+// 條件：還沒實質進度 + 這個 IP 有背景/命題可加 + （開場版本舊 或 命題已換新一週）。
+// 已經談到一半的對談一律不動（改走 maybeInjectNewWeek），避免洗掉進度。
 function shouldUpgradeKickoff(){
   if(!T.run||!T.run.responses) return false;
-  if((T.run.responses.__kickoffV||0)>=KICKOFF_VERSION) return false;
-  const userMsgs=chat().filter(m=>!m.kickoff&&m.role==='user').length;
-  const cov=T.run.responses.__coverage||[];
-  const prog=Array.isArray(cov)?cov.filter(c=>c&&(c.status==='covered'||c.status==='partial')).length:0;
-  if(userMsgs>0||prog>0) return false;
-  return !!rosterSummaryText();   // 沒背景可加就不折騰（舊＝新）
+  if(hasProgress()) return false;
+  const hasBG = !!rosterSummaryText() || !!premiseSummaryText();
+  if(!hasBG) return false;
+  const verOld = (T.run.responses.__kickoffV||0) < KICKOFF_VERSION;
+  const wkNew  = !!currentPremiseWeek() && (T.run.responses.__premiseWeek||'') !== currentPremiseWeek();
+  return verOld || wkNew;
 }
+// 已有進度的對談遇到「新一週會議結論」：插入一條「新一週優化開始」訊息（保留先前進度，每週只插一次）。
+async function maybeInjectNewWeek(){
+  if(!T.run||!T.run.responses) return false;
+  const wk=currentPremiseWeek();
+  if(!wk||!T.premise||(!T.premise.focus&&!T.premise.issues)) return false;
+  if((T.run.responses.__premiseWeek||'')===wk) return false;   // 已是這週命題
+  if(!hasProgress()){ T.run.responses.__premiseWeek=wk; saveRun(); return false; }  // 沒進度的交給開場重生
+  let body='—— 新一週優化開始（'+wk+'）——\n';
+  if(T.premise.focus) body+='本週要優化：'+T.premise.focus+'\n';
+  if(T.premise.issues) body+='待解問題：'+T.premise.issues+'\n';
+  body+='我們從上週的成果接著往這些方向優化。';
+  chat().push({ role:'assistant', content:body, newweek:true });
+  T.run.responses.__premiseWeek=wk; saveRun(); renderChat();
+  return true;
+}
+function restart(){ if(!confirm('重新開始會清空這條流程的對話，確定？')) return; T.run.responses.__chat=[]; saveRun(); startIfEmpty(); }
 function restart(){ if(!confirm('重新開始會清空這條流程的對話，確定？')) return; T.run.responses.__chat=[]; saveRun(); startIfEmpty(); }
 
 // ── 匯出 ──
