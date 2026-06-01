@@ -368,9 +368,21 @@ async function loadRefAssets(){
 }
 function refAssetsHTML(items, big){
   if(!items||!items.length) return '';
-  const grid='<div class="gimgs'+(big?'':' refgrid')+'">'+items.map(a=>'<div class="gitem"><img src="'+a.src+'" loading="lazy" title="'+esc(a.label||'點擊放大')+'"><div class="gcap">'+esc(a.label||'')+'</div></div>').join('')+'</div>';
-  return '<div class="ref-h" style="color:var(--gold)">📌 既有素材・最新發展（來自正典）</div>'+grid
-    +'<div style="border-bottom:1px solid var(--line);margin:8px 0 14px"></div>';
+  // 依出現順序分組角色（專屬場景排最後）；角色內再依分類（多面圖/表情包/Pose…）分段。
+  const order=[]; const byChar={};
+  items.forEach(a=>{ const c=a.character||'素材'; if(!byChar[c]){byChar[c]=[];order.push(c);} byChar[c].push(a); });
+  const ordered=order.filter(c=>!/場景/.test(c)).concat(order.filter(c=>/場景/.test(c)));
+  let html='<div class="ref-h" style="color:var(--gold)">📌 既有素材庫（正典・分角色分類）</div>';
+  ordered.forEach(c=>{
+    html+='<div style="font-weight:800;font-size:13px;color:#e8e6e0;margin:12px 2px 2px;border-left:3px solid var(--gold);padding-left:7px">'+esc(c)+'</div>';
+    const cats=[]; const byCat={};
+    byChar[c].forEach(a=>{ const k=a.category||'其他'; if(!byCat[k]){byCat[k]=[];cats.push(k);} byCat[k].push(a); });
+    cats.forEach(k=>{
+      html+='<div style="font-size:10px;color:var(--dim);margin:7px 2px 3px;letter-spacing:.03em">'+esc(k)+'（'+byCat[k].length+'）</div>'
+        +'<div class="gimgs'+(big?'':' refgrid')+'">'+byCat[k].map(a=>'<div class="gitem"><img src="'+a.src+'" loading="lazy" title="'+esc(a.label||'')+'"><div class="gcap">'+esc(a.label||'')+'</div></div>').join('')+'</div>';
+    });
+  });
+  return html+'<div style="border-bottom:1px solid var(--line);margin:12px 0 14px"></div>';
 }
 async function fillGallery(elId, big){
   if(!$(elId)) return;
