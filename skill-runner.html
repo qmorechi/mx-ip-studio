@@ -485,16 +485,29 @@ async function fetchIpRoster(ip){
     return null;
   }catch(e){ return null; }
 }
-// ── 流程路由（網址 hash）：記住目前開著的流程，重整後不跳回首頁 ──
+// ── 流程路由：記住目前開著的流程，重整後不跳回首頁 ──
+// 同時寫網址 hash（可分享/可前進後退）與 localStorage（重整還原的真正依據，
+// 不怕 Supabase OAuth/detectSessionInUrl 在載入時清掉網址 hash）。
+const OPEN_FLOW_KEY='mxip_runner_open_flow';
 function setFlowRoute(roleId){
   try{
     const base=location.pathname+location.search;
     history.replaceState(null,'', roleId==null ? base : base+'#flow='+encodeURIComponent(T.ip)+':'+roleId);
   }catch(e){}
+  try{
+    if(roleId==null) localStorage.removeItem(OPEN_FLOW_KEY);
+    else localStorage.setItem(OPEN_FLOW_KEY, JSON.stringify({ ip:T.ip, roleId:roleId }));
+  }catch(e){}
 }
 function parseFlowRoute(){
   const m=/^#flow=([^:]+):(\d+)$/.exec(location.hash||'');
   return m ? { ip:decodeURIComponent(m[1]), roleId:+m[2] } : null;
+}
+// 還原目標：優先看網址 hash，沒有再退 localStorage（重整主要靠這個）。
+function readOpenFlow(){
+  const h=parseFlowRoute(); if(h) return h;
+  try{ const o=JSON.parse(localStorage.getItem(OPEN_FLOW_KEY)||'null'); if(o&&o.ip&&o.roleId) return { ip:o.ip, roleId:+o.roleId }; }catch(e){}
+  return null;
 }
 async function openRole(id){
   if(T.busy) return;
@@ -788,8 +801,8 @@ async function boot(){
   if($('lightbox')) $('lightbox').onclick=()=>$('lightbox').classList.remove('on');
   document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ const l=$('lightbox'); if(l) l.classList.remove('on'); } });
   await renderHome();
-  // 重整還原：網址 hash 記著上次開的流程 → 直接重開那條流程（不停在首頁）。
-  const _route=parseFlowRoute();
+  // 重整還原：hash 或 localStorage 記著上次開的流程 → 直接重開那條流程（不停在首頁）。
+  const _route=readOpenFlow();
   if(_route && ROLE_DATA.flowByRep[_route.roleId] && Array.from($('ipSel').options).some(o=>o.value===_route.ip)){
     if($('ipSel').value!==_route.ip){ $('ipSel').value=_route.ip; T.ip=_route.ip; }
     await openRole(_route.roleId);
