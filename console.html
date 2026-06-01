@@ -1065,7 +1065,25 @@ function renderEngineTab(){
     </div>`).join('');
   histEl.querySelectorAll('[data-cfg]').forEach(b=> b.addEventListener('click', ()=> confirmConfigRollback(b.dataset.cfg)));
   const dep = document.getElementById('deployBtn');
-  if(dep) dep.addEventListener('click', ()=> alert('部署新版需 Ray 先交付 draft config（draft 流程尚未接）。'));
+  if(dep) dep.addEventListener('click', deployLatestDraft);
+}
+
+// 部署 Ray 上傳的最新 draft engine_config（is_stable=false 的最新一筆）到穩定區。
+// 重用 rollbackConfig 的翻 is_stable 邏輯（把舊穩定版設 false、目標設 true）。
+function deployLatestDraft(){
+  const vs = (engineState && engineState.versions) || [];
+  const draft = vs[0];   // versions 依 deployed_at desc 排序 → Ray 剛上傳的 draft 在最前
+  if(!draft){ alert('目前沒有任何引擎配置可部署。'); return; }
+  if(draft.is_stable){ alert('最新版已經是穩定版了，目前沒有待部署的新 draft（請確認 Ray 已上傳新版）。'); return; }
+  const cur = engineState.current;
+  openConfirm({
+    title:`🚀 部署 engine_config ${esc(draft.version)} 到穩定區`,
+    desc:`把 Ray 上傳的新引擎配置 <strong>${esc(draft.version)}</strong> 設為雲端運行中（STABLE），操作員的生成面板下次生成就會用新對應。`,
+    impact:`<div><span class="label">要部署</span><code>engine_config ${esc(draft.version)}</code>${draft.changelog?'<br><span style="color:#a3a097;font-size:12px">'+esc(draft.changelog)+'</span>':''}</div>
+            <div><span class="label">取代</span>${cur?('engine_config '+esc(cur.version)):'（目前無穩定版）'}</div>
+            <div><span class="label">進行中生成</span>不受影響 · 下次生成才切換</div>`,
+    okText:'確認部署', onOk:()=> rollbackConfig(draft.version),
+  });
 }
 
 function confirmConfigRollback(version){
