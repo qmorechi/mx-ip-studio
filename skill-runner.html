@@ -122,6 +122,14 @@
   .guide { border:1px solid var(--line); border-radius:10px; background:var(--panel); padding:10px; overflow:auto; }
   .guide h3 { font-size:12px; color:var(--dim); margin:2px 6px 8px; letter-spacing:.05em; font-weight:600; }
   .guide .focus { font-size:11px; color:var(--ok); margin:0 6px 10px; line-height:1.6; }
+  /* 既有角色重點提示卡（釘在對話最上方，從 roster 直接列出 A/B/C/D…，不靠 AI 自述） */
+  .roster-card { flex:0 0 auto; border:1px solid rgba(197,164,107,.45); background:rgba(197,164,107,.07); border-radius:10px; padding:10px 12px; margin:0 0 10px; }
+  .roster-card .rc-h { font-size:12.5px; font-weight:900; color:var(--gold); margin-bottom:8px; display:flex; flex-wrap:wrap; gap:8px; align-items:baseline; }
+  .roster-card .rc-sub { font-size:11px; font-weight:600; color:var(--dim); }
+  .roster-card .rc-list { display:grid; gap:6px; }
+  .roster-card .rc-item { font-size:12.5px; line-height:1.5; color:#e8e6e0; }
+  .roster-card .rc-letter { display:inline-grid; place-items:center; width:18px; height:18px; border-radius:5px; background:var(--gold); color:#111318; font-weight:900; font-size:11px; margin-right:7px; vertical-align:middle; }
+  .roster-card .rc-dna { color:var(--dim); margin-left:6px; }
   .covbox { border:1px solid var(--line); border-radius:8px; background:var(--panel2); padding:9px 10px; margin:0 0 10px; }
   .covbox h3 { font-size:11px; color:var(--ok); margin:0 0 7px; letter-spacing:.03em; font-weight:600; }
   .covrow { font-size:12px; color:var(--dim); padding:3px 0; line-height:1.45; }
@@ -655,6 +663,13 @@ function renderGuide(){
   return '<div class="guide">'+renderDeliverable()+renderPrompts()+renderCovBox()+renderLinks()+'<h3>流程全貌（'+f.stages.length+' 階段）</h3>'+(focus?'<div class="focus">'+focus+'</div>':'')
     + f.stages.map((s,i)=>'<div class="gstep"><span class="n">'+(i+1)+'</span><span><div>'+esc(s.title)+'</div><div class="cmd">'+esc(s.cmd)+'</div></span></div>').join('')+'</div>';
 }
+// 既有角色重點提示卡：直接從 roster 列出 A/B/C/D…＋一句描述（不依賴 AI 自述）。
+function renderRosterCard(){
+  const r=T.roster;
+  if(!Array.isArray(r)||!r.length) return '';
+  const items=r.map((c,i)=>'<div class="rc-item"><span class="rc-letter">'+String.fromCharCode(65+i)+'</span><b>'+esc(c.name||('角色'+(i+1)))+'</b>'+(c.dna?'<span class="rc-dna">'+esc(c.dna)+'</span>':'')+'</div>').join('');
+  return '<div class="roster-card"><div class="rc-h">📋 這個 IP 目前已有的角色（'+r.length+'）<span class="rc-sub">先看現有設定，再往下深化／給意見</span></div><div class="rc-list">'+items+'</div></div>';
+}
 function bubbles(){
   return chat().filter(m=>!m.kickoff).map(m=>{
     const imgs=(m.images&&m.images.length)?'<div class="bimgs">'+m.images.map(d=>'<img src="'+d+'">').join('')+'</div>':'';
@@ -676,6 +691,7 @@ function renderChat(){
     +(_items.length?'<div class="chat-prog"><span>覆蓋率 '+_cpct+'%・'+_covd+'/'+_items.length+'</span><div class="cbar"><i style="width:'+_cpct+'%"></i></div></div>':'')
     +'</div>'
     +'<div class="runner">'+renderGuide()+'<div class="chat">'
+    +renderRosterCard()
     +'<div class="msgs" id="msgs">'+bubbles()+(T.busy?'<div class="typing">顧問思考中…</div>':'')+'</div>'
     +((T.pending.length||T.pendingDocs.length)?'<div class="attach-row">'
         +T.pending.map((d,i)=>'<div class="thumb"><img src="'+d+'"><button data-rm="'+i+'" title="移除">×</button></div>').join('')
