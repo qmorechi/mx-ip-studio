@@ -197,9 +197,13 @@
 
 <div id="runnerArea" style="flex:1 1 auto; min-height:0; display:flex; flex-direction:column;"></div>
 <script>
-// 解析時就先判斷：若記得上次開的流程，第一筆畫面直接放「載入中」，
-// 不讓首頁（或瀏覽器殘留快照）在還原進流程前閃一下。
-try{ if(localStorage.getItem('mxip_runner_open_flow')){ document.getElementById('runnerArea').innerHTML='<div class="empty" style="padding:40px;color:#a3a097">載入你上次的流程中…</div>'; } }catch(e){}
+// 解析時就先判斷：只有「重整」且記得上次流程時，第一筆畫面才放「載入中」，
+// 不讓首頁（或瀏覽器殘留快照）在還原進流程前閃一下。正常進入不套用（要顯示總覽頁）。
+try{
+  var _n=(performance.getEntriesByType&&performance.getEntriesByType('navigation')[0]);
+  var _rl=_n?_n.type==='reload':(performance.navigation&&performance.navigation.type===1);
+  if(_rl && localStorage.getItem('mxip_runner_open_flow')){ document.getElementById('runnerArea').innerHTML='<div class="empty" style="padding:40px;color:#a3a097">載入你上次的流程中…</div>'; }
+}catch(e){}
 </script>
 <div class="lightbox" id="lightbox"><img id="lightboxImg" alt=""></div>
 
@@ -547,6 +551,14 @@ function readOpenFlow(){
   const h=parseFlowRoute(); if(h) return h;
   try{ const o=JSON.parse(localStorage.getItem(OPEN_FLOW_KEY)||'null'); if(o&&o.ip&&o.roleId) return { ip:o.ip, roleId:+o.roleId }; }catch(e){}
   return null;
+}
+// 這次載入是不是「瀏覽器重整」？只有重整才還原上次流程；正常進入/從別頁切回 → 顯示總覽頁。
+function isReloadNav(){
+  try{
+    const nav=(performance.getEntriesByType&&performance.getEntriesByType('navigation'))||[];
+    if(nav.length&&nav[0].type) return nav[0].type==='reload';
+    return !!(performance.navigation&&performance.navigation.type===1);
+  }catch(e){ return false; }
 }
 async function openRole(id){
   if(T.busy) return;
@@ -917,9 +929,11 @@ async function boot(){
   if($('rolesLink')) $('rolesLink').onclick=()=>{ location.href='roles.html?u='+encodeURIComponent(memberId())+'&ip='+encodeURIComponent(T.ip||''); };
   if($('lightbox')) $('lightbox').onclick=()=>$('lightbox').classList.remove('on');
   document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ const l=$('lightbox'); if(l) l.classList.remove('on'); } });
-  // 重整還原：hash 或 localStorage 記著上次開的流程 → 直接重開那條流程。
-  // 先判斷再渲染：要還原就「不先渲染首頁」，避免重整時閃一下首頁再跳進流程。
-  const _route=readOpenFlow();
+  // 只有「瀏覽器重整」才還原上次流程；正常進入或從別頁切回 → 顯示總覽頁，並清掉上次流程記憶
+  // （否則每次進 Skill Runner 都被丟進上次那條流程、回不到總覽）。
+  const _reload=isReloadNav();
+  if(!_reload) setFlowRoute(null);
+  const _route = _reload ? readOpenFlow() : null;
   if(_route && ROLE_DATA.flowByRep[_route.roleId] && Array.from($('ipSel').options).some(o=>o.value===_route.ip)){
     if($('ipSel').value!==_route.ip){ $('ipSel').value=_route.ip; T.ip=_route.ip; }
     $('runnerArea').innerHTML='<div class="empty">載入中…</div>';
