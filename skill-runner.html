@@ -693,7 +693,7 @@ function exportMarkdown(){ download((runKey()+'_'+T.ip+'_'+memberId()).replace(/
 // ── 啟動 ──
 async function onIpChange(){ T.ip=$('ipSel').value; await renderHome(); }
 async function boot(){
-  await MXIPAuth.init({ gate:true });
+  await MXIPAuth.init({ gate:'overlay' });   // 未登入：原地壓暗 + 置中登入卡（登入後 OAuth 整頁重載再 boot）
   if(!(MXIPAuth.currentUser() && MXIPAuth.isAllowed())) return;
   try{ T.isAdmin = await MXIPAuth.hasAnyRole(['admin']); }catch(e){ T.isAdmin=false; }
   await loadIPs();            // 動態 IP 清單（含新增/暫停；暫停 IP 仍可選來充實內容）

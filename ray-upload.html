@@ -345,16 +345,17 @@ let engineMaxNum = 0;     // engine_config 最大版號（'v3' → 3）
 
 // ── 載入真實版本資料 ──
 async function loadData(){
-  // 後台發版頁僅限 backend / admin：其他人（含一般成員）擋在門外。
-  if (window.MXIPAuth && !(await MXIPAuth.hasAnyRole(['admin','backend']))) {
-    MXIPAuth.showForbidden('此頁僅限後台（Ray / 管理員）');
-    return;
-  }
-  // 未登入：不載資料、停用發布流程（後台發版頁必須登入）。
+  // 未登入：交給置中登入浮層（gate:'overlay'），不載資料、停用發布流程，且先別跑角色
+  // 門檻（否則 hasAnyRole 回空會誤觸 showForbidden 蓋掉浮層）。登入後 OAuth 整頁重載再進來。
   if (window.MXIPAuth && !MXIPAuth.currentUser()) {
     state.ready = false; state.needsLogin = true; SKILLS = [];
     setSyncState('ok');
     renderAll();
+    return;
+  }
+  // 已登入但非 backend / admin：擋在門外。
+  if (window.MXIPAuth && !(await MXIPAuth.hasAnyRole(['admin','backend']))) {
+    MXIPAuth.showForbidden('此頁僅限後台（Ray / 管理員）');
     return;
   }
   state.needsLogin = false;
@@ -617,7 +618,7 @@ document.getElementById('webhookCfg').addEventListener('click', ()=>{
 
 // ── 啟動 ──
 renderWebhookCfg();
-(window.MXIPAuth ? MXIPAuth.init({ gate: true }) : Promise.resolve()).then(loadData);
+(window.MXIPAuth ? MXIPAuth.init({ gate: 'overlay' }) : Promise.resolve()).then(loadData);
 // 登入/登出即時重繪：登出停用發版、登入載回版本資料。
 if (window.MXIPAuth && MXIPAuth.onChange) MXIPAuth.onChange(loadData);
 </script>

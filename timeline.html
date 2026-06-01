@@ -303,7 +303,7 @@ async function appendMeetingNodes(wrap){
   });
 }
 
-(window.MXIPAuth ? MXIPAuth.init({ gate: true }) : Promise.resolve()).then(loadTimeline);
+(window.MXIPAuth ? MXIPAuth.init({ gate: 'overlay' }) : Promise.resolve()).then(loadTimeline);
 if (window.MXIPAuth && MXIPAuth.onChange) MXIPAuth.onChange(loadTimeline);
 </script>
 </body>

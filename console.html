@@ -1206,6 +1206,9 @@ var _np = document.getElementById('npBtn'); if(_np) _np.addEventListener('click'
 
 // ── 啟動 ──
 async function init() {
+  // 未登入：交給置中登入浮層（gate:'overlay'），先別跑角色門檻，否則 hasAnyRole 回空
+  // 會誤觸 showForbidden 把整頁（含浮層）蓋掉。登入後 OAuth 整頁重載會再進來。
+  if (window.MXIPAuth && !MXIPAuth.currentUser()) return;
   // 主控台僅限管理員與後台（qmore / Ray）：一般成員（如 echo）擋在門外。
   if (window.MXIPAuth && !(await MXIPAuth.hasAnyRole(['admin', 'backend']))) {
     MXIPAuth.showForbidden('主控台僅限管理員與後台');
@@ -1222,7 +1225,7 @@ async function init() {
   renderMatrix();
   renderInviteList();
 }
-(window.MXIPAuth ? MXIPAuth.init({ gate: true }) : Promise.resolve()).then(init);
+(window.MXIPAuth ? MXIPAuth.init({ gate: 'overlay' }) : Promise.resolve()).then(init);
 // 登入/登出即時重繪：登出清空、登入載回；並重載當前分頁。
 if (window.MXIPAuth && MXIPAuth.onChange) MXIPAuth.onChange(() => {
   skillState = null; engineState = null;
