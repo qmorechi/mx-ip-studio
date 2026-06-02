@@ -158,6 +158,10 @@
   .composer textarea { flex:1; background:var(--panel2); color:var(--txt); border:1px solid var(--line); border-radius:10px;
     padding:11px 13px; font:14px/1.5 inherit; outline:none; resize:none; min-height:48px; max-height:160px; }
   .composer textarea:focus { border-color:var(--gold); }
+  /* ＋ 功能鍵與手機功能選單（桌機隱藏，用既有 toolbar） */
+  .more-btn{ display:none; }
+  .msheet{ display:none; }
+  .msheet[hidden]{ display:none; }
   .attach-btn { cursor:pointer; border:1px solid var(--line); border-radius:10px; padding:11px 13px; background:var(--panel2); font-size:17px; line-height:1; }
   .attach-btn:hover { border-color:var(--gold); }
   .attach-row { display:flex; gap:8px; flex-wrap:wrap; padding:4px 0 0; }
@@ -207,7 +211,28 @@
     .weekdiv{ font-size:14px; }
     /* 長按鈕在手機可換行、不撐破版面（消除壓縮感與橫向溢出） */
     button{ font-size:15px; white-space:normal; padding:11px 14px; }
-    .toolbar{ gap:8px; }
+
+    /* ── 手機：整頁式自然捲動（像 Line），不在卡片/對話框裡再放捲軸 ── */
+    .chat{ overflow-y:auto; -webkit-overflow-scrolling:touch; }
+    .msgs{ overflow:visible; flex:0 0 auto; }                 /* 不自己捲；跟卡片一起被 .chat 捲動 */
+    .roster-card, .premise-card{ max-height:none; overflow:visible; }   /* 卡片不再內捲，手指直接滑頁回看 */
+    /* 輸入列釘在底部，永遠看得到 */
+    .composer{ position:sticky; bottom:0; z-index:3; background:var(--bg); padding:8px 0 6px; border-top:1px solid var(--line); gap:7px; }
+
+    /* ── ＋ 功能鍵：把不常用的（上傳/匯入/彙整/匯出/重開/狀態）收進來，騰出輸入空間 ── */
+    .composer .attach-btn{ display:none; }    /* 收進 ＋ 選單 */
+    .toolbar{ display:none; }                  /* 收進 ＋ 選單 */
+    .more-btn{ display:inline-flex; align-items:center; justify-content:center; width:46px; min-width:46px; height:50px; padding:0; font-size:26px; font-weight:300; line-height:1; }
+    /* 浮在輸入列上方的功能選單（不擠壓對話、不被 sticky 輸入列蓋住） */
+    .msheet:not([hidden]){ display:flex; flex-direction:column; gap:8px; position:fixed; left:10px; right:10px; bottom:74px; z-index:50; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px; box-shadow:0 12px 40px rgba(0,0,0,.5); }
+    .msheet button{ width:100%; text-align:left; font-size:15.5px; padding:13px 14px; }
+    .msheet-row{ display:flex; align-items:center; gap:10px; font-size:14px; color:var(--dim); padding:4px 2px; }
+    .msheet-row select{ font-size:16px; flex:0 0 auto; min-width:0; }
+
+    /* ── Line 風：左右分明的對話泡泡（配色維持 Bento），訊息整則完整顯示 ── */
+    .msg{ border-radius:16px; }
+    .msg.ai{ border-top-left-radius:5px; }
+    .msg.user{ border-top-right-radius:5px; }
   }
 </style>
 </head>
@@ -640,7 +665,7 @@ async function saveRun(){
     if(r.ok){ const rows=await r.json(); if(rows&&rows[0]) T.run.id=rows[0].id; markSaved('已存雲端 ✓'); } else { T.online=false; markSaved('已存本機'); }
   }catch(e){ T.online=false; markSaved('已存本機'); }
 }
-function markSaved(t){ const el=$('saveState'); if(el) el.textContent=t+'　'+new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}); }
+function markSaved(t){ const s=t+'　'+new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}); const a=$('saveState'); if(a) a.textContent=s; const b=$('saveState2'); if(b) b.textContent=s; }
 
 // ── AI 顧問 ──
 function buildBrief(){
@@ -783,7 +808,8 @@ function renderChat(){
         +T.pending.map((d,i)=>'<div class="thumb"><img src="'+d+'"><button data-rm="'+i+'" title="移除">×</button></div>').join('')
         +T.pendingDocs.map((d,i)=>'<div class="doc-chip">📄 '+esc(d.name)+'<button data-rmd="'+i+'" title="移除">×</button></div>').join('')
       +'</div>':'')
-    +'<div class="composer"><label class="attach-btn" title="上傳參考圖 / 手稿 / 影片 / PDF（影片自動抽影格、PDF 直接給 AI 讀）">📎<input type="file" id="fileInput" accept="image/*,video/*,application/pdf" multiple hidden></label>'
+    +'<div class="composer"><button class="more-btn" id="moreBtn" type="button" title="更多功能">＋</button>'
+    +'<label class="attach-btn" title="上傳參考圖 / 手稿 / 影片 / PDF（影片自動抽影格、PDF 直接給 AI 讀）">📎<input type="file" id="fileInput" accept="image/*,video/*,application/pdf" multiple hidden></label>'
     +'<button class="attach-btn" id="docBtn" type="button" title="從 Google Doc / Drive 匯入文字當素材">📄</button>'
     +'<textarea id="input" placeholder="輸入你的回覆，或上傳參考圖/手稿讓 AI 看（Enter 送出）"'+(T.busy?' disabled':'')+'></textarea>'
     +'<button class="primary" id="sendBtn"'+(T.busy?' disabled':'')+'>送出</button></div>'
@@ -792,10 +818,20 @@ function renderChat(){
     +'<select id="statusSel" style="min-width:auto"><option value="draft"'+(T.run.status==='draft'?' selected':'')+'>草稿</option>'
     +'<option value="in_review"'+(T.run.status==='in_review'?' selected':'')+'>送審</option>'
     +'<option value="done"'+(T.run.status==='done'?' selected':'')+'>完成</option></select>'
-    +'<span class="savestate" id="saveState">—</span></div></div><div class="refpanel" id="refpanel"></div></div>';
+    +'<span class="savestate" id="saveState">—</span></div>'
+    /* 手機：＋ 展開的功能選單（代理點擊上面那些隱藏的按鈕，不重複邏輯）*/
+    +'<div class="msheet" id="msheet" hidden>'
+      +'<button id="m_file" type="button">📎 上傳圖／手稿／PDF</button>'
+      +'<button id="m_doc" type="button">📄 從 Google Doc／Drive 匯入</button>'
+      +'<button id="m_deliver" type="button">🧩 彙整成正式提案</button>'
+      +'<button id="m_export" type="button">⬇ 匯出對話</button>'
+      +'<button id="m_restart" type="button">↻ 重新開始</button>'
+      +'<div class="msheet-row">狀態：<select id="m_status"><option value="draft"'+(T.run.status==='draft'?' selected':'')+'>草稿</option><option value="in_review"'+(T.run.status==='in_review'?' selected':'')+'>送審</option><option value="done"'+(T.run.status==='done'?' selected':'')+'>完成</option></select><span class="savestate" id="saveState2">—</span></div>'
+    +'</div>'
+    +'</div><div class="refpanel" id="refpanel"></div></div>';
   wire(); scrollMsgs(); fillGallery('refpanel', false);
 }
-function scrollMsgs(){ const m=$('msgs'); if(m) m.scrollTop=m.scrollHeight; }
+function scrollMsgs(){ const m=$('msgs'); if(m){ m.scrollTop=m.scrollHeight; const c=m.closest('.chat'); if(c) c.scrollTop=c.scrollHeight; } }   // 桌機 .msgs 內捲；手機改 .chat 整體捲動，兩邊都拉到底
 function wire(){
   if($('backBtn')) $('backBtn').onclick=()=>{ setFlowRoute(null); renderHome(); };   // 永遠可回（renderHome 會作廢在途請求、解除 busy）
   if($('fileInput')) $('fileInput').onchange=(e)=>{ addFiles(e.target.files); e.target.value=''; };
@@ -839,6 +875,11 @@ function wire(){
   if($('exportMd')) $('exportMd').onclick=exportMarkdown;
   if($('restartBtn')) $('restartBtn').onclick=restart;
   if($('statusSel')) $('statusSel').onchange=(e)=>{ const prev=T.run.status; T.run.status=e.target.value; saveRun(); if(e.target.value==='done'&&prev!=='done') notifyDone(); };
+  // 手機「＋」功能選單：展開/收合，選單項目直接代理點擊上面那些（隱藏的）按鈕，不重複邏輯。
+  if($('moreBtn')) $('moreBtn').onclick=()=>{ const s=$('msheet'); if(s) s.hidden=!s.hidden; };
+  const _proxy=(id,target)=>{ const b=$(id); if(b) b.onclick=()=>{ const t=$(target); const s=$('msheet'); if(s) s.hidden=true; if(t) t.click(); }; };
+  _proxy('m_file','fileInput'); _proxy('m_doc','docBtn'); _proxy('m_deliver','deliverBtn'); _proxy('m_export','exportMd'); _proxy('m_restart','restartBtn');
+  if($('m_status')) $('m_status').onchange=(e)=>{ const ss=$('statusSel'); const s=$('msheet'); if(s) s.hidden=true; if(ss){ ss.value=e.target.value; ss.onchange({target:ss}); } };
 }
 // 依「這條流程彙整的交付清單」結構化彙整指令 → 全公司提案格式統一
 function deliverInstr(){
