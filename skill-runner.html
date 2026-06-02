@@ -797,7 +797,14 @@ function wire(){
   document.querySelectorAll('.bimgs img').forEach(img=>{ img.onclick=()=>openLightbox(img.src); });
   const input=$('input');
   if($('sendBtn')) $('sendBtn').onclick=()=>doSend();
-  if(input){ input.onkeydown=(e)=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); doSend(); } }; input.focus(); }
+  if(input){ input.onkeydown=(e)=>{
+    // 中文輸入法組字中按 Enter 是「選字確認」，不能當送出（否則組字被吃掉、內容消失、又送出空字串）。
+    // e.isComposing（標準）／keyCode 229（舊版瀏覽器 fallback）都代表 IME 組字中。
+    if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){ e.preventDefault(); doSend(); }
+  };
+    // 桌機自動聚焦輸入框；手機不自動聚焦（避免每次重繪都彈出軟鍵盤）。
+    if(!('ontouchstart' in window) && !navigator.maxTouchPoints){ input.focus(); }
+  }
   if($('deliverBtn')) $('deliverBtn').onclick=()=>doSend(deliverInstr(), true);
   if($('exportMd')) $('exportMd').onclick=exportMarkdown;
   if($('restartBtn')) $('restartBtn').onclick=restart;
