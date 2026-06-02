@@ -1137,8 +1137,16 @@ function switchTab(name){
   if(loggedIn && name==='skills'  && !skillState)  loadSkills().then(renderSkillTab);
   if(loggedIn && name==='engines' && !engineState) loadEngines().then(renderEngineTab);
   if(loggedIn && name==='projects') renderProjects();
+  // 記住分頁，⌘R 重整後停在同一頁（hash 可分享、localStorage 為後備）。
+  try{ history.replaceState(null,'', '#'+name); localStorage.setItem('mxip_console_tab', name); }catch(e){}
 }
 document.querySelectorAll('.tab-btn').forEach(b=> b.addEventListener('click', ()=> switchTab(b.dataset.tab)));
+// 重整還原：依網址 hash / localStorage 停在上次的分頁（沒有就回預設 roles）。
+function restoreTab(){
+  let t=''; try{ t=(location.hash||'').slice(1)||localStorage.getItem('mxip_console_tab')||''; }catch(e){}
+  if(['roles','skills','engines','projects'].indexOf(t)===-1){ const a=document.querySelector('.tab-btn.active'); t=a?a.dataset.tab:'roles'; }
+  switchTab(t);
+}
 
 // ── 頂部左右兩欄折疊（本週開會包 / 角色互動圖）──
 document.querySelectorAll('.hubHead').forEach(btn => btn.addEventListener('click', () => {
@@ -1264,11 +1272,11 @@ async function init() {
   renderMatrix();
   renderInviteList();
 }
-(window.MXIPAuth ? MXIPAuth.init({ gate: 'overlay' }) : Promise.resolve()).then(init);
+(window.MXIPAuth ? MXIPAuth.init({ gate: 'overlay' }) : Promise.resolve()).then(init).then(restoreTab);
 // 登入/登出即時重繪：登出清空、登入載回；並重載當前分頁。
 if (window.MXIPAuth && MXIPAuth.onChange) MXIPAuth.onChange(() => {
   skillState = null; engineState = null;
-  init().then(() => { const a = document.querySelector('.tab-btn.active'); if (a) switchTab(a.dataset.tab); });
+  init().then(restoreTab);
 });
 </script>
 </body>
