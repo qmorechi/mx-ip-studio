@@ -226,8 +226,11 @@
     .msg.user{ padding-left:12px; padding-right:12px; }
     .msg .who{ font-size:13px; }
     .typing{ font-size:15px; }
-    .composer textarea{ font-size:16px; min-height:54px; padding:13px 14px; }
-    .composer{ gap:7px; }
+    /* ＋／輸入框／送出 三者等高、頂底切齊（不再高低不整齊）：composer 改 stretch、移除按鈕固定高 */
+    .composer{ gap:7px; align-items:stretch; }
+    .composer textarea{ font-size:16px; min-height:50px; max-height:140px; padding:13px 14px; }
+    .more-btn{ height:auto; align-self:stretch; }
+    #sendBtn{ height:auto; align-self:stretch; }
     .chat-role{ font-size:16px; }
     .roster-card .rc-h, .premise-card .pc-h{ font-size:14.5px; }
     .roster-card .rc-item, .premise-card .pc-row{ font-size:15px; line-height:1.65; }
@@ -246,7 +249,7 @@
     /* ── ＋ 功能鍵：把不常用的（上傳/匯入/彙整/匯出/重開/狀態）收進來，騰出輸入空間 ── */
     .composer .attach-btn{ display:none; }    /* 收進 ＋ 選單 */
     .toolbar{ display:none; }                  /* 收進 ＋ 選單 */
-    .more-btn{ display:inline-flex; align-items:center; justify-content:center; width:46px; min-width:46px; height:50px; padding:0; font-size:26px; font-weight:300; line-height:1; }
+    .more-btn{ display:inline-flex; align-items:center; justify-content:center; width:50px; min-width:50px; padding:0; font-size:26px; font-weight:300; line-height:1; }
     /* 浮在輸入列上方的功能選單（不擠壓對話、不被 sticky 輸入列蓋住） */
     .msheet:not([hidden]){ display:flex; flex-direction:column; gap:8px; position:fixed; left:10px; right:10px; bottom:74px; z-index:50; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px; box-shadow:0 12px 40px rgba(0,0,0,.5); }
     .msheet button{ width:100%; text-align:left; font-size:15.5px; padding:13px 14px; }
@@ -855,7 +858,7 @@ function renderChat(){
     +'<div class="composer"><button class="more-btn" id="moreBtn" type="button" title="更多功能">＋</button>'
     +'<label class="attach-btn" title="上傳參考圖 / 手稿 / 影片 / PDF（影片自動抽影格、PDF 直接給 AI 讀）">📎<input type="file" id="fileInput" accept="image/*,video/*,application/pdf" multiple hidden></label>'
     +'<button class="attach-btn" id="docBtn" type="button" title="從 Google Doc / Drive 匯入文字當素材">📄</button>'
-    +'<textarea id="input" placeholder="輸入你的回覆，或上傳參考圖/手稿讓 AI 看（Enter 送出）"'+(T.busy?' disabled':'')+'></textarea>'
+    +'<textarea id="input" placeholder="輸入你的回覆…（Enter 送出，＋可上傳圖/手稿）"'+(T.busy?' disabled':'')+'></textarea>'
     +'<button class="primary" id="sendBtn"'+(T.busy?' disabled':'')+'>送出</button></div>'
     +'<div class="toolbar"><button id="deliverBtn"'+(T.busy?' disabled':'')+'>🧩 彙整成正式提案（依 skill 規格）</button>'
     +'<button id="exportMd">⬇ 匯出對話</button><button id="restartBtn">↻ 重新開始</button>'
