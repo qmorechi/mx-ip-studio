@@ -190,6 +190,7 @@
   .attach-btn { cursor:pointer; border:1px solid var(--line); border-radius:10px; padding:0 14px; background:var(--panel2); font-size:17px; line-height:1; display:inline-flex; align-items:center; justify-content:center; }
   .attach-btn:hover { border-color:var(--gold); }
   .gdrive-ic { display:inline-block; vertical-align:middle; width:20px; height:20px; }
+  .ic { display:inline-block; vertical-align:-.18em; flex:0 0 auto; }   /* 統一線性圖示，跟字色走（currentColor） */
   .msheet button .gdrive-ic { width:18px; height:18px; margin-right:7px; vertical-align:-4px; }
   .attach-row { display:flex; gap:8px; flex-wrap:wrap; padding:4px 0 0; }
   .thumb { position:relative; }
@@ -326,6 +327,25 @@ function roleById(id){ return ROLE_DATA.roles.find(r=>r.id===id); }
 function ipName(id){ const m=(typeof IPS!=='undefined'?IPS:[]).find(x=>x.id===id); return m?m.name:id; }
 // Google Drive 官方多色 logo（inline SVG，不吊 CDN）；尺寸由 .gdrive-ic CSS 控，桌機/手機共用同一顆。
 const GDRIVE_SVG='<svg class="gdrive-ic" viewBox="0 0 87.3 78" aria-label="Google Drive"><path fill="#0066da" d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z"/><path fill="#00ac47" d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z"/><path fill="#ea4335" d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.5l5.85 11.5z"/><path fill="#00832d" d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z"/><path fill="#2684fc" d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z"/><path fill="#ffba00" d="M73.4 26.5L60.7 4.5c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z"/></svg>';
+// ── 統一圖示系統：Lucide（MIT、線性、跨裝置一致）；inline SVG 自架、currentColor 上色 ──
+const ICONS={
+  paperclip:'<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
+  plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',
+  'rotate-ccw':'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>',
+  sparkles:'<path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/>',
+  'clipboard-list':'<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
+  'bar-chart':'<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
+  'chevron-left':'<path d="m15 18-6-6 6-6"/>',
+  'chevron-right':'<path d="m9 18 6-6-6-6"/>',
+  link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  pin:'<path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>',
+  package:'<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+  image:'<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.83 0L6 21"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'
+};
+function ic(name,sz){ sz=sz||18; return '<svg class="ic" width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[name]||'')+'</svg>'; }
 
 // ── 附圖：圖片縮圖、影片抽關鍵影格（皆在前端轉成 jpeg dataURL）──
 function toPayload(d){ const m=/^data:(image\/[a-z]+);base64,(.+)$/.exec(d||''); return m?{media_type:m[1],data:m[2]}:null; }
@@ -411,8 +431,8 @@ async function renderHome(){
   const noneJoined=ids.length===0;
   let html='<div class="home"><div class="home-top">'
     +'<div class="pbar-wrap"><div class="pbar-top"><span>我參與的流程　實質完成度（交付項覆蓋率）</span><span><b>'+pct+'%</b>　完成流程 '+done+' / '+ids.length+'</span></div><div class="pbar"><i style="width:'+pct+'%"></i></div></div>'
-    + '<button id="digestBtn">📋 本週成果</button>'
-    + (T.isAdmin?'<button id="teamBtn">📊 全 IP 進度表</button>':'')
+    + '<button id="digestBtn">'+ic('clipboard-list',16)+' 本週成果</button>'
+    + (T.isAdmin?'<button id="teamBtn">'+ic('bar-chart',16)+' 全 IP 進度表</button>':'')
     + '</div>'
     + '<div class="home-hint">這裡同時選流程＋開工：未參與的點「＋ 參與」加入，參與後點磚塊進去跟 AI 顧問一次做完。完成＝在流程裡彙整提案＋貼連結＋狀態設「完成」。</div>'
     + (noneJoined?'<div class="empty" style="margin:8px 0">你在這個 IP 還沒參與任何流程——挑下面想做的點「＋ 參與這個流程」就能開工。</div>':'')
@@ -521,7 +541,7 @@ function refAssetsHTML(items, big){
   const order=[]; const byChar={};
   items.forEach(a=>{ const c=a.character||'素材'; if(!byChar[c]){byChar[c]=[];order.push(c);} byChar[c].push(a); });
   const ordered=order.filter(c=>!/場景/.test(c)).concat(order.filter(c=>/場景/.test(c)));
-  let html='<div class="ref-h" style="color:var(--gold)">📌 既有素材庫（正典・分角色分類）</div>';
+  let html='<div class="ref-h" style="color:var(--gold)">'+ic('pin',15)+' 既有素材庫（正典・分角色分類）</div>';
   ordered.forEach(c=>{
     html+='<div style="font-weight:800;font-size:13px;color:#e8e6e0;margin:12px 2px 2px;border-left:3px solid var(--gold);padding-left:7px">'+esc(c)+'</div>';
     const cats=[]; const byCat={};
@@ -783,7 +803,7 @@ function links(){ return (T.run && T.run.responses && Array.isArray(T.run.respon
 function renderLinks(){
   if(!T.roleId) return '';
   const ls=links();
-  return '<div class="covbox"><h3>🔗 提案連結（'+ls.length+'）</h3>'
+  return '<div class="covbox"><h3>'+ic('link',15)+' 提案連結（'+ls.length+'）</h3>'
     + '<div style="font-size:11px;color:var(--dim);margin:-4px 0 7px">貼上你提案的原檔連結（ChatGPT/Gemini/Google Doc/Figma/Drive…）。開會包會顯示給大家點開、保留你的原始格式。</div>'
     + ls.map((u,i)=>'<div class="covrow" style="display:flex;justify-content:space-between;align-items:center;gap:6px"><a href="'+esc(u)+'" target="_blank" rel="noopener" style="color:#8dd3ff;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0">🔗 '+esc(u)+'</a><button data-rml="'+i+'" title="移除" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:15px">×</button></div>').join('')
     + '<button id="addLinkBtn" style="margin-top:6px;background:#20242c;border:1px solid rgba(255,255,255,.14);border-radius:7px;color:#e8e6e0;font-family:inherit;font-size:12px;font-weight:700;padding:6px 11px;cursor:pointer">+ 加提案連結</button>'
@@ -793,15 +813,15 @@ function renderLinks(){
 function renderDeliverable(){
   if(!T.roleId) return '';
   const d=T.run&&T.run.responses&&T.run.responses.__deliverable;
-  if(!d||!d.text) return '<div class="covbox" style="border:1px solid rgba(242,179,94,.3)"><h3>📦 正式提案</h3><div style="font-size:11.5px;color:var(--dim)">還沒彙整。對談到一段落，按下方「🧩 彙整成正式提案」依 skill 規格產出統一格式，開會包就會顯示給大家。</div></div>';
-  return '<div class="covbox" style="border:1px solid rgba(113,209,194,.45)"><h3>📦 正式提案 ✅</h3><div style="font-size:11.5px;color:var(--dim)">已依 skill 規格彙整（'+esc(new Date(d.at).toLocaleString("zh-TW"))+'）。再按「彙整」會更新；狀態設「完成」即正式提交，開會包顯示這份。</div></div>';
+  if(!d||!d.text) return '<div class="covbox" style="border:1px solid rgba(242,179,94,.3)"><h3>'+ic('package',15)+' 正式提案</h3><div style="font-size:11.5px;color:var(--dim)">還沒彙整。對談到一段落，按下方「🧩 彙整成正式提案」依 skill 規格產出統一格式，開會包就會顯示給大家。</div></div>';
+  return '<div class="covbox" style="border:1px solid rgba(113,209,194,.45)"><h3>'+ic('package',15)+' 正式提案 ✅</h3><div style="font-size:11.5px;color:var(--dim)">已依 skill 規格彙整（'+esc(new Date(d.at).toLocaleString("zh-TW"))+'）。再按「彙整」會更新；狀態設「完成」即正式提交，開會包顯示這份。</div></div>';
 }
 function promptList(){ return (T.run && T.run.responses && Array.isArray(T.run.responses.__prompts)) ? T.run.responses.__prompts : []; }
 // 🎨 生圖 Prompt 清單：彙整正式提案時若有生圖需求，顧問附 ===PROMPTS===，這裡列出讓成員選一個複製去 Gemini/ChatGPT 生圖
 function renderPrompts(){
   if(!T.roleId) return '';
   const ps=promptList(); if(!ps.length) return '';
-  return '<div class="covbox" style="border:1px solid rgba(141,211,255,.4)"><h3>🎨 生圖 Prompt（'+ps.length+'）· 選一個複製去生圖</h3>'
+  return '<div class="covbox" style="border:1px solid rgba(141,211,255,.4)"><h3>'+ic('image',15)+' 生圖 Prompt（'+ps.length+'）· 選一個複製去生圖</h3>'
     + '<div style="font-size:11px;color:var(--dim);margin:-4px 0 8px;line-height:1.55">① 複製 Prompt → ② 貼到 <b style="color:#71d1c2">Gemini</b> / <b style="color:#f8d66d">ChatGPT</b> 生成提案檔/圖 → ③ 回來用上方「🔗 提案連結」貼上連結 → ④ 把右下角狀態設「<b style="color:#71d1c2">完成</b>」，這個流程才算結案。同畫面有兩版時自己挑要用哪個。</div>'
     + ps.map((p,i)=>{ const tool=String(p.tool||'').toLowerCase();
         const badge=tool.indexOf('gemini')>=0?'<span style="background:rgba(113,209,194,.18);color:#71d1c2;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px">Gemini</span>':'<span style="background:rgba(248,214,109,.18);color:#f8d66d;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px">ChatGPT</span>';
@@ -823,7 +843,7 @@ function renderPremiseCard(){
   const p=T.premise;
   if(!p||(!p.focus&&!p.issues)) return '';
   const wk=p.week?('依 '+esc(p.week)+' 會議結論'):'依上次會議結論';
-  return '<div class="premise-card"><div class="pc-h">🎯 本週優化重點（'+wk+'）<span class="pc-sub">這一輪要往這些方向優化／產出</span></div>'
+  return '<div class="premise-card"><div class="pc-h">'+ic('target',17)+' 本週優化重點（'+wk+'）<span class="pc-sub">這一輪要往這些方向優化／產出</span></div>'
     + (p.focus?'<div class="pc-row"><span class="pc-k">本週要優化</span>'+esc(p.focus)+'</div>':'')
     + (p.issues?'<div class="pc-row pc-issue"><span class="pc-k">待解問題</span>'+esc(p.issues)+'</div>':'')
     + '</div>';
@@ -833,7 +853,7 @@ function renderRosterCard(){
   const r=T.roster;
   if(!Array.isArray(r)||!r.length) return '';
   const items=r.map((c,i)=>'<div class="rc-item"><span class="rc-letter">'+String.fromCharCode(65+i)+'</span><b>'+esc(c.name||('角色'+(i+1)))+'</b>'+(c.dna?'<span class="rc-dna">'+esc(c.dna)+'</span>':'')+'</div>').join('');
-  return '<div class="roster-card"><div class="rc-h">📋 這個 IP 目前已有的角色（'+r.length+'）<span class="rc-sub">先看現有設定，再往下深化／給意見</span></div><div class="rc-list">'+items+'</div></div>';
+  return '<div class="roster-card"><div class="rc-h">'+ic('users',17)+' 這個 IP 目前已有的角色（'+r.length+'）<span class="rc-sub">先看現有設定，再往下深化／給意見</span></div><div class="rc-list">'+items+'</div></div>';
 }
 function bubbles(){
   return chat().filter(m=>!m.kickoff).map(m=>{
@@ -853,8 +873,8 @@ function renderChat(){
   const _cpct=_items.length?Math.round(_covd/_items.length*100):0;
   const _title=fl?esc(fl.emoji+' '+fl.zh):esc(f.label);
   const _chap=(fl&&fl.chapter)?('（'+(fl.chapter==='story'?'故事章節':'分鏡章節')+'）'):'';
-  area.innerHTML='<div class="chat-head"><button id="backBtn" class="crumb-back">‹ 回我選定的流程</button>'
-    +'<span class="crumb-sep">›</span>'
+  area.innerHTML='<div class="chat-head"><button id="backBtn" class="crumb-back">'+ic('chevron-left',16)+' 回我選定的流程</button>'
+    +'<span class="crumb-sep">'+ic('chevron-right',16)+'</span>'
     +'<span class="chat-role"><b>'+_title+'</b>'+_chap+'</span>'
     +(_items.length?'<div class="chat-prog"><span>覆蓋率 '+_cpct+'%・'+_covd+'/'+_items.length+'</span><div class="cbar"><i style="width:'+_cpct+'%"></i></div></div>':'')
     +'</div>'
@@ -865,24 +885,24 @@ function renderChat(){
         +T.pending.map((d,i)=>'<div class="thumb"><img src="'+d+'"><button data-rm="'+i+'" title="移除">×</button></div>').join('')
         +T.pendingDocs.map((d,i)=>'<div class="doc-chip">📄 '+esc(d.name)+'<button data-rmd="'+i+'" title="移除">×</button></div>').join('')
       +'</div>':'')
-    +'<div class="composer"><button class="more-btn" id="moreBtn" type="button" title="更多功能">＋</button>'
-    +'<label class="attach-btn" title="上傳參考圖 / 手稿 / 影片 / PDF（影片自動抽影格、PDF 直接給 AI 讀）">📎<input type="file" id="fileInput" accept="image/*,video/*,application/pdf" multiple hidden></label>'
+    +'<div class="composer"><button class="more-btn" id="moreBtn" type="button" title="更多功能">'+ic('plus',24)+'</button>'
+    +'<label class="attach-btn" title="上傳參考圖 / 手稿 / 影片 / PDF（影片自動抽影格、PDF 直接給 AI 讀）">'+ic('paperclip',20)+'<input type="file" id="fileInput" accept="image/*,video/*,application/pdf" multiple hidden></label>'
     +'<button class="attach-btn" id="docBtn" type="button" title="從 Google Doc / Drive 匯入文字當素材">'+GDRIVE_SVG+'</button>'
     +'<textarea id="input" placeholder="輸入你的回覆…（Enter 送出，＋可上傳圖/手稿）"'+(T.busy?' disabled':'')+'></textarea>'
     +'<button class="primary" id="sendBtn"'+(T.busy?' disabled':'')+'>送出</button></div>'
-    +'<div class="toolbar"><button id="deliverBtn"'+(T.busy?' disabled':'')+'>🧩 彙整成正式提案（依 skill 規格）</button>'
-    +'<button id="exportMd">⬇ 匯出對話</button><button id="restartBtn">↻ 重新開始</button>'
+    +'<div class="toolbar"><button id="deliverBtn"'+(T.busy?' disabled':'')+'>'+ic('sparkles',16)+' 彙整成正式提案（依 skill 規格）</button>'
+    +'<button id="exportMd">'+ic('download',16)+' 匯出對話</button><button id="restartBtn">'+ic('rotate-ccw',16)+' 重新開始</button>'
     +'<select id="statusSel" style="min-width:auto"><option value="draft"'+(T.run.status==='draft'?' selected':'')+'>草稿</option>'
     +'<option value="in_review"'+(T.run.status==='in_review'?' selected':'')+'>送審</option>'
     +'<option value="done"'+(T.run.status==='done'?' selected':'')+'>完成</option></select>'
     +'<span class="savestate" id="saveState">—</span></div>'
     /* 手機：＋ 展開的功能選單（代理點擊上面那些隱藏的按鈕，不重複邏輯）*/
     +'<div class="msheet" id="msheet" hidden>'
-      +'<button id="m_file" type="button">📎 上傳圖／手稿／PDF</button>'
+      +'<button id="m_file" type="button">'+ic('paperclip',18)+' 上傳圖／手稿／PDF</button>'
       +'<button id="m_doc" type="button">'+GDRIVE_SVG+' 從 Google Doc／Drive 匯入</button>'
-      +'<button id="m_deliver" type="button">🧩 彙整成正式提案</button>'
-      +'<button id="m_export" type="button">⬇ 匯出對話</button>'
-      +'<button id="m_restart" type="button">↻ 重新開始</button>'
+      +'<button id="m_deliver" type="button">'+ic('sparkles',18)+' 彙整成正式提案</button>'
+      +'<button id="m_export" type="button">'+ic('download',18)+' 匯出對話</button>'
+      +'<button id="m_restart" type="button">'+ic('rotate-ccw',18)+' 重新開始</button>'
       +'<div class="msheet-row">狀態：<select id="m_status"><option value="draft"'+(T.run.status==='draft'?' selected':'')+'>草稿</option><option value="in_review"'+(T.run.status==='in_review'?' selected':'')+'>送審</option><option value="done"'+(T.run.status==='done'?' selected':'')+'>完成</option></select><span class="savestate" id="saveState2">—</span></div>'
     +'</div>'
     +'</div><div class="refpanel" id="refpanel"></div></div>';
