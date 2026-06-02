@@ -102,7 +102,10 @@
   .ptable th { color:var(--dim); font-weight:600; font-size:11px; }
 
   /* 對談 */
-  .chat-head { display:flex; gap:14px; align-items:center; padding:12px 28px 0; flex:0 0 auto; }
+  .chat-head { display:flex; gap:10px; align-items:center; padding:12px 28px 0; flex:0 0 auto; flex-wrap:wrap; }
+  /* 麵包屑：回我選定的流程 › 目前流程（主從關係一行表示，省空間） */
+  .crumb-back { background:#f8d66d; color:#111318; border:none; font-weight:800; border-radius:8px; padding:7px 12px; font-size:13px; white-space:nowrap; }
+  .crumb-sep { color:#5a6270; font-weight:900; font-size:15px; }
   .chat-role { font-size:14px; color:var(--dim); }
   .chat-role b { color:var(--txt); }
   .chat-prog { margin-left:auto; display:flex; align-items:center; gap:10px; font-size:12px; color:var(--dim); }
@@ -191,8 +194,12 @@
     /* 省上方空間 */
     .breadcrumb{ padding:10px 14px; font-size:13px; } header{ padding:12px 14px 8px; } .sub{ display:none; }
     h1{ font-size:20px; }
-    .picker{ padding:10px 14px 0; gap:8px; } select{ min-width:0; flex:1 1 140px; font-size:16px; padding:11px 12px; }
-    .chat-head{ padding:10px 14px 0; flex-wrap:wrap; gap:8px; }
+    /* IP 下拉：正常單行高度（移除會讓 select 在直欄 .field 內縱向長高的 flex），字尾原生 ▾ */
+    .picker{ padding:10px 14px 0; gap:8px; align-items:center; } .field{ flex:1 1 auto; min-width:0; }
+    select{ min-width:0; width:100%; font-size:16px; padding:10px 12px; height:auto; }
+    /* 在流程對話頁，隱藏上方標題/麵包屑/IP選單列（資訊都收進下面那行麵包屑），省高度 */
+    body.flow-view .breadcrumb, body.flow-view header, body.flow-view .picker{ display:none; }
+    .chat-head{ padding:10px 14px 4px; flex-wrap:wrap; gap:6px 8px; align-items:center; }
     /* 關鍵：改 flex 直欄、讓 .chat 真正吃滿高度 → 對話區(.msgs)內部捲動，送出後新訊息會被帶到眼前
        （原本是 grid，列高=內容，導致整頁長高、新訊息跑到畫面外） */
     .runner{ display:flex; flex-direction:column; padding:10px 12px 0; }
@@ -338,6 +345,7 @@ async function myRunsForIp(ip){
 async function renderHome(){
   // 離開流程：作廢在途請求(nav++)、清流程脈絡、解除 busy → back/磚塊永遠回得來，不被卡住或被晚到的 AI 回應拉回對話。
   T.nav++; T.view='home'; T.skill=null; T.roleId=null; T.run=null; T.busy=false;
+  document.body.classList.remove('flow-view');   // 總覽頁：顯示標題/IP選單/流程選擇
   const area=$('runnerArea');
   area.innerHTML='<div class="empty">載入中…</div>';
   if(!T.ip){ area.innerHTML='<div class="empty">請先選 IP。</div>'; return; }
@@ -791,14 +799,16 @@ function bubbles(){
 function renderChat(){
   const area=$('runnerArea');
   if(!T.skill){ renderHome(); return; }
+  document.body.classList.add('flow-view');   // 流程對話頁：收起上方標題/IP選單，只留麵包屑
   const f=SKILL_FLOWS[T.skill]; const fl=curFlow();
   const _items=curDeliverables(); const _cov=(T.run&&T.run.responses&&T.run.responses.__coverage)||[];
   const _covd=_items.filter((d,i)=>_cov[i]&&_cov[i].status==='covered').length;
   const _cpct=_items.length?Math.round(_covd/_items.length*100):0;
   const _title=fl?esc(fl.emoji+' '+fl.zh):esc(f.label);
   const _chap=(fl&&fl.chapter)?('（'+(fl.chapter==='story'?'故事章節':'分鏡章節')+'）'):'';
-  area.innerHTML='<div class="chat-head"><button id="backBtn" style="background:#f8d66d;color:#111318;border-color:#f8d66d;font-weight:800">← 回我選定的流程</button>'
-    +'<div class="chat-role"><b>'+_title+'</b>'+_chap+' <span class="pill">'+esc(f.label)+'</span></div>'
+  area.innerHTML='<div class="chat-head"><button id="backBtn" class="crumb-back">‹ 回我選定的流程</button>'
+    +'<span class="crumb-sep">›</span>'
+    +'<span class="chat-role"><b>'+_title+'</b>'+_chap+'</span>'
     +(_items.length?'<div class="chat-prog"><span>覆蓋率 '+_cpct+'%・'+_covd+'/'+_items.length+'</span><div class="cbar"><i style="width:'+_cpct+'%"></i></div></div>':'')
     +'</div>'
     +'<div class="runner">'+renderGuide()+'<div class="chat">'
