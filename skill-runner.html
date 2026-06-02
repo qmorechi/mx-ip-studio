@@ -175,9 +175,12 @@
   .msg strong { color:var(--gold); }
   .typing { align-self:flex-start; color:var(--dim); font-size:13px; padding:6px 4px; }
   .composer { flex:0 0 auto; display:flex; gap:8px; align-items:stretch; padding:10px 0 4px; }   /* 三者等高切齊（桌機/手機一致） */
-  .composer textarea { flex:1; background:var(--panel2); color:var(--txt); border:1px solid var(--line); border-radius:10px;
+  /* 輸入框＝你的，框線用與「你的綠泡泡」一致的綠（UI 語彙：綠＝你）；送出也綠 */
+  .composer textarea { flex:1; background:var(--panel2); color:var(--txt); border:1px solid rgba(74,222,128,.45); border-radius:10px;
     padding:12px 14px; font:16px/1.55 inherit; outline:none; resize:none; min-height:48px; max-height:160px; }
-  .composer textarea:focus { border-color:var(--gold); }
+  .composer textarea:focus { border-color:#4ade80; box-shadow:0 0 0 2px rgba(74,222,128,.18); }
+  #sendBtn { background:#4ade80; color:#0d2417; border-color:#4ade80; font-weight:800; }
+  #sendBtn:hover { background:#5eea90; border-color:#5eea90; }
   /* ＋ 功能鍵與手機功能選單（桌機隱藏，用既有 toolbar） */
   .more-btn{ display:none; }
   .msheet{ display:none; }
