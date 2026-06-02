@@ -179,12 +179,26 @@
   .empty a { color:var(--gold); }
   @media (max-width:1200px){ .runner{ grid-template-columns:230px 1fr; } .refpanel{ display:none; } }
   @media (max-width:820px){
-    .runner{ grid-template-columns:1fr; }
+    /* 省上方空間 */
+    .breadcrumb{ padding:10px 14px; } header{ padding:12px 14px 8px; } .sub{ display:none; }
+    .picker{ padding:10px 14px 0; gap:8px; } select{ min-width:0; width:100%; }
+    .chat-head{ padding:10px 14px 0; flex-wrap:wrap; gap:8px; }
+    /* 關鍵：改 flex 直欄、讓 .chat 真正吃滿高度 → 對話區(.msgs)內部捲動，送出後新訊息會被帶到眼前
+       （原本是 grid，列高=內容，導致整頁長高、新訊息跑到畫面外） */
+    .runner{ display:flex; flex-direction:column; padding:10px 14px 0; }
     .guide{ display:none; }
-    /* 手機：背景卡(角色/本週重點)不可吃掉整個對話區——限高可內部捲動，並保證對話區最小可視高度 */
-    .roster-card, .premise-card { max-height:30vh; overflow:auto; }
-    .msgs { min-height:160px; }
-    .chat-head{ padding:12px 14px 0; } .runner{ padding:12px 14px 0; }
+    .chat{ flex:1 1 auto; min-height:0; }
+    /* 背景卡限高、可內捲，不再把對話區擠成 0 高 */
+    .roster-card, .premise-card{ max-height:24vh; overflow:auto; }
+    .msgs{ min-height:0; }
+    /* 放大字級好讀；textarea ≥16px 連帶避免 iOS 聚焦時自動放大整頁 */
+    .msg{ font-size:15.5px; line-height:1.75; max-width:92%; }
+    .msg .who{ font-size:11px; }
+    .typing{ font-size:14px; }
+    .composer textarea{ font-size:16px; }
+    .chat-role{ font-size:15px; }
+    .roster-card .rc-h, .roster-card .rc-item, .premise-card .pc-h, .premise-card .pc-row{ font-size:13.5px; }
+    button{ font-size:14px; }
   }
 </style>
 </head>
