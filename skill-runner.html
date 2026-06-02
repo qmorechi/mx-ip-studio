@@ -173,7 +173,7 @@
   .msg.user .who { color:var(--ok); }                                  /* 你＝青綠標籤 */
   .msg strong { color:var(--gold); }
   .typing { align-self:flex-start; color:var(--dim); font-size:13px; padding:6px 4px; }
-  .composer { flex:0 0 auto; display:flex; gap:8px; align-items:flex-end; padding:10px 0 4px; }
+  .composer { flex:0 0 auto; display:flex; gap:8px; align-items:stretch; padding:10px 0 4px; }   /* 三者等高切齊（桌機/手機一致） */
   .composer textarea { flex:1; background:var(--panel2); color:var(--txt); border:1px solid var(--line); border-radius:10px;
     padding:11px 13px; font:14px/1.5 inherit; outline:none; resize:none; min-height:48px; max-height:160px; }
   .composer textarea:focus { border-color:var(--gold); }
@@ -181,7 +181,7 @@
   .more-btn{ display:none; }
   .msheet{ display:none; }
   .msheet[hidden]{ display:none; }
-  .attach-btn { cursor:pointer; border:1px solid var(--line); border-radius:10px; padding:11px 13px; background:var(--panel2); font-size:17px; line-height:1; }
+  .attach-btn { cursor:pointer; border:1px solid var(--line); border-radius:10px; padding:0 14px; background:var(--panel2); font-size:17px; line-height:1; display:inline-flex; align-items:center; justify-content:center; }
   .attach-btn:hover { border-color:var(--gold); }
   .attach-row { display:flex; gap:8px; flex-wrap:wrap; padding:4px 0 0; }
   .thumb { position:relative; }
