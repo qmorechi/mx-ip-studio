@@ -28,7 +28,7 @@
   .field { display:flex; flex-direction:column; gap:4px; }
   .field label { font-size:11px; color:var(--dim); letter-spacing:.04em; }
   select { background:var(--panel2); color:var(--txt); border:1px solid var(--line); border-radius:8px;
-           padding:8px 11px; font:14px/1.4 inherit; outline:none; min-width:200px; }
+           padding:9px 12px; font-family:inherit; font-size:15px; line-height:1.4; outline:none; min-width:200px; }
   select:focus { border-color:var(--gold); }
   /* 用 longhand：font shorthand 配 inherit-family 不合法會被整條丟棄→吃預設小字。 */
   button { cursor:pointer; border:1px solid var(--line); border-radius:9px; padding:9px 15px; font-family:inherit; font-size:13.5px; line-height:1.2;
@@ -189,6 +189,8 @@
   .msheet[hidden]{ display:none; }
   .attach-btn { cursor:pointer; border:1px solid var(--line); border-radius:10px; padding:0 14px; background:var(--panel2); font-size:17px; line-height:1; display:inline-flex; align-items:center; justify-content:center; }
   .attach-btn:hover { border-color:var(--gold); }
+  .gdrive-ic { display:inline-block; vertical-align:middle; width:20px; height:20px; }
+  .msheet button .gdrive-ic { width:18px; height:18px; margin-right:7px; vertical-align:-4px; }
   .attach-row { display:flex; gap:8px; flex-wrap:wrap; padding:4px 0 0; }
   .thumb { position:relative; }
   .thumb img { width:54px; height:54px; object-fit:cover; border-radius:8px; border:1px solid var(--line); display:block; }
@@ -322,6 +324,8 @@ function showBanner(msg){ const b=$('banner'); if(!msg){ b.classList.add('hidden
 function pad2(n){ return (n<10?'0':'')+n; }
 function roleById(id){ return ROLE_DATA.roles.find(r=>r.id===id); }
 function ipName(id){ const m=(typeof IPS!=='undefined'?IPS:[]).find(x=>x.id===id); return m?m.name:id; }
+// Google Drive 官方多色 logo（inline SVG，不吊 CDN）；尺寸由 .gdrive-ic CSS 控，桌機/手機共用同一顆。
+const GDRIVE_SVG='<svg class="gdrive-ic" viewBox="0 0 87.3 78" aria-label="Google Drive"><path fill="#0066da" d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z"/><path fill="#00ac47" d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z"/><path fill="#ea4335" d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.5l5.85 11.5z"/><path fill="#00832d" d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z"/><path fill="#2684fc" d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z"/><path fill="#ffba00" d="M73.4 26.5L60.7 4.5c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z"/></svg>';
 
 // ── 附圖：圖片縮圖、影片抽關鍵影格（皆在前端轉成 jpeg dataURL）──
 function toPayload(d){ const m=/^data:(image\/[a-z]+);base64,(.+)$/.exec(d||''); return m?{media_type:m[1],data:m[2]}:null; }
@@ -863,7 +867,7 @@ function renderChat(){
       +'</div>':'')
     +'<div class="composer"><button class="more-btn" id="moreBtn" type="button" title="更多功能">＋</button>'
     +'<label class="attach-btn" title="上傳參考圖 / 手稿 / 影片 / PDF（影片自動抽影格、PDF 直接給 AI 讀）">📎<input type="file" id="fileInput" accept="image/*,video/*,application/pdf" multiple hidden></label>'
-    +'<button class="attach-btn" id="docBtn" type="button" title="從 Google Doc / Drive 匯入文字當素材"><svg class="gdrive-ic" viewBox="0 0 87.3 78" width="20" height="20" aria-label="Google Drive"><path fill="#0066da" d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z"/><path fill="#00ac47" d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z"/><path fill="#ea4335" d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.5l5.85 11.5z"/><path fill="#00832d" d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z"/><path fill="#2684fc" d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z"/><path fill="#ffba00" d="M73.4 26.5L60.7 4.5c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z"/></svg></button>'
+    +'<button class="attach-btn" id="docBtn" type="button" title="從 Google Doc / Drive 匯入文字當素材">'+GDRIVE_SVG+'</button>'
     +'<textarea id="input" placeholder="輸入你的回覆…（Enter 送出，＋可上傳圖/手稿）"'+(T.busy?' disabled':'')+'></textarea>'
     +'<button class="primary" id="sendBtn"'+(T.busy?' disabled':'')+'>送出</button></div>'
     +'<div class="toolbar"><button id="deliverBtn"'+(T.busy?' disabled':'')+'>🧩 彙整成正式提案（依 skill 規格）</button>'
@@ -875,7 +879,7 @@ function renderChat(){
     /* 手機：＋ 展開的功能選單（代理點擊上面那些隱藏的按鈕，不重複邏輯）*/
     +'<div class="msheet" id="msheet" hidden>'
       +'<button id="m_file" type="button">📎 上傳圖／手稿／PDF</button>'
-      +'<button id="m_doc" type="button">📄 從 Google Doc／Drive 匯入</button>'
+      +'<button id="m_doc" type="button">'+GDRIVE_SVG+' 從 Google Doc／Drive 匯入</button>'
       +'<button id="m_deliver" type="button">🧩 彙整成正式提案</button>'
       +'<button id="m_export" type="button">⬇ 匯出對話</button>'
       +'<button id="m_restart" type="button">↻ 重新開始</button>'
