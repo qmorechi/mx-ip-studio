@@ -316,33 +316,33 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
   </div>
 
   <div class="tabs">
-    <button class="tab-btn active" data-tab="roles">📋 流程指派</button>
-    <button class="tab-btn" data-tab="skills">📦 Skill 版本管理</button>
-    <button class="tab-btn" data-tab="engines">🤖 AI 引擎管理</button>
-    <button class="tab-btn" data-tab="projects">🗂️ IP 專案</button>
+    <button class="tab-btn active" data-tab="roles"><span data-ic="clipboard-list" data-sz="15"></span> 流程指派</button>
+    <button class="tab-btn" data-tab="skills"><span data-ic="package" data-sz="15"></span> Skill 版本管理</button>
+    <button class="tab-btn" data-tab="engines"><span data-ic="bot" data-sz="15"></span> AI 引擎管理</button>
+    <button class="tab-btn" data-tab="projects"><span data-ic="folder" data-sz="15"></span> IP 專案</button>
   </div>
 
   <div class="tab-panel active" id="tab-roles">
   <section class="block">
-    <h2>📊 進度</h2>
+    <h2><span data-ic="bar-chart" data-sz="17"></span> 進度</h2>
     <div class="progress-stats" id="progressStats"></div>
     <div class="progress-bar"><div class="progress-bar-fill" id="progressBarFill" style="width:0%"></div></div>
   </section>
 
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px;margin-bottom:18px">
     <section class="block" style="margin:0">
-      <h2>⚠ 還沒人參與的流程</h2>
+      <h2><span data-ic="alert-triangle" data-sz="17"></span> 還沒人參與的流程</h2>
       <div class="vacant-list" id="vacantList"></div>
     </section>
     <section class="block" style="margin:0">
-      <h2>👥 角色互動圖（唯讀）</h2>
+      <h2><span data-ic="users" data-sz="17"></span> 角色互動圖（唯讀）</h2>
       <p class="lead">這個 IP 的 22 角色互動節點圖 / 過載指標。角色定下來就很少動，疊在主控台上看、不換頁。</p>
       <button id="navRoles" class="hubOpen" data-roles="1" data-title="👥 角色互動圖（唯讀）" style="background:#20242c;color:#e8e6e0;border:1px solid rgba(255,255,255,.14);border-radius:9px;font-family:inherit;font-weight:800;font-size:13px;padding:9px 15px;cursor:pointer">🔗 開啟角色互動圖（浮層）</button>
     </section>
   </div>
 
   <section class="block">
-    <h2>🎯 流程 × 成員矩陣</h2>
+    <h2><span data-ic="target" data-sz="17"></span> 流程 × 成員矩陣</h2>
     <p class="lead">點任一格切換指派狀態(直接寫 Supabase,即時同步給所有人)。同色直欄代表同一階段。</p>
     <div class="matrix-wrap">
       <table class="matrix" id="matrixTable"></table>
@@ -350,7 +350,7 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
   </section>
 
   <section class="block">
-    <h2>📬 邀請發送</h2>
+    <h2><span data-ic="mail" data-sz="17"></span> 邀請發送</h2>
     <p class="lead">「📤 發 Slack」點開預覽訊息可編輯,確認後一鍵發到 webhook 對應的頻道(通常 <code>#mx-ip-提案</code> 或 <code>#mx-ip-通知</code>)。</p>
     <div class="config-row">
       <label for="baseUrl">連結網址前綴</label>
@@ -410,12 +410,12 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
 
   <div class="tab-panel" id="tab-projects">
     <section class="block">
-      <h2>🗂️ IP 專案</h2>
+      <h2><span data-ic="folder" data-sz="17"></span> IP 專案</h2>
       <p class="lead">只有「<b style="color:#71d1c2">上線中</b>」的 IP 會進 <a href="meeting.html" style="color:#c5a46b">本週開會包</a> 議程；「暫停」的 IP 大家仍可在 Skill Runner 持續充實內容，養好再上線、再拿出來討論。</p>
       <div id="ipTiles" style="margin-top:12px"></div>
     </section>
     <section class="block">
-      <h2>➕ 新增專案</h2>
+      <h2><span data-ic="plus" data-sz="17"></span> 新增專案</h2>
       <p class="lead">新案預設「暫停」，先在背景養內容，準備好再上線。</p>
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px">
         <input id="npName" placeholder="專案名稱（例：星際拉麵）" style="flex:1;min-width:160px;background:#20242c;border:1px solid rgba(255,255,255,.14);border-radius:8px;color:#e8e6e0;font-family:inherit;font-size:13px;padding:9px 11px">
