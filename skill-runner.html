@@ -802,8 +802,8 @@ function renderChat(){
     +(_items.length?'<div class="chat-prog"><span>覆蓋率 '+_cpct+'%・'+_covd+'/'+_items.length+'</span><div class="cbar"><i style="width:'+_cpct+'%"></i></div></div>':'')
     +'</div>'
     +'<div class="runner">'+renderGuide()+'<div class="chat">'
-    +renderPremiseCard()+renderRosterCard()
-    +'<div class="msgs" id="msgs">'+bubbles()+(T.busy?'<div class="typing">顧問思考中…</div>':'')+'</div>'
+    /* 背景卡放進可捲動的對話區頂端：對話一長就跟著被推上去捲走，不再永久佔住閱讀空間 */
+    +'<div class="msgs" id="msgs">'+renderPremiseCard()+renderRosterCard()+bubbles()+(T.busy?'<div class="typing">顧問思考中…</div>':'')+'</div>'
     +((T.pending.length||T.pendingDocs.length)?'<div class="attach-row">'
         +T.pending.map((d,i)=>'<div class="thumb"><img src="'+d+'"><button data-rm="'+i+'" title="移除">×</button></div>').join('')
         +T.pendingDocs.map((d,i)=>'<div class="doc-chip">📄 '+esc(d.name)+'<button data-rmd="'+i+'" title="移除">×</button></div>').join('')
