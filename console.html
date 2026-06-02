@@ -456,6 +456,15 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
 </div>
 
 <script>
+/* 重整防閃：主程式跑起來前，先依 hash/localStorage 把分頁切到上次那頁（避免先閃一下「流程指派」再跳回） */
+(function(){try{var t=(location.hash||'').slice(1)||localStorage.getItem('mxip_console_tab')||'';
+if(['skills','engines','projects'].indexOf(t)===-1)return;
+var bs=document.querySelectorAll('.tab-btn'); for(var i=0;i<bs.length;i++) bs[i].classList.toggle('active', bs[i].getAttribute('data-tab')===t);
+var ps=document.querySelectorAll('.tab-panel'); for(var j=0;j<ps.length;j++) ps[j].classList.toggle('active', ps[j].id==='tab-'+t);
+var pk=document.querySelector('.ip-picker'); if(pk) pk.style.display='none';
+}catch(e){}})();
+</script>
+<script>
 // ── Supabase 設定 ──
 const SB_URL  = 'https://cpzbwxgokmvayhzrvkqm.supabase.co';
 const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNwemJ3eGdva212YXloenJ2a3FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNTY1NTYsImV4cCI6MjA5NDkzMjU1Nn0.7d_pasAywneqOxOHFGlc1dpMJcUv1BDCvhV2jYLaAGE';
