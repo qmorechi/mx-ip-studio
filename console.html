@@ -6,6 +6,7 @@
 <title>MX-IP-Studio · 主控台</title>
 <style>
 *{box-sizing:border-box}
+.ic{display:inline-block;vertical-align:-.18em}
 body{margin:0;background:#0d0d0f;color:#e8e6e0;font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;min-height:100vh;line-height:1.5}
 .wrap{max-width:1200px;margin:0 auto;padding:28px 24px 60px}
 
@@ -262,6 +263,7 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
 <script src="members.js"></script>
 <script src="ips.js"></script>
 <script src="roles-data.js?v=2"></script>
+<script src="icons.js?v=1"></script>
 <!-- 方案 C / P1 登入層（草稿，未啟用前不影響運作） -->
 <script src="vendor/supabase.js"></script>
 <script src="auth.js?v=11"></script>
@@ -578,7 +580,7 @@ function renderVacant() {
     return;
   }
   el.innerHTML = vacant.map(f =>
-    `<span class="vacant-item">${f.emoji} ${f.zh}</span>`
+    `<span class="vacant-item">${flowIcon(f.key,14)} ${f.zh}</span>`
   ).join('');
 }
 
@@ -601,7 +603,7 @@ function renderMatrix() {
       return `<td class="member-cell ${on ? 'on' : ''}" data-role="${f.repId}" data-member="${m.id}" title="${m.name} × ${f.zh}">${on ? '✓' : ''}</td>`;
     }).join('');
     return `<tr>
-      <td class="role-cell" style="--c:${f.color}"><span class="role-num">${f.emoji}</span>${f.zh}</td>
+      <td class="role-cell" style="--c:${f.color}"><span class="role-num">${flowIcon(f.key,15)}</span>${f.zh}</td>
       ${cells}
       <td class="total-cell">${assigned.length}</td>
     </tr>`;

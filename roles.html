@@ -117,6 +117,7 @@ li{margin:.35em 0}
 <script src="members.js"></script>
 <script src="ips.js"></script>
 <script src="roles-data.js?v=2"></script>
+<script src="icons.js?v=1"></script>
 <!-- 方案 C / P1 登入層（草稿，未啟用前不影響運作） -->
 <script src="vendor/supabase.js"></script>
 <script src="auth.js?v=11"></script>
@@ -156,6 +157,7 @@ li{margin:.35em 0}
 .flow-card{min-height:auto}
 .flow-card.mine{box-shadow:0 0 0 2px color-mix(in srgb,var(--c),transparent 55%),0 20px 60px rgba(0,0,0,.28)}
 .flow-emoji{font-size:22px;margin-right:6px;vertical-align:middle}
+.ic{display:inline-block;vertical-align:-.18em}
 .flow-join{appearance:none;font-family:inherit;width:100%;margin:6px 0 4px;padding:12px 14px;border-radius:12px;border:1px solid var(--c);background:color-mix(in srgb,var(--c),transparent 86%);color:var(--c);font-weight:900;font-size:15px;cursor:pointer;transition:.15s transform,.15s background}
 .flow-join:hover{transform:translateY(-1px);background:color-mix(in srgb,var(--c),transparent 78%)}
 .flow-join.joined{background:var(--c);color:#111318;border-color:transparent}
@@ -367,8 +369,8 @@ function renderAfterFlow() {
       nudge = `<div class="all-done">🎉 你參與的 ${joined.length} 個流程都完成了！可以等下次會議，或再認領新的流程。</div>`;
     } else {
       const next = undone[0];
-      goLabel = '→ 去做下一個：' + next.emoji + ' ' + next.zh;
-      const chips = undone.map(f => `<span class="nn-chip" style="border-color:${f.color}66">${f.emoji} ${f.zh}・${flowStatus(f) === 'doing' ? '進行中' : '未開始'}</span>`).join('');
+      goLabel = '→ 去做下一個：' + flowIcon(next.key,14) + ' ' + next.zh;
+      const chips = undone.map(f => `<span class="nn-chip" style="border-color:${f.color}66">${flowIcon(f.key,13)} ${f.zh}・${flowStatus(f) === 'doing' ? '進行中' : '未開始'}</span>`).join('');
       nudge = `<div class="next-nudge">⚠️ 你參與了 ${joined.length} 個流程，還有 <b>${undone.length}</b> 個沒完成：
         <div class="nn-flows">${chips}</div>
         <div style="margin-top:8px;color:#cfc7bb;font-weight:600;font-size:12.5px">建議一個一個做完（提交提案檔＋連結、狀態設「完成」）再開下一個，負荷比較穩。</div>
@@ -389,7 +391,7 @@ function renderAfterFlow() {
 // ── render legend ──
 function renderLegend() {
   document.getElementById('legend').innerHTML = DATA.flows.map(f =>
-    `<span class="chip"><span style="color:${f.color}">●</span> ${f.emoji} ${f.zh}</span>`
+    `<span class="chip"><span style="color:${f.color}">●</span> ${flowIcon(f.key,14)} ${f.zh}</span>`
   ).join('');
 }
 
@@ -438,7 +440,7 @@ function flowCardHTML(f) {
     ? `<span class="flow-status-badge fsb-${stKey}">${stKey === 'done' ? '✅ 已完成' : stKey === 'doing' ? '🔵 進行中' : '⚪ 未開始'}</span>`
     : '';
   return `<article class="phase flow-card${mine ? ' mine' : ''}" id="flow-card-${f.key}" data-flow="${f.key}" style="--c:${f.color}">
-    <h2><span class="flow-emoji">${f.emoji}</span>${f.zh}${stBadge}</h2>
+    <h2><span class="flow-emoji">${flowIcon(f.key,22)}</span>${f.zh}${stBadge}</h2>
     <p>${f.desc}</p>
     ${control}
     <div class="flow-section-label">這個流程的協作專家（${f.collaborators.length}）</div>
@@ -492,7 +494,7 @@ function selectFlow(key) {
 
   detail.innerHTML = `
     <p class="panel-kicker">Flow Detail</p>
-    <h2>${f.emoji}｜${f.zh}</h2>
+    <h2>${flowIcon(f.key,20)} ${f.zh}</h2>
     <div class="en">${f.skill}${chap}</div>
     <div class="badge"><span class="dot"></span>${f.zh}</div>
     <div class="section-title">參與成員</div>
@@ -520,7 +522,7 @@ function renderMyPanel() {
   if (n >= 3)       { pillCls = 'warn-high'; pillTxt = `🛑 你跨了 ${n} 個流程，負荷偏高`; }
   else if (n === 2) { pillCls = 'warn-mid';  pillTxt = '⚠️ 跨 2 個流程'; }
   else if (n === 1) { pillCls = 'warn-ok';   pillTxt = '🟢 專注單一流程'; }
-  const chips = mine.map(k => { const f = DATA.flows.find(x => x.key === k); return `<span class="ov-chan" style="--cc:${f.color}">${f.emoji} ${f.zh}</span>`; }).join('');
+  const chips = mine.map(k => { const f = DATA.flows.find(x => x.key === k); return `<span class="ov-chan" style="--cc:${f.color}">${flowIcon(f.key,13)} ${f.zh}</span>`; }).join('');
   el.innerHTML = `
     <div class="mp-label">你的流程參與（在下方流程卡點「參與這個流程」加入，可多選；負荷越專注越好）</div>
     <div class="mp-overload">

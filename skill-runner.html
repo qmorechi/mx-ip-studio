@@ -343,9 +343,16 @@ const ICONS={
   package:'<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
   image:'<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.83 0L6 21"/>',
   users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
-  target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'
+  target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  /* 流程識別圖示（取代 🧠🎨🎬🎞️）*/
+  brain:'<path d="M12 5a3 3 0 1 0-5.997.142 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.142 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/>',
+  palette:'<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z"/>',
+  clapperboard:'<path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z"/><path d="m6.2 5.3 3.1 3.9"/><path d="m12.4 3.4 3.1 4"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
+  film:'<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/>'
 };
+const FLOW_ICON={ brand:'brain', character:'palette', story:'clapperboard', board:'film' };
 function ic(name,sz){ sz=sz||18; return '<svg class="ic" width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[name]||'')+'</svg>'; }
+function flowIcon(key,sz){ return ic(FLOW_ICON[key]||'target', sz||18); }
 
 // ── 附圖：圖片縮圖、影片抽關鍵影格（皆在前端轉成 jpeg dataURL）──
 function toPayload(d){ const m=/^data:(image\/[a-z]+);base64,(.+)$/.exec(d||''); return m?{media_type:m[1],data:m[2]}:null; }
@@ -447,7 +454,7 @@ async function renderHome(){
         const act=joined
           ? '<div class="tile-act"><span class="tile-go">點磚塊進入開工 →</span><button class="t-leave" data-leave="'+id+'">退出</button></div>'
           : '<div class="tile-act"><button class="t-join" data-join="'+id+'">＋ 參與這個流程</button></div>';
-        return '<div class="tile'+(joined?' joined':' unjoined')+'" data-id="'+id+'"><div class="rn">'+esc(f.emoji+' '+f.zh)+chap+'</div>'
+        return '<div class="tile'+(joined?' joined':' unjoined')+'" data-id="'+id+'"><div class="rn">'+flowIcon(f.key,14)+' '+esc(f.zh)+chap+'</div>'
           +'<div class="rname">'+esc(SKILL_FLOWS[sk].label)+'</div><div class="rscope">'+esc(f.desc)+'</div>'
           +'<div class="tbar"><i style="width:'+(joined?tp:0)+'%"></i></div>'
           + stat + act + '</div>';
@@ -871,7 +878,7 @@ function renderChat(){
   const _items=curDeliverables(); const _cov=(T.run&&T.run.responses&&T.run.responses.__coverage)||[];
   const _covd=_items.filter((d,i)=>_cov[i]&&_cov[i].status==='covered').length;
   const _cpct=_items.length?Math.round(_covd/_items.length*100):0;
-  const _title=fl?esc(fl.emoji+' '+fl.zh):esc(f.label);
+  const _title=fl?(flowIcon(fl.key,17)+' '+esc(fl.zh)):esc(f.label);
   const _chap=(fl&&fl.chapter)?('（'+(fl.chapter==='story'?'故事章節':'分鏡章節')+'）'):'';
   area.innerHTML='<div class="chat-head"><button id="backBtn" class="crumb-back">'+ic('chevron-left',16)+' 回我選定的流程</button>'
     +'<span class="crumb-sep">'+ic('chevron-right',16)+'</span>'
