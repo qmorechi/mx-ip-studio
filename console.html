@@ -364,7 +364,7 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
     </div>
     <div id="inviteList"></div>
     <div class="invite-bulk">
-      <button class="big-copy" id="sendAll">📤 發送全員通知到 Slack</button>
+      <button class="big-copy" id="sendAll"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> 發送全員通知到 Slack</button>
     </div>
   </section>
   </div><!-- /tab-roles -->
@@ -377,7 +377,7 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
       <button class="hubOpen" data-src="ray-upload.html?type=skill" data-title="🚀 發布新版本" style="background:#c5a46b;color:#111318;border:none;border-radius:8px;font-family:inherit;font-weight:800;font-size:13px;padding:9px 15px;cursor:pointer">🚀 發布新版 Skill（進測試環）</button>
     </div>
     <div class="gov-summary" id="skillSummary"></div>
-    <div class="gov-section-title">📦 各 Skill 版本狀態 <span class="sub">穩定版 = 操作員當前使用 · 最新版 = Ray 剛推</span></div>
+    <div class="gov-section-title"><svg class="ic" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> 各 Skill 版本狀態 <span class="sub">穩定版 = 操作員當前使用 · 最新版 = Ray 剛推</span></div>
     <div class="skill-cards" id="skillCards"></div>
     <div class="rings-wrap">
       <div class="rings-head">
@@ -397,10 +397,10 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
     <div class="ray-only" style="margin:0 0 16px;display:none">
       <button class="hubOpen" data-src="ray-upload.html?type=engine" data-title="🚀 發布新版本" style="background:#c5a46b;color:#111318;border:none;border-radius:8px;font-family:inherit;font-weight:800;font-size:13px;padding:9px 15px;cursor:pointer">🚀 發布新引擎配置（進測試環）</button>
     </div>
-    <div class="gov-section-title">📌 當前部署中的引擎配置</div>
+    <div class="gov-section-title"><svg class="ic" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg> 當前部署中的引擎配置</div>
     <div id="engineCurrent"></div>
     <div class="map-wrap">
-      <div class="map-head"><h3>🎯 任務 → 最佳引擎對應</h3><p>每個生成任務當前用哪個引擎 · 「上次變更」顯示對應會隨時間漂移</p></div>
+      <div class="map-head"><h3><svg class="ic" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> 任務 → 最佳引擎對應</h3><p>每個生成任務當前用哪個引擎 · 「上次變更」顯示對應會隨時間漂移</p></div>
       <div class="map-scroll"><table class="mapping" id="mappingTable"></table></div>
     </div>
     <div class="gov-section-title">🤖 引擎登錄表 <span class="sub">所有可用引擎 · 啟用 / 測試中 / 停用</span></div>
@@ -704,8 +704,8 @@ function renderInviteList() {
         <div class="invite-url">${urlFor(m.id)}</div>
       </div>
       <div class="invite-actions">
-        <button class="copy" data-action="url" data-id="${m.id}">📋 連結</button>
-        <button class="copy" data-action="slack" data-id="${m.id}">📤 發 Slack</button>
+        <button class="copy" data-action="url" data-id="${m.id}">${ic('copy',13)} 連結</button>
+        <button class="copy" data-action="slack" data-id="${m.id}">${ic('mail',13)} 發 Slack</button>
       </div>
     </div>
   `).join('');
@@ -918,7 +918,7 @@ function renderSkillTab(){
 function renderSkillCard(s){
   const hasUpdate = s.stable !== s.latest.version;
   const latestCls = s.status==='new' ? 'new' : s.status==='bug' ? 'bug' : 'same';
-  let actions = `<button class="act-btn ghost" data-act="hist" data-key="${s.key}">📜 版本紀錄</button>`;
+  let actions = `<button class="act-btn ghost" data-act="hist" data-key="${s.key}">${ic('clipboard',13)} 版本紀錄</button>`;
   // 升級到穩定版＝qmore（admin）把關專屬；Ray（backend）看不到這顆。
   if(MYROLE.admin && s.status==='new') actions += `<button class="act-btn promote" data-act="promote" data-key="${s.key}" data-ver="${s.latest.version}">⬆️ 升級到穩定版</button>`;
   else if(MYROLE.admin && s.status==='bug') actions += `<button class="act-btn promote disabled" disabled>⬆️ 升級（已鎖）</button>`;
@@ -1035,7 +1035,7 @@ function renderEngineTab(){
       <div class="config-ver">engine_config ${esc(cur.version)} <span class="badge-stable">🟢 STABLE · 雲端運行中</span></div>
       <div class="config-meta">部署於 ${esc(cur.deployed_at)} · 由 ${esc(cur.deployed_by)} 部署 · 涵蓋 ${maps.length} 種生成任務</div>
     </div>
-    <div class="config-actions">${MYROLE.admin ? '<button class="act-btn deploy" id="deployBtn">🚀 部署新版</button>' : ''}</div>
+    <div class="config-actions">${MYROLE.admin ? '<button class="act-btn deploy" id="deployBtn"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91 0z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg> 部署新版</button>' : ''}</div>
   </div>`;
   mapEl.innerHTML = maps.length
     ? `<thead><tr><th>生成任務</th><th>當前推薦引擎</th><th>上次變更</th><th>替代選項</th></tr></thead><tbody>`
