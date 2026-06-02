@@ -178,7 +178,14 @@
   .empty { color:var(--dim); font-size:14px; padding:48px 20px; text-align:center; line-height:1.9; }
   .empty a { color:var(--gold); }
   @media (max-width:1200px){ .runner{ grid-template-columns:230px 1fr; } .refpanel{ display:none; } }
-  @media (max-width:820px){ .runner{ grid-template-columns:1fr; } .guide{ display:none; } }
+  @media (max-width:820px){
+    .runner{ grid-template-columns:1fr; }
+    .guide{ display:none; }
+    /* 手機：背景卡(角色/本週重點)不可吃掉整個對話區——限高可內部捲動，並保證對話區最小可視高度 */
+    .roster-card, .premise-card { max-height:30vh; overflow:auto; }
+    .msgs { min-height:160px; }
+    .chat-head{ padding:12px 14px 0; } .runner{ padding:12px 14px 0; }
+  }
 </style>
 </head>
 <body>
