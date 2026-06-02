@@ -820,7 +820,7 @@ function renderLinks(){
 function renderDeliverable(){
   if(!T.roleId) return '';
   const d=T.run&&T.run.responses&&T.run.responses.__deliverable;
-  if(!d||!d.text) return '<div class="covbox" style="border:1px solid rgba(242,179,94,.3)"><h3>'+ic('package',15)+' 正式提案</h3><div style="font-size:11.5px;color:var(--dim)">還沒彙整。對談到一段落，按下方「🧩 彙整成正式提案」依 skill 規格產出統一格式，開會包就會顯示給大家。</div></div>';
+  if(!d||!d.text) return '<div class="covbox" style="border:1px solid rgba(242,179,94,.3)"><h3>'+ic('package',15)+' 正式提案</h3><div style="font-size:11.5px;color:var(--dim)">還沒彙整。對談到一段落，按下方「'+ic('sparkles',13)+' 彙整成正式提案」依 skill 規格產出統一格式，開會包就會顯示給大家。</div></div>';
   return '<div class="covbox" style="border:1px solid rgba(113,209,194,.45)"><h3>'+ic('package',15)+' 正式提案 ✅</h3><div style="font-size:11.5px;color:var(--dim)">已依 skill 規格彙整（'+esc(new Date(d.at).toLocaleString("zh-TW"))+'）。再按「彙整」會更新；狀態設「完成」即正式提交，開會包顯示這份。</div></div>';
 }
 function promptList(){ return (T.run && T.run.responses && Array.isArray(T.run.responses.__prompts)) ? T.run.responses.__prompts : []; }
@@ -829,7 +829,7 @@ function renderPrompts(){
   if(!T.roleId) return '';
   const ps=promptList(); if(!ps.length) return '';
   return '<div class="covbox" style="border:1px solid rgba(141,211,255,.4)"><h3>'+ic('image',15)+' 生圖 Prompt（'+ps.length+'）· 選一個複製去生圖</h3>'
-    + '<div style="font-size:11px;color:var(--dim);margin:-4px 0 8px;line-height:1.55">① 複製 Prompt → ② 貼到 <b style="color:#71d1c2">Gemini</b> / <b style="color:#f8d66d">ChatGPT</b> 生成提案檔/圖 → ③ 回來用上方「🔗 提案連結」貼上連結 → ④ 把右下角狀態設「<b style="color:#71d1c2">完成</b>」，這個流程才算結案。同畫面有兩版時自己挑要用哪個。</div>'
+    + '<div style="font-size:11px;color:var(--dim);margin:-4px 0 8px;line-height:1.55">① 複製 Prompt → ② 貼到 <b style="color:#71d1c2">Gemini</b> / <b style="color:#f8d66d">ChatGPT</b> 生成提案檔/圖 → ③ 回來用上方「'+ic('link',13)+' 提案連結」貼上連結 → ④ 把右下角狀態設「<b style="color:#71d1c2">完成</b>」，這個流程才算結案。同畫面有兩版時自己挑要用哪個。</div>'
     + ps.map((p,i)=>{ const tool=String(p.tool||'').toLowerCase();
         const badge=tool.indexOf('gemini')>=0?'<span style="background:rgba(113,209,194,.18);color:#71d1c2;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px">Gemini</span>':'<span style="background:rgba(248,214,109,.18);color:#f8d66d;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px">ChatGPT</span>';
         return '<div style="background:#1a1e25;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 10px;margin:6px 0">'
