@@ -30,7 +30,8 @@
   select { background:var(--panel2); color:var(--txt); border:1px solid var(--line); border-radius:8px;
            padding:8px 11px; font:14px/1.4 inherit; outline:none; min-width:200px; }
   select:focus { border-color:var(--gold); }
-  button { cursor:pointer; border:1px solid var(--line); border-radius:9px; padding:9px 15px; font:13px/1 inherit;
+  /* 用 longhand：font shorthand 配 inherit-family 不合法會被整條丟棄→吃預設小字。 */
+  button { cursor:pointer; border:1px solid var(--line); border-radius:9px; padding:9px 15px; font-family:inherit; font-size:13.5px; line-height:1.2;
            background:var(--panel2); color:var(--txt); white-space:nowrap; }
   button:hover { border-color:var(--gold); }
   button.primary { background:var(--gold); color:#1a1408; border-color:var(--gold); font-weight:700; }
@@ -180,7 +181,7 @@
   .composer textarea { flex:1; background:var(--panel2); color:var(--txt); border:1px solid rgba(74,222,128,.45); border-radius:10px;
     padding:13px 15px; font-family:inherit; font-size:15px; line-height:1.6; outline:none; resize:none; min-height:50px; max-height:170px; }
   .composer textarea:focus { border-color:#4ade80; box-shadow:0 0 0 2px rgba(74,222,128,.18); }
-  #sendBtn { background:#4ade80; color:#0d2417; border-color:#4ade80; font-weight:800; }
+  #sendBtn { background:#4ade80; color:#0d2417; border-color:#4ade80; font-weight:800; font-size:15px; }   /* 與對話內文同大 */
   #sendBtn:hover { background:#5eea90; border-color:#5eea90; }
   /* ＋ 功能鍵與手機功能選單（桌機隱藏，用既有 toolbar） */
   .more-btn{ display:none; }
