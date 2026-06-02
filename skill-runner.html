@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>MX IP STUDIO｜Skill Runner 引導式產出</title>
 <style>
   :root { --bg:#0d0d0f; --panel:#161618; --panel2:#1c1c20; --line:#2a2a30;
@@ -179,26 +179,35 @@
   .empty a { color:var(--gold); }
   @media (max-width:1200px){ .runner{ grid-template-columns:230px 1fr; } .refpanel{ display:none; } }
   @media (max-width:820px){
+    /* 不讓任何元素撐出畫面寬度（橫向溢出會讓整頁被壓縮→字看起來小、聚焦又被放大） */
+    html, body{ overflow-x:hidden; }
     /* 省上方空間 */
-    .breadcrumb{ padding:10px 14px; } header{ padding:12px 14px 8px; } .sub{ display:none; }
-    .picker{ padding:10px 14px 0; gap:8px; } select{ min-width:0; width:100%; }
+    .breadcrumb{ padding:10px 14px; font-size:13px; } header{ padding:12px 14px 8px; } .sub{ display:none; }
+    h1{ font-size:20px; }
+    .picker{ padding:10px 14px 0; gap:8px; } select{ min-width:0; flex:1 1 140px; font-size:16px; padding:11px 12px; }
     .chat-head{ padding:10px 14px 0; flex-wrap:wrap; gap:8px; }
     /* 關鍵：改 flex 直欄、讓 .chat 真正吃滿高度 → 對話區(.msgs)內部捲動，送出後新訊息會被帶到眼前
        （原本是 grid，列高=內容，導致整頁長高、新訊息跑到畫面外） */
-    .runner{ display:flex; flex-direction:column; padding:10px 14px 0; }
+    .runner{ display:flex; flex-direction:column; padding:10px 12px 0; }
     .guide{ display:none; }
     .chat{ flex:1 1 auto; min-height:0; }
     /* 背景卡限高、可內捲，不再把對話區擠成 0 高 */
-    .roster-card, .premise-card{ max-height:24vh; overflow:auto; }
-    .msgs{ min-height:0; }
-    /* 放大字級好讀；textarea ≥16px 連帶避免 iOS 聚焦時自動放大整頁 */
-    .msg{ font-size:15.5px; line-height:1.75; max-width:92%; }
-    .msg .who{ font-size:11px; }
-    .typing{ font-size:14px; }
-    .composer textarea{ font-size:16px; }
-    .chat-role{ font-size:15px; }
-    .roster-card .rc-h, .roster-card .rc-item, .premise-card .pc-h, .premise-card .pc-row{ font-size:13.5px; }
-    button{ font-size:14px; }
+    .roster-card, .premise-card{ max-height:22vh; overflow:auto; }
+    .msgs{ min-height:0; gap:14px; }
+    /* 字級整體放大、好讀（手機拿在手上閱讀距離較近也夠大）；輸入框 16px 配合 maximum-scale 杜絕聚焦放大 */
+    .msg{ font-size:17px; line-height:1.85; max-width:94%; padding:12px 15px; }
+    .msg .who{ font-size:12px; }
+    .typing{ font-size:15px; }
+    .composer textarea{ font-size:16px; min-height:54px; padding:13px 14px; }
+    .composer{ gap:7px; }
+    .chat-role{ font-size:16px; }
+    .roster-card .rc-h, .premise-card .pc-h{ font-size:14.5px; }
+    .roster-card .rc-item, .premise-card .pc-row{ font-size:15px; line-height:1.65; }
+    .roster-card .rc-sub, .premise-card .pc-sub{ font-size:12.5px; }
+    .weekdiv{ font-size:14px; }
+    /* 長按鈕在手機可換行、不撐破版面（消除壓縮感與橫向溢出） */
+    button{ font-size:15px; white-space:normal; padding:11px 14px; }
+    .toolbar{ gap:8px; }
   }
 </style>
 </head>
