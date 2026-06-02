@@ -69,6 +69,19 @@
   .tile .tbar { height:5px; background:#0e0e10; border-radius:4px; overflow:hidden; margin:11px 0 0; }
   .tile .tbar > i { display:block; height:100%; background:var(--ok); transition:width .3s; }
   .tile .tstat { margin-top:8px; display:flex; gap:8px; align-items:center; }
+  /* 總覽＝選流程＋開工二合一：磚塊上的參與/退出控制 */
+  .home-hint { font-size:12.5px; color:var(--dim); line-height:1.6; margin:2px 0 12px; }
+  .tile-act { margin-top:11px; display:flex; align-items:center; gap:10px; }
+  .tile-go { font-size:11.5px; color:var(--gold); font-weight:700; }
+  .t-join { background:var(--gold); color:#1a1408; border:none; border-radius:8px; font-weight:800; padding:9px 13px; font-size:13px; white-space:nowrap; }
+  .t-leave { margin-left:auto; background:transparent; border:1px solid var(--line); color:var(--dim); border-radius:7px; padding:6px 11px; font-size:11.5px; }
+  .t-leave:hover { border-color:#ff8b73; color:#ffd8cf; }
+  .tile.unjoined { cursor:default; }
+  .tile.unjoined:hover { transform:none; border-color:var(--line); border-top-color:var(--line); box-shadow:none; }
+  .tile.unjoined .tbar { display:none; }
+  .home-foot { margin:14px 2px 4px; }
+  .home-foot a { color:var(--dim); font-size:12px; text-decoration:none; }
+  .home-foot a:hover { color:var(--gold); }
   .pstat { display:inline-block; font-size:11px; padding:2px 10px; border-radius:20px; }
   .s-todo{ background:rgba(122,120,112,.18); color:var(--dim); }
   .s-doing{ background:rgba(141,211,255,.16); color:#8dd3ff; }
@@ -254,7 +267,6 @@
 
 <div class="picker">
   <div class="field"><label>IP 計畫</label><select id="ipSel"></select></div>
-  <button id="rolesLink" style="margin-left:auto" title="選你要參與的流程；之後隨時回來檢索或調整">🗂 流程選擇 / 總覽</button>
 </div>
 
 <div id="runnerArea" style="flex:1 1 auto; min-height:0; display:flex; flex-direction:column;"></div>
@@ -340,6 +352,20 @@ async function myRunsForIp(ip){
   try{ const r=await fetch(SB+'/rest/v1/skill_runs?member_id=eq.'+encodeURIComponent(memberId())+'&ip_id=eq.'+encodeURIComponent(ip)+'&select=skill_id,status,updated_at,coverage:responses->__coverage',{headers:MXIPAuth.authHeaders()});
     if(r.ok){ T.online=true; return await r.json(); } T.online=false; return []; }catch(e){ T.online=false; return []; }
 }
+// 參與/退出流程（寫 role_members；與舊 roles.html 同一張表、同一把手 repId）→ 把「流程選擇」併進總覽頁。
+async function joinFlow(repId){
+  const me=memberId(); if(!me) return;
+  // 與 roles.html 同：純 POST（join 鈕只在未參與時出現，重複機率低；萬一重複由 RLS/唯一鍵擋、catch 吞掉）。
+  try{ await fetch(SB+'/rest/v1/role_members',{ method:'POST', headers:MXIPAuth.authHeaders({'Prefer':'return=minimal'}), body:JSON.stringify({ ip_id:T.ip, role_id:repId, member_id:me }) }); }
+  catch(e){ console.warn('join failed',e); }
+  await renderHome();
+}
+async function leaveFlow(repId){
+  const me=memberId(); if(!me) return;
+  try{ await fetch(SB+'/rest/v1/role_members?ip_id=eq.'+encodeURIComponent(T.ip)+'&role_id=eq.'+repId+'&member_id=eq.'+encodeURIComponent(me),{ method:'DELETE', headers:MXIPAuth.authHeaders({'Prefer':'return=minimal'}) }); }
+  catch(e){ console.warn('leave failed',e); }
+  await renderHome();
+}
 
 // ── 首頁：磚塊牆 ──
 async function renderHome(){
@@ -375,7 +401,8 @@ async function renderHome(){
     + '<button id="digestBtn">📋 本週成果</button>'
     + (T.isAdmin?'<button id="teamBtn">📊 全 IP 進度表</button>':'')
     + '</div>'
-    + (noneJoined?'<div class="empty" style="margin:10px 0">你在這個 IP 還沒選流程——下面四個流程都壓暗了。請先到 <a href="roles.html?ip='+esc(T.ip)+'">流程選擇頁</a> 選好你要參與的流程，再回來開工。</div>':'')
+    + '<div class="home-hint">這裡同時選流程＋開工：未參與的點「＋ 參與」加入，參與後點磚塊進去跟 AI 顧問一次做完。完成＝在流程裡彙整提案＋貼連結＋狀態設「完成」。</div>'
+    + (noneJoined?'<div class="empty" style="margin:8px 0">你在這個 IP 還沒參與任何流程——挑下面想做的點「＋ 參與這個流程」就能開工。</div>':'')
     + '<div id="myTodos"></div><div class="tiles">'
     + allReps.map(id=>{ const f=ROLE_DATA.flowByRep[id]; if(!f) return ''; const c=cmap[id]; const sk=ROLE_SKILL[id];
         const joined=myReps.includes(id);
@@ -383,15 +410,22 @@ async function renderHome(){
         const chap=f.chapter?('（'+(f.chapter==='story'?'故事章節':'分鏡章節')+'）'):'';
         const stat=joined
           ? '<div class="tstat"><span class="pstat s-'+c.s+'">'+LBL[c.s]+'</span><span style="font-size:11px;color:var(--dim)">'+tp+'%・涵蓋 '+c.covered+'/'+c.total+'</span>'+(c.wk?'<span class="wk">● 本週</span>':'')+'</div>'
-          : '<div class="tstat"><span class="pstat s-locked">🔒 未參與</span><span style="font-size:11px;color:var(--dim)">到流程選擇頁加入</span></div>';
-        return '<div class="tile'+(joined?'':' dim')+'" data-id="'+id+'"'+(joined?'':' title="你沒有參與這個流程——到流程選擇頁加入後才會在這裡開工"')+'><div class="rn">'+esc(f.emoji+' '+f.zh)+chap+'</div>'
+          : '<div class="tstat"><span class="pstat s-todo">尚未參與</span></div>';
+        const act=joined
+          ? '<div class="tile-act"><span class="tile-go">點磚塊進入開工 →</span><button class="t-leave" data-leave="'+id+'">退出</button></div>'
+          : '<div class="tile-act"><button class="t-join" data-join="'+id+'">＋ 參與這個流程</button></div>';
+        return '<div class="tile'+(joined?' joined':' unjoined')+'" data-id="'+id+'"><div class="rn">'+esc(f.emoji+' '+f.zh)+chap+'</div>'
           +'<div class="rname">'+esc(SKILL_FLOWS[sk].label)+'</div><div class="rscope">'+esc(f.desc)+'</div>'
           +'<div class="tbar"><i style="width:'+(joined?tp:0)+'%"></i></div>'
-          + stat + '</div>';
+          + stat + act + '</div>';
       }).join('')
-    + '</div><div class="home-gallery" id="homeGallery"></div></div>';
+    + '</div>'
+    + '<div class="home-foot"><a href="roles.html?u='+esc(memberId()||'')+'&ip='+esc(T.ip)+'">↗ 看每條流程的協作專家與權責（流程細節頁）</a></div>'
+    + '<div class="home-gallery" id="homeGallery"></div></div>';
   area.innerHTML=html;
-  document.querySelectorAll('.tile:not(.dim)').forEach(t=>t.onclick=()=>openRole(+t.dataset.id));
+  document.querySelectorAll('.tile.joined').forEach(t=>t.onclick=()=>openRole(+t.dataset.id));
+  document.querySelectorAll('[data-join]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); joinFlow(+b.dataset.join); });
+  document.querySelectorAll('[data-leave]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); if(confirm('退出後這條流程不再出現在你的開工清單（已產出的內容會保留，重新參與即可繼續）。確定退出？')) leaveFlow(+b.dataset.leave); });
   if($('teamBtn')) $('teamBtn').onclick=()=>renderTeamTable();
   if($('digestBtn')) $('digestBtn').onclick=()=>renderWeeklyDigest();
   fillGallery('homeGallery', true);
@@ -1024,7 +1058,6 @@ async function boot(){
   if(_qip && Array.from($('ipSel').options).some(o=>o.value===_qip)) $('ipSel').value=_qip;
   T.ip=$('ipSel').value;
   $('ipSel').onchange=onIpChange;
-  if($('rolesLink')) $('rolesLink').onclick=()=>{ location.href='roles.html?u='+encodeURIComponent(memberId())+'&ip='+encodeURIComponent(T.ip||''); };
   if($('lightbox')) $('lightbox').onclick=()=>$('lightbox').classList.remove('on');
   document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ const l=$('lightbox'); if(l) l.classList.remove('on'); } });
   // 只有「瀏覽器重整」才還原上次流程；正常進入或從別頁切回 → 顯示總覽頁，並清掉上次流程記憶
