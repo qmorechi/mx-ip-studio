@@ -1060,6 +1060,16 @@ async function loadEngines(){
   }catch(e){ console.warn('loadEngines failed', e); setSyncState('error'); engineState = {versions:[], current:null, error:String(e)}; }
 }
 
+// 任務 channel 前綴 emoji（存在 engine_config 資料裡）→ Lucide flow 圖示（與全站流程圖示一致）。
+// 純前端轉換,不動 DB；未知前綴則原樣顯示。
+const CH_ICON = { '👤':'palette', '🎬':'film' };
+function chLabel(ch){
+  ch = String(ch || '');
+  for(const e in CH_ICON){
+    if(ch.startsWith(e)) return ic(CH_ICON[e],12) + ' ' + esc(ch.slice(e.length).replace(/^\s+/,''));
+  }
+  return esc(ch);
+}
 function renderEngineTab(){
   if(!engineState) return;
   const cur = engineState.current;
@@ -1083,7 +1093,7 @@ function renderEngineTab(){
   mapEl.innerHTML = maps.length
     ? `<thead><tr><th>生成任務</th><th>當前推薦引擎</th><th>上次變更</th><th>替代選項</th></tr></thead><tbody>`
       + maps.map(m=>`<tr>
-          <td><div class="task-name">${esc(m.task)}</div><div class="task-channel">${esc(m.channel)}</div></td>
+          <td><div class="task-name">${esc(m.task)}</div><div class="task-channel">${chLabel(m.channel)}</div></td>
           <td><span class="engine-pill"><span class="vendor-dot ${esc(m.vendor||'other')}"></span>${ic('star',12,'#f8d66d')} ${esc(m.engine)}</span></td>
           <td><span class="changed-tag ${m.changed==='W22'?'':'stable-tag'}">${esc(m.changed)}</span></td>
           <td><span class="alt-engines">${esc(m.alts||'—')}</span></td>
