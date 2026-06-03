@@ -60,10 +60,15 @@ table.matrix th, table.matrix td{padding:6px 4px;text-align:center;border-bottom
 table.matrix thead th{background:#0d0d0f;position:sticky;top:0;color:#a3a097;font-weight:900;font-size:11px;text-transform:uppercase;letter-spacing:.03em;padding:8px 4px}
 table.matrix .role-cell{text-align:left;padding:6px 10px 6px 6px;color:#e8e6e0;font-weight:700;white-space:nowrap;min-width:200px}
 table.matrix .role-num{display:inline-grid;place-items:center;width:24px;height:18px;border-radius:999px;background:var(--c);color:#111318;font-weight:950;font-size:10px;margin-right:6px}
-table.matrix .member-cell{cursor:pointer;width:48px;height:34px;user-select:none;transition:.15s background}
-table.matrix .member-cell:hover{background:rgba(255,255,255,.06)}
+table.matrix .member-cell{cursor:default;width:48px;height:34px;user-select:none;transition:.15s background}
+table.matrix.editing .member-cell{cursor:pointer}
+table.matrix.editing .member-cell:hover{background:rgba(255,255,255,.06)}
 table.matrix .member-cell.on{background:rgba(74,222,128,.15);color:#86efac;font-weight:900;font-size:14px}
-table.matrix .member-cell.on:hover{background:rgba(255,139,115,.18);color:#ff8b73}
+table.matrix.editing .member-cell.on:hover{background:rgba(255,139,115,.18);color:#ff8b73}
+/* 編輯模式：唯讀為預設,點「編輯指派」才解鎖,避免誤觸 */
+.matrix-wrap.editing{outline:2px solid rgba(197,164,107,.55);outline-offset:5px;border-radius:10px}
+#matrixEditBtn{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12px}
+#matrixEditBtn.editing-on{background:#c5a46b;color:#111318;border-color:#c5a46b}
 table.matrix .total-cell{color:#a3a097;font-weight:700;font-size:11px;padding-left:14px;text-align:right}
 table.matrix tfoot th{padding-top:10px;color:#a3a097;font-weight:700;font-size:11px}
 
@@ -342,8 +347,10 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
   </div>
 
   <section class="block">
-    <h2><span data-ic="target" data-sz="17"></span> 流程 × 成員矩陣</h2>
-    <p class="lead">點任一格切換指派狀態(直接寫 Supabase,即時同步給所有人)。同色直欄代表同一階段。</p>
+    <h2><span data-ic="target" data-sz="17"></span> 流程 × 成員矩陣
+      <button id="matrixEditBtn" class="act-btn ghost" type="button"><span data-ic="square-pen" data-sz="13"></span> 編輯指派</button>
+    </h2>
+    <p class="lead" id="matrixLead">唯讀檢視中——點右上「編輯指派」才能切換格子,避免誤觸。同色直欄代表同一階段。</p>
     <div class="matrix-wrap">
       <table class="matrix" id="matrixTable"></table>
     </div>
@@ -630,6 +637,7 @@ function renderMatrix() {
   // 綁定點擊
   table.querySelectorAll('.member-cell').forEach(cell => {
     cell.addEventListener('click', async () => {
+      if (!matrixEditMode) return;   // 唯讀模式不接受切換,避免誤觸
       const roleId = Number(cell.dataset.role);
       const memberId = cell.dataset.member;
       // 樂觀更新 UI
@@ -643,7 +651,32 @@ function renderMatrix() {
       updateMatrixTotals();
     });
   });
+  // 重建表格後,若仍在編輯模式要把解鎖狀態套回來
+  setMatrixEdit(matrixEditMode);
 }
+
+// ── 矩陣編輯模式（預設唯讀,避免誤觸他人指派）──
+let matrixEditMode = false;
+function setMatrixEdit(on) {
+  matrixEditMode = on;
+  const table = document.getElementById('matrixTable');
+  const wrap = table ? table.closest('.matrix-wrap') : null;
+  const btn = document.getElementById('matrixEditBtn');
+  const lead = document.getElementById('matrixLead');
+  if (table) table.classList.toggle('editing', on);
+  if (wrap) wrap.classList.toggle('editing', on);
+  if (btn) {
+    btn.classList.toggle('editing-on', on);
+    btn.innerHTML = on ? `${ic('check',13)} 完成編輯` : `${ic('square-pen',13)} 編輯指派`;
+  }
+  if (lead) lead.textContent = on
+    ? '編輯中——點格子切換指派(直接寫 Supabase,即時同步給所有人)。完成後按「完成編輯」鎖回唯讀。'
+    : '唯讀檢視中——點右上「編輯指派」才能切換格子,避免誤觸。同色直欄代表同一階段。';
+}
+(function wireMatrixEdit() {
+  const btn = document.getElementById('matrixEditBtn');
+  if (btn) btn.addEventListener('click', () => setMatrixEdit(!matrixEditMode));
+})();
 
 function updateMatrixTotals() {
   // 重新計算 row 和 col 的小計,直接寫 DOM
