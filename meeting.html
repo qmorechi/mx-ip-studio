@@ -97,26 +97,27 @@
     color:var(--text);font-family:inherit;font-size:13px;line-height:1.5;padding:7px 9px;resize:vertical}
   .bf-field textarea:focus{outline:none;border-color:var(--gold)}
   .bf-todos{font-size:12px;color:var(--dim);margin:10px 0 4px}
+  .ic{display:inline-block;vertical-align:-.18em}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="crumb"><a href="index.html">← MX-IP-Studio</a> · 主控功能</div>
-  <h1>📋 本週開會包</h1>
+  <h1><span data-ic="clipboard-list" data-sz="22"></span> 本週開會包</h1>
   <p class="sub">把大家在 Skill Runner 的交付，合成成「決策驅動」的會議議程。拖曳排序、折疊聚焦、一鍵貼 Slack。</p>
 
   <div class="modes">
-    <button id="tabPre" class="modetab on">📋 會前 · 開會包</button>
-    <button id="tabPost" class="modetab">📝 會後 · 整理與代辦</button>
-    <button id="tabWeek" class="modetab">📊 週報 · 貢獻榜</button>
+    <button id="tabPre" class="modetab on"><span data-ic="clipboard-list" data-sz="15"></span> 會前 · 開會包</button>
+    <button id="tabPost" class="modetab"><span data-ic="square-pen" data-sz="15"></span> 會後 · 整理與代辦</button>
+    <button id="tabWeek" class="modetab"><span data-ic="bar-chart" data-sz="15"></span> 週報 · 貢獻榜</button>
   </div>
 
   <!-- 會前：開會包 -->
   <div id="preMode">
     <div class="bar">
-      <button id="genBtn" class="primary">⚙️ 生成本週開會包</button>
-      <button id="slackBtn" class="ghost" disabled>📤 貼議程到 Slack</button>
-      <button id="mdBtn" class="ghost" disabled>⬇️ 匯出 Markdown</button>
+      <button id="genBtn" class="primary"><span data-ic="settings" data-sz="14"></span> 生成本週開會包</button>
+      <button id="slackBtn" class="ghost" disabled><span data-ic="mail" data-sz="14"></span> 貼議程到 Slack</button>
+      <button id="mdBtn" class="ghost" disabled><span data-ic="download" data-sz="14"></span> 匯出 Markdown</button>
       <span id="weekLbl" class="cmeta"></span>
     </div>
     <p class="hint">提示：卡片左側 ⠿ 可拖曳排序（把卡別人的、紅燈的排前面）；點標題列折疊/展開——開會時收起全部、討論到誰才展開誰。</p>
@@ -135,7 +136,7 @@
     </div>
     <p class="hint">會議常跳來跳去沒關係——AI 會靠<b>內容語意</b>把討論對到各提案（不靠時間戳）。系統會自動帶上本週「上線中 IP」的正式提案與視覺稿連結當對照。</p>
 
-    <label class="tlabel" for="tx">📝 會議逐字稿（從 MeetKit 複製貼上；確認錄音已轉好再貼）</label>
+    <label class="tlabel" for="tx"><span data-ic="square-pen" data-sz="15"></span> 會議逐字稿（從 MeetKit 複製貼上；確認錄音已轉好再貼）</label>
     <div class="bar" style="margin-bottom:6px">
       <input id="docUrl" class="bf-in" style="flex:1;min-width:220px" placeholder="📄 或貼 Google Doc / Drive 連結，從雲端讀逐字稿/會議記錄進來">
       <button id="docImport" class="ghost">讀進來</button>
@@ -144,12 +145,12 @@
 
     <div class="bar">
       <span id="propLbl" class="cmeta">提案載入中…</span>
-      <button id="reloadProp" class="ghost">↻ 重新帶提案</button>
+      <button id="reloadProp" class="ghost"><span data-ic="rotate-ccw" data-sz="13"></span> 重新帶提案</button>
     </div>
     <div class="bar">
-      <button id="synthBtn" class="primary" disabled>🧠 生成會後整理＋待辦</button>
-      <button id="synthSlackBtn" class="ghost" disabled>📤 貼結論到 Slack</button>
-      <button id="synthMdBtn" class="ghost" disabled>⬇️ 匯出 Markdown</button>
+      <button id="synthBtn" class="primary" disabled><span data-ic="brain" data-sz="14"></span> 生成會後整理＋待辦</button>
+      <button id="synthSlackBtn" class="ghost" disabled><span data-ic="mail" data-sz="14"></span> 貼結論到 Slack</button>
+      <button id="synthMdBtn" class="ghost" disabled><span data-ic="download" data-sz="14"></span> 匯出 Markdown</button>
     </div>
 
     <div id="synthMsg" class="msg"></div>
@@ -163,9 +164,9 @@
   <div id="weekMode" style="display:none">
     <p class="hint">一鍵把本週進展、🏆 貢獻榜、會議重點、待辦完成率整理成週報貼到 Slack 全員看。資料來自本週各「上線中 IP」的交付＋最近一次會議結論＋本週待辦（純彙整、不花 AI）。</p>
     <div class="bar">
-      <button id="weekGenBtn" class="primary">📊 生成本週週報</button>
-      <button id="weekSlackBtn" class="ghost" disabled>📤 貼週報到 Slack</button>
-      <button id="weekMdBtn" class="ghost" disabled>⬇️ 匯出 Markdown</button>
+      <button id="weekGenBtn" class="primary"><span data-ic="bar-chart" data-sz="14"></span> 生成本週週報</button>
+      <button id="weekSlackBtn" class="ghost" disabled><span data-ic="mail" data-sz="14"></span> 貼週報到 Slack</button>
+      <button id="weekMdBtn" class="ghost" disabled><span data-ic="download" data-sz="14"></span> 匯出 Markdown</button>
       <span id="weekWkLbl" class="cmeta"></span>
     </div>
     <div id="weekMsg" class="msg"></div>
@@ -178,6 +179,7 @@
 <script src="ips.js"></script>
 <script src="roles-data.js?v=2"></script>
 <script src="members.js"></script>
+<script src="icons.js?v=1"></script>
 <script>
 const CONSULT_SLUG = 'hyper-processor';
 const DRIVE_SLUG = 'drive-read';   // ⚠️ 部署後若 Supabase 自動改 slug，改這裡

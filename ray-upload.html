@@ -132,6 +132,7 @@
   .modal-btn{background:var(--success);color:#0A0E14;border:none;border-radius:9px;padding:11px 24px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;margin-top:8px}
 
   @media (max-width:600px){.type-cards{grid-template-columns:1fr}.version-types{grid-template-columns:1fr}}
+  .ic{display:inline-block;vertical-align:-.18em}
 </style>
 </head>
 <body>
@@ -139,6 +140,7 @@
 <!-- 方案 C / P1 登入層（草稿，未啟用前不影響運作） -->
 <script src="vendor/supabase.js"></script>
 <script src="auth.js?v=11"></script>
+<script src="icons.js?v=1"></script>
 
 <div class="topbar">
   <div class="breadcrumb"><a href="console.html">MX IP STUDIO</a> › <span class="backend">後台</span> › <strong>發布新版本</strong><span class="sync-dot" id="syncDot" title="Supabase 連線中"></span></div>
@@ -151,13 +153,13 @@
 <div class="page">
 
   <div class="header">
-    <div class="header-tag">🔧 後台 · Skill 作者專用</div>
+    <div class="header-tag"><span data-ic="wrench" data-sz="13"></span> 後台 · Skill 作者專用</div>
     <h1>發布新版本</h1>
     <p>本地測試好了？拖檔上來、填個說明就發布。<br>不用碰 git，系統自動幫你存版本。</p>
   </div>
 
   <div class="safety">
-    <span class="safety-icon">🛡️</span>
+    <span class="safety-icon" data-ic="shield-check" data-sz="20"></span>
     <div class="safety-text">
       <strong>放心發布</strong>：你發布的版本<strong>不會立即上線給操作員</strong>。會先進測試環（automation-test + test），由 qmore 確認沒問題後才推到穩定區。就算有 bug 也擋在測試環，影響不到大家正在做的工作。
     </div>
@@ -173,12 +175,12 @@
     </div>
     <div class="type-cards">
       <div class="type-card selected" data-type="skill">
-        <div class="type-card-icon">📦</div>
+        <div class="type-card-icon" data-ic="package" data-sz="26"></div>
         <div class="type-card-name">Skill</div>
         <div class="type-card-desc">brand-core / 角色一致性 / storyboard 等的 prompt 邏輯</div>
       </div>
       <div class="type-card" data-type="engine">
-        <div class="type-card-icon">🎨</div>
+        <div class="type-card-icon" data-ic="palette" data-sz="26"></div>
         <div class="type-card-name">生成引擎配置</div>
         <div class="type-card-desc">哪個任務用哪套 AI 生圖最好的對應表</div>
       </div>
@@ -197,7 +199,7 @@
       <div class="step-hint" id="dropHint">支援資料夾 zip / 單檔</div>
     </div>
     <div class="drop-zone" id="dropZone">
-      <div class="drop-icon">📁</div>
+      <div class="drop-icon" data-ic="folder" data-sz="32"></div>
       <div class="drop-text" id="dropText">拖曳檔案到這裡，或點擊選擇</div>
       <div class="drop-sub" id="dropSub">把整個 skill 資料夾打包成 zip 拖進來就好</div>
     </div>
@@ -214,17 +216,17 @@
     <label class="field-label">這次是哪種更新？<span class="req">*</span></label>
     <div class="version-types">
       <div class="ver-type" data-vt="patch">
-        <div class="ver-type-label">🔧 小修正</div>
+        <div class="ver-type-label"><span data-ic="wrench" data-sz="14"></span> 小修正</div>
         <div class="ver-type-desc">修 bug、微調</div>
         <div class="ver-type-num" id="vtPatch">—</div>
       </div>
       <div class="ver-type selected" data-vt="minor">
-        <div class="ver-type-label">✨ 新功能</div>
+        <div class="ver-type-label"><span data-ic="sparkles" data-sz="14"></span> 新功能</div>
         <div class="ver-type-desc">加東西、不破壞舊的</div>
         <div class="ver-type-num" id="vtMinor">—</div>
       </div>
       <div class="ver-type" data-vt="major">
-        <div class="ver-type-label">🔄 大改版</div>
+        <div class="ver-type-label"><span data-ic="refresh-cw" data-sz="14"></span> 大改版</div>
         <div class="ver-type-desc">結構大改</div>
         <div class="ver-type-num" id="vtMajor">—</div>
       </div>
@@ -243,11 +245,11 @@
     </div>
   </div>
 
-  <button class="publish-btn" id="publishBtn" disabled>🚀 發布（進測試環 + 通知 qmore）</button>
+  <button class="publish-btn" id="publishBtn" disabled><span data-ic="rocket" data-sz="16"></span> 發布（進測試環 + 通知 qmore）</button>
   <div class="publish-err" id="publishErr"></div>
 
   <div class="next-steps">
-    <h3>📋 發布後會發生什麼</h3>
+    <h3><span data-ic="clipboard-list" data-sz="14"></span> 發布後會發生什麼</h3>
     <div class="next-flow">
       <div class="next-item">
         <div class="next-item-num">1</div>
@@ -272,7 +274,7 @@
 
 <div class="modal-overlay" id="modal">
   <div class="modal">
-    <div class="modal-icon" id="modalIcon">🚀</div>
+    <div class="modal-icon" id="modalIcon" data-ic="rocket" data-sz="40"></div>
     <h3 id="modalTitle">發布成功！</h3>
     <p id="modalLead">你的新版已寫進版本庫並進入測試環，qmore 會看到。</p>
     <div class="summary" id="modalSummary"></div>
