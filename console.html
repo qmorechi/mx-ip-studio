@@ -362,12 +362,12 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
     <h2><span data-ic="mail" data-sz="17"></span> 邀請發送</h2>
     <p class="lead">「<span data-ic="mail" data-sz="13"></span> 發 Slack」點開預覽訊息可編輯,確認後一鍵發到 webhook 對應的頻道(通常 <code>#mx-ip-提案</code> 或 <code>#mx-ip-通知</code>)。</p>
     <div class="config-row">
-      <label for="baseUrl">連結網址前綴</label>
+      <label for="baseUrl">連結網址前綴 <span id="baseGroup" style="color:#c5a46b;font-weight:400"></span></label>
       <input type="text" id="baseUrl" placeholder="https://mx-ip-studio.mx.design/roles.html">
     </div>
-    <p class="config-hint">預設用本頁網址推算,改後存 localStorage 下次不用再貼。</p>
+    <p class="config-hint">每個頻道群組各自記住,選上面的群組就自動帶入,改後存 localStorage 下次不用再貼。</p>
     <div class="slack-settings">
-      <label>Slack Webhook</label>
+      <label>Slack Webhook <span id="slackWhGroup" style="color:#c5a46b;font-weight:400"></span></label>
       <input type="text" id="slackWebhook" placeholder="https://hooks.slack.com/services/T.../B.../...">
       <span class="status" id="slackStatus"></span>
     </div>
@@ -728,8 +728,8 @@ const baseInput = document.getElementById('baseUrl');
 baseInput.value = localStorage.getItem('mxip_invite_base_url') || defaultBase();
 baseInput.addEventListener('input', () => {
   const v = baseInput.value.trim();
-  if (v) localStorage.setItem('mxip_invite_base_url', v);
-  else localStorage.removeItem('mxip_invite_base_url');
+  if (v) localStorage.setItem(baseKey(INVITE_GROUP), v);
+  else localStorage.removeItem(baseKey(INVITE_GROUP));
   renderInviteList();
 });
 
@@ -766,6 +766,13 @@ let INVITE_GROUP = 'all';
 function flowByKey(key){ return ROLE_DATA.flows.find(f => f.key === key); }
 function chSuggest(flow){ return '#mx-ip-' + String(currentIpId).toLowerCase() + '-' + flow.zh; }
 function groupLabel(key){ if(key==='all') return '全部成員'; const f=flowByKey(key); return f?(f.emoji+' '+f.zh):key; }
+// 每個頻道群組各自記住「連結網址前綴」與「Slack Webhook」，選群組時自動帶入（設定一次即可）。
+function whKey(g){ return g==='all' ? 'mxip_slack_webhook' : 'mxip_slack_webhook__'+g; }
+function baseKey(g){ return g==='all' ? 'mxip_invite_base_url' : 'mxip_invite_base_url__'+g; }
+function getWebhookFor(g){ let v=localStorage.getItem(whKey(g)); if(!v && g!=='all') v=localStorage.getItem('mxip_slack_webhook'); return v||''; }
+function getBaseFor(g){ let v=localStorage.getItem(baseKey(g)); if(!v && g!=='all') v=localStorage.getItem('mxip_invite_base_url'); return v||defaultBase(); }
+function updateGroupTags(g){ const t=g==='all'?'':('（'+groupLabel(g)+' 頻道）'); const a=document.getElementById('baseGroup'); const b=document.getElementById('slackWhGroup'); if(a)a.textContent=t; if(b)b.textContent=t; }
+function loadGroupFields(g){ const bi=document.getElementById('baseUrl'); const si=document.getElementById('slackWebhook'); if(bi) bi.value=getBaseFor(g); if(si) si.value=getWebhookFor(g); updateGroupTags(g); if(typeof updateSlackStatus==='function') updateSlackStatus(); }
 // 某流程群組的成員＝在這個 IP 被指派到該流程（role_members.role_id = flow repId）的人。
 function membersInGroup(key){ if(key==='all') return MEMBERS; const f=flowByKey(key); if(!f) return MEMBERS; return MEMBERS.filter(m => (assignments[f.repId]||[]).includes(m.id)); }
 function renderInviteFilter(){
@@ -774,7 +781,7 @@ function renderInviteFilter(){
   el.innerHTML = pills.map(p=>{ const on=p.key===INVITE_GROUP;
     return '<button class="chip-filter" data-grp="'+p.key+'" style="background:'+(on?'rgba(197,164,107,.18)':'#20242c')+';border:1px solid '+(on?'#c5a46b':'rgba(255,255,255,.14)')+';color:'+(on?'#c5a46b':'#a3a097')+';border-radius:999px;font-family:inherit;font-weight:700;font-size:12px;padding:6px 13px;cursor:pointer">'+esc(p.label)+'　'+p.n+'</button>';
   }).join('');
-  el.querySelectorAll('.chip-filter').forEach(b=> b.addEventListener('click', ()=>{ INVITE_GROUP=b.dataset.grp; renderInviteList(); }));
+  el.querySelectorAll('.chip-filter').forEach(b=> b.addEventListener('click', ()=>{ INVITE_GROUP=b.dataset.grp; loadGroupFields(INVITE_GROUP); renderInviteList(); }));
 }
 function updateSendAllLabel(n){
   const b = document.getElementById('sendAll'); if(!b) return;
@@ -849,7 +856,7 @@ function updateSlackStatus() {
 }
 slackInput.addEventListener('input', () => {
   const v = slackInput.value.trim();
-  if (v) localStorage.setItem(SLACK_KEY, v); else localStorage.removeItem(SLACK_KEY);
+  if (v) localStorage.setItem(whKey(INVITE_GROUP), v); else localStorage.removeItem(whKey(INVITE_GROUP));
   updateSlackStatus();
 });
 updateSlackStatus();
@@ -1246,6 +1253,7 @@ function switchTab(name){
   if(loggedIn && name==='engines' && !engineState) loadEngines().then(renderEngineTab);
   if(loggedIn && name==='projects') renderProjects();
   if(loggedIn && name==='vote') renderVoteTab();
+  if(name==='roles' && typeof loadGroupFields==='function') loadGroupFields(INVITE_GROUP);
   // 記住分頁，⌘R 重整後停在同一頁（hash 可分享、localStorage 為後備）。
   try{ history.replaceState(null,'', '#'+name); localStorage.setItem('mxip_console_tab', name); }catch(e){}
 }
@@ -1533,9 +1541,11 @@ function vPopulateGaugeGroup(){
 function vGaugeGroupHint(){
   const el=document.getElementById('gaugeGroupHint'); if(!el) return;
   const g=vGaugeGroup();
-  if(g==='all'){ el.textContent='發給整個 IP（量表含 4 大流程）。'; return; }
+  loadGroupFields(g);  // 帶入該頻道記住的 webhook,送出量表就會發到正確頻道
+  const set = getWebhookFor(g) ? '　✓ 已綁定 webhook' : '　⚠ 尚未設定 webhook（到「流程指派 › 邀請發送」選該群組貼一次,之後自動帶入）';
+  if(g==='all'){ el.textContent='發給整個 IP（量表含 4 大流程）。'+set; return; }
   const f=flowByKey(g); const n=(assignments[f.repId]||[]).length;
-  el.textContent='只發給【'+f.zh+'】頻道：'+n+' 位參與成員，建議貼 '+chSuggest(f)+' 的 webhook。';
+  el.textContent='只發給【'+f.zh+'】頻道：'+n+' 位參與成員。'+set;
 }
 var _gg=document.getElementById('gaugeGroup'); if(_gg) _gg.addEventListener('change', vGaugeGroupHint);
 var _gf=document.getElementById('gaugeFlowBtn'); if(_gf) _gf.addEventListener('click', vGaugeFlow);
