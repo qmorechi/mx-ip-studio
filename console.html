@@ -269,7 +269,7 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
 <script src="members.js"></script>
 <script src="ips.js"></script>
 <script src="roles-data.js?v=2"></script>
-<script src="icons.js?v=1"></script>
+<script src="icons.js?v=2"></script>
 <!-- 方案 C / P1 登入層（草稿，未啟用前不影響運作） -->
 <script src="vendor/supabase.js"></script>
 <script src="auth.js?v=11"></script>
@@ -326,6 +326,7 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
     <button class="tab-btn" data-tab="skills"><span data-ic="package" data-sz="15"></span> Skill 版本管理</button>
     <button class="tab-btn" data-tab="engines"><span data-ic="bot" data-sz="15"></span> AI 引擎管理</button>
     <button class="tab-btn" data-tab="projects"><span data-ic="folder" data-sz="15"></span> IP 專案</button>
+    <button class="tab-btn" data-tab="vote"><span data-ic="vote" data-sz="15"></span> 票選發布</button>
   </div>
 
   <div class="tab-panel active" id="tab-roles">
@@ -370,6 +371,8 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
       <input type="text" id="slackWebhook" placeholder="https://hooks.slack.com/services/T.../B.../...">
       <span class="status" id="slackStatus"></span>
     </div>
+    <p class="config-hint" style="margin-bottom:6px">依參與的流程篩選收件人——不同流程＝不同 Slack 頻道。選一個群組,只發給那個頻道的成員。</p>
+    <div class="invite-filter" id="inviteFilter" style="display:flex;gap:7px;flex-wrap:wrap;margin:0 0 12px"></div>
     <div id="inviteList"></div>
     <div class="invite-bulk">
       <button class="big-copy" id="sendAll"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> 發送全員通知到 Slack</button>
@@ -434,6 +437,25 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
       <p id="npMsg" class="lead" style="margin-top:8px"></p>
     </section>
   </div><!-- /tab-projects -->
+
+  <div class="tab-panel" id="tab-vote">
+    <section class="block">
+      <h2><span data-ic="vote" data-sz="17"></span> 票選發布 <span id="voteWeekLbl" style="font-size:12px;color:#a3a097;font-weight:400"></span></h2>
+      <p class="lead">每週「提交 → 票選 → 發布」非同步流程,取代實體週會。階段由你手動推進;個人投票對同儕保密,只有這裡看得到完整票數明細。</p>
+      <div id="voteCycleBox"><p class="lead">載入中…</p></div>
+    </section>
+    <section class="block">
+      <h2><span data-ic="bar-chart" data-sz="17"></span> 完成度量表（推 Slack）</h2>
+      <p class="lead">推一張純文字量表到 Slack,凸顯發展較低、需要人手的部分。先選「發送頻道群組」鎖定對象與頻道,發送前在下方「邀請發送」的 Slack Webhook 欄貼該頻道 webhook（每次可不同）。</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <label for="gaugeGroup" style="font-size:12px;color:#a3a097">發送頻道群組</label>
+        <select id="gaugeGroup" style="background:#20242c;border:1px solid rgba(255,255,255,.14);border-radius:8px;color:#e8e6e0;font-family:inherit;font-size:13px;padding:8px 11px"></select>
+        <button class="act-btn" id="gaugeFlowBtn"><span data-ic="bar-chart" data-sz="13"></span> 流程完成度量表</button>
+        <button class="act-btn" id="gaugeCharBtn"><span data-ic="users" data-sz="13"></span> IP 人物進度量表</button>
+      </div>
+      <p class="config-hint" id="gaugeGroupHint" style="margin-top:8px"></p>
+    </section>
+  </div><!-- /tab-vote -->
 </div>
 
 <!-- Slack 發送 Modal -->
@@ -466,10 +488,10 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
 <script>
 /* 重整防閃：主程式跑起來前，先依 hash/localStorage 把分頁切到上次那頁（避免先閃一下「流程指派」再跳回） */
 (function(){try{var t=(location.hash||'').slice(1)||localStorage.getItem('mxip_console_tab')||'';
-if(['skills','engines','projects'].indexOf(t)===-1)return;
+if(['skills','engines','projects','vote'].indexOf(t)===-1)return;
 var bs=document.querySelectorAll('.tab-btn'); for(var i=0;i<bs.length;i++) bs[i].classList.toggle('active', bs[i].getAttribute('data-tab')===t);
 var ps=document.querySelectorAll('.tab-panel'); for(var j=0;j<ps.length;j++) ps[j].classList.toggle('active', ps[j].id==='tab-'+t);
-var pk=document.querySelector('.ip-picker'); if(pk) pk.style.display='none';
+var pk=document.querySelector('.ip-picker'); if(pk) pk.style.display=(t==='vote')?'':'none';
 }catch(e){}})();
 </script>
 <script>
@@ -723,8 +745,10 @@ function slackMessage(member) {
 
 function allMembersMessage() {
   const ip = ipById.get(currentIpId);
-  const lines = MEMBERS.map(m => `• @${m.id}  ${urlFor(m.id)}`).join('\n');
-  return `Hi 大家,請幫忙在「${ip.name}」選你要參與的 4 大流程(一人可多選):\n\n${lines}`;
+  const ms = membersInGroup(INVITE_GROUP);
+  const lines = ms.map(m => `• @${m.id}  ${urlFor(m.id)}`).join('\n');
+  const head = INVITE_GROUP==='all' ? 'Hi 大家' : ('Hi 【'+groupLabel(INVITE_GROUP)+'】的夥伴');
+  return `${head},請幫忙在「${ip.name}」選你要參與的 4 大流程(一人可多選):\n\n${lines}`;
 }
 
 async function copyToClipboard(text, btn, successText='✓ 已複製') {
@@ -737,9 +761,35 @@ async function copyToClipboard(text, btn, successText='✓ 已複製') {
   } catch(e) { alert('複製失敗:' + e.message); }
 }
 
+// ── 頻道群組篩選：依參與流程把收件人分成各 Slack 頻道（成員選的流程不同＝頻道不同）──
+let INVITE_GROUP = 'all';
+function flowByKey(key){ return ROLE_DATA.flows.find(f => f.key === key); }
+function chSuggest(flow){ return '#mx-ip-' + String(currentIpId).toLowerCase() + '-' + flow.zh; }
+function groupLabel(key){ if(key==='all') return '全部成員'; const f=flowByKey(key); return f?(f.emoji+' '+f.zh):key; }
+// 某流程群組的成員＝在這個 IP 被指派到該流程（role_members.role_id = flow repId）的人。
+function membersInGroup(key){ if(key==='all') return MEMBERS; const f=flowByKey(key); if(!f) return MEMBERS; return MEMBERS.filter(m => (assignments[f.repId]||[]).includes(m.id)); }
+function renderInviteFilter(){
+  const el = document.getElementById('inviteFilter'); if(!el) return;
+  const pills = [{key:'all',label:'全部',n:MEMBERS.length}].concat(ROLE_DATA.flows.map(f=>({key:f.key,label:f.emoji+' '+f.zh,n:(assignments[f.repId]||[]).length})));
+  el.innerHTML = pills.map(p=>{ const on=p.key===INVITE_GROUP;
+    return '<button class="chip-filter" data-grp="'+p.key+'" style="background:'+(on?'rgba(197,164,107,.18)':'#20242c')+';border:1px solid '+(on?'#c5a46b':'rgba(255,255,255,.14)')+';color:'+(on?'#c5a46b':'#a3a097')+';border-radius:999px;font-family:inherit;font-weight:700;font-size:12px;padding:6px 13px;cursor:pointer">'+esc(p.label)+'　'+p.n+'</button>';
+  }).join('');
+  el.querySelectorAll('.chip-filter').forEach(b=> b.addEventListener('click', ()=>{ INVITE_GROUP=b.dataset.grp; renderInviteList(); }));
+}
+function updateSendAllLabel(n){
+  const b = document.getElementById('sendAll'); if(!b) return;
+  const ic2='<svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>';
+  const lbl = INVITE_GROUP==='all' ? '發送全員通知到 Slack' : ('發送【'+groupLabel(INVITE_GROUP)+'】群組通知到 Slack');
+  b.innerHTML = ic2+' '+lbl+'（'+n+' 人）';
+  b.disabled = !n;
+}
+
 function renderInviteList() {
+  renderInviteFilter();
   const list = document.getElementById('inviteList');
-  list.innerHTML = MEMBERS.map(m => `
+  const ms = membersInGroup(INVITE_GROUP);
+  if(!ms.length){ list.innerHTML = '<p class="lead" style="padding:10px 0">這個頻道群組目前沒有指派成員——到「流程指派」矩陣指派後就會出現在這裡。</p>'; updateSendAllLabel(0); return; }
+  list.innerHTML = ms.map(m => `
     <div class="invite-row">
       <div class="invite-avatar">${m.short}</div>
       <div class="invite-info">
@@ -768,12 +818,16 @@ function renderInviteList() {
       }
     });
   });
+  updateSendAllLabel(ms.length);
 }
 
 document.getElementById('sendAll').addEventListener('click', () => {
+  const ms = membersInGroup(INVITE_GROUP);
+  if(!ms.length){ alert('這個頻道群組目前沒有成員。'); return; }
+  const ch = INVITE_GROUP==='all' ? '' : ('　建議貼 '+chSuggest(flowByKey(INVITE_GROUP))+' 的 webhook');
   openModal({
-    title: '全員 Slack 通知',
-    sub: '11 個人的專屬連結整批發送,內容可編輯',
+    title: INVITE_GROUP==='all' ? '全員 Slack 通知' : ('【'+groupLabel(INVITE_GROUP)+'】群組 Slack 通知'),
+    sub: ms.length+' 人的專屬連結整批發送,內容可編輯。'+ch,
     text: allMembersMessage(),
   });
 });
@@ -879,6 +933,7 @@ document.getElementById('ipSelect').addEventListener('change', async e => {
   renderVacant();
   renderMatrix();
   renderInviteList();
+  if(document.querySelector('.tab-btn.active') && document.querySelector('.tab-btn.active').dataset.tab==='vote') renderVoteTab();
 });
 
 // ════════════════ 治理分頁：Skill 版本 + AI 引擎 ════════════════
@@ -1184,12 +1239,13 @@ document.getElementById('emergencyBtn').addEventListener('click', ()=> alert('�
 function switchTab(name){
   document.querySelectorAll('.tab-btn').forEach(b=> b.classList.toggle('active', b.dataset.tab===name));
   document.querySelectorAll('.tab-panel').forEach(p=> p.classList.toggle('active', p.id==='tab-'+name));
-  document.querySelector('.ip-picker').style.display = name==='roles' ? '' : 'none';
+  document.querySelector('.ip-picker').style.display = (name==='roles'||name==='vote') ? '' : 'none';
   // 未登入不載入分頁資料（含 skill/engine 版本），保持空白。
   const loggedIn = !(window.MXIPAuth && !MXIPAuth.currentUser());
   if(loggedIn && name==='skills'  && !skillState)  loadSkills().then(renderSkillTab);
   if(loggedIn && name==='engines' && !engineState) loadEngines().then(renderEngineTab);
   if(loggedIn && name==='projects') renderProjects();
+  if(loggedIn && name==='vote') renderVoteTab();
   // 記住分頁，⌘R 重整後停在同一頁（hash 可分享、localStorage 為後備）。
   try{ history.replaceState(null,'', '#'+name); localStorage.setItem('mxip_console_tab', name); }catch(e){}
 }
@@ -1197,7 +1253,7 @@ document.querySelectorAll('.tab-btn').forEach(b=> b.addEventListener('click', ()
 // 重整還原：依網址 hash / localStorage 停在上次的分頁（沒有就回預設 roles）。
 function restoreTab(){
   let t=''; try{ t=(location.hash||'').slice(1)||localStorage.getItem('mxip_console_tab')||''; }catch(e){}
-  if(['roles','skills','engines','projects'].indexOf(t)===-1){ const a=document.querySelector('.tab-btn.active'); t=a?a.dataset.tab:'roles'; }
+  if(['roles','skills','engines','projects','vote'].indexOf(t)===-1){ const a=document.querySelector('.tab-btn.active'); t=a?a.dataset.tab:'roles'; }
   switchTab(t);
 }
 
@@ -1300,6 +1356,190 @@ function applyRoleVisibility(){
   document.querySelectorAll('.ray-only').forEach(el => el.style.display = MYROLE.backend ? '' : 'none');
   document.querySelectorAll('.admin-only').forEach(el => el.style.display = MYROLE.admin ? '' : 'none');
 }
+
+// ════════════════ 票選發布分頁（admin 主控者）════════════════
+// 週期狀態機：submission（無 cycle 列＝預設）→ voting（凍結提案快照）→ published。
+// 個人投票存 proposal_votes，RLS 對同儕保密；只有這裡（admin）撈得到完整明細。
+function vWeekStart(ts){ const d=new Date(ts); d.setHours(0,0,0,0); const dow=(d.getDay()+6)%7; d.setDate(d.getDate()-dow); return d.getTime(); }
+function vIsoWeek(dd){ const d=new Date(dd); d.setHours(0,0,0,0); d.setDate(d.getDate()+3-((d.getDay()+6)%7));
+  const w1=new Date(d.getFullYear(),0,4); const n=1+Math.round(((d-w1)/864e5-3+((w1.getDay()+6)%7))/7);
+  return d.getFullYear()+'-W'+String(n).padStart(2,'0'); }
+function vRid(s){ return (s&&s.indexOf('#')>=0)?+s.split('#')[1]:null; }
+function vRoleLabel(s){ const f=ROLE_DATA.flowByRep[vRid(s)]; return f?(f.emoji+' '+f.zh):(s||'流程'); }
+function vFlowDeliv(f){ const seen=new Set(),out=[]; ((f&&f.collaborators)||[]).forEach(id=>{ const r=roleById.get(id); (r?r.deliverables:[]).forEach(d=>{ if(!seen.has(d)){seen.add(d);out.push(d);} }); }); return out; }
+function vIpName(id){ const m=ipById.get(id); return m?m.name:id; }
+
+// 當週 skill_runs → 提案物件（提交期顯示 + 開始票選時凍結成快照）
+function vProposals(runs){
+  const ws=vWeekStart(Date.now());
+  return runs.map(run=>{
+    const resp=run.responses||{};
+    const chat=(resp.__chat||[]).filter(m=>!m.kickoff);
+    const deliv=(resp.__deliverable&&resp.__deliverable.text)||'';
+    const rid=vRid(run.skill_id); const f=rid?ROLE_DATA.flowByRep[rid]:null;
+    const items=f?vFlowDeliv(f):[]; const cov=resp.__coverage||[];
+    const covered=items.filter((d,i)=>cov[i]&&cov[i].status==='covered').length;
+    const pct=items.length?Math.round(covered/items.length*100):0;
+    let ex=deliv; if(!ex&&chat.length){ const u=[...chat].reverse().find(m=>m.role==='user')||chat[chat.length-1]; ex=u?u.content:''; }
+    ex=String(ex||'').slice(0,260);
+    const upMs=run.updated_at?new Date(run.updated_at).getTime():0;
+    return { key:run.id, member_id:run.member_id, skill_id:run.skill_id, role_zh:vRoleLabel(run.skill_id),
+             title:vRoleLabel(run.skill_id), excerpt:ex, pct:pct, thisWeek:upMs>=ws, hasContent:(chat.length>0||!!deliv) };
+  }).filter(x=>x.thisWeek&&x.hasContent);
+}
+
+let VOTE_CYCLE=null;
+async function renderVoteTab(){
+  const box=document.getElementById('voteCycleBox'); if(!box) return;
+  vPopulateGaugeGroup();
+  const wk=vIsoWeek(new Date());
+  const lbl=document.getElementById('voteWeekLbl'); if(lbl) lbl.textContent='· '+vIpName(currentIpId)+'　'+wk;
+  box.innerHTML='<p class="lead">載入中…</p>';
+  let cyc=null;
+  try{ const rows=await sbFetch('vote_cycles?ip_id=eq.'+encodeURIComponent(currentIpId)+'&week=eq.'+encodeURIComponent(wk)+'&select=*&limit=1'); cyc=(rows&&rows[0])||null; }catch(e){}
+  VOTE_CYCLE=cyc;
+  const phase=cyc?cyc.phase:'submission';
+  if(phase==='voting') return vRenderVoting(box,cyc);
+  if(phase==='published') return vRenderPublished(box,cyc);
+  return vRenderSubmission(box,wk);
+}
+
+async function vRenderSubmission(box,wk){
+  let runs=[]; try{ runs=(await sbFetch('skill_runs?ip_id=eq.'+encodeURIComponent(currentIpId)+'&select=id,member_id,skill_id,status,updated_at,responses&order=updated_at.desc&limit=80'))||[]; }catch(e){}
+  const props=vProposals(runs);
+  let h='<div class="gov-principle" style="margin-bottom:12px"><strong>目前：提交期</strong>　本週已上繳 <b style="color:#71d1c2">'+props.length+'</b> 筆提案。截止後按下方按鈕開始匿名票選（會把這些提案凍結成選票，之後成員編輯不影響本輪）。</div>';
+  if(props.length){ h+='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">'
+    +props.map(p=>'<div style="background:#20242c;border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:9px 12px;font-size:13px"><b>'+esc(p.role_zh)+'</b> <span style="color:#a3a097">'+esc(p.member_id)+'</span> <span style="color:#86837c;font-size:12px">覆蓋 '+p.pct+'%</span></div>').join('')+'</div>'; }
+  else { h+='<p class="lead">本週還沒有人上繳提案。</p>'; }
+  h+='<button class="act-btn" id="vStartBtn"'+(props.length?'':' disabled')+'><span data-ic="vote" data-sz="13"></span> 開始票選（凍結 '+props.length+' 筆提案）</button>';
+  box.innerHTML=h; if(window.fillIcons) fillIcons(box);
+  const b=document.getElementById('vStartBtn'); if(b) b.onclick=()=>vStartVoting(wk,props);
+}
+
+async function vStartVoting(wk,props){
+  if(!props.length) return;
+  if(!confirm('開始票選？將凍結本週 '+props.length+' 筆提案，成員即可匿名投票。')) return;
+  const snap=props.map(p=>({key:p.key,member_id:p.member_id,skill_id:p.skill_id,role_zh:p.role_zh,title:p.title,excerpt:p.excerpt,pct:p.pct}));
+  try{
+    if(VOTE_CYCLE){ await sbFetch('vote_cycles?id=eq.'+encodeURIComponent(VOTE_CYCLE.id),{method:'PATCH',body:JSON.stringify({phase:'voting',proposals:snap})}); }
+    else { await sbFetch('vote_cycles',{method:'POST',body:JSON.stringify({ip_id:currentIpId,week:wk,phase:'voting',proposals:snap})}); }
+    renderVoteTab();
+  }catch(e){ alert('開始票選失敗：'+(e.message||e)); }
+}
+
+async function vRenderVoting(box,cyc){
+  const props=Array.isArray(cyc.proposals)?cyc.proposals:[];
+  let votes=[]; try{ votes=(await sbFetch('proposal_votes?cycle_id=eq.'+encodeURIComponent(cyc.id)+'&select=proposal_key,voter_member_id'))||[]; }catch(e){}
+  const tally={}; votes.forEach(v=>{ (tally[v.proposal_key]=tally[v.proposal_key]||[]).push(v.voter_member_id); });
+  const ranked=props.map(p=>({p:p,voters:tally[p.key]||[]})).sort((a,b)=>b.voters.length-a.voters.length);
+  const voters=new Set(votes.map(v=>v.voter_member_id));
+  let h='<div class="gov-principle" style="margin-bottom:12px"><strong>目前：票選期</strong>　'+voters.size+' 人已投票、共 '+votes.length+' 讚。下面是完整明細（<b style="color:#71d1c2">只有主控台</b>看得到「誰投了誰」）。</div>';
+  h+='<div class="rings-scroll"><table class="rings"><thead><tr><th>提案</th><th>得讚</th><th>投票者</th></tr></thead><tbody>'
+    +ranked.map(r=>'<tr><td><b>'+esc(r.p.role_zh||r.p.title)+'</b><br><span style="color:#a3a097;font-size:12px">'+esc(r.p.member_id)+'</span></td>'
+      +'<td style="font-weight:800;font-size:16px;color:#c5a46b">'+r.voters.length+'</td>'
+      +'<td style="color:#a3a097;font-size:12px">'+(r.voters.length?r.voters.map(esc).join('、'):'—')+'</td></tr>').join('')
+    +'</tbody></table></div>';
+  h+='<button class="act-btn" id="vEndBtn" style="margin-top:14px"><span data-ic="check" data-sz="13"></span> 結束票選並發布結果</button>';
+  box.innerHTML=h; if(window.fillIcons) fillIcons(box);
+  document.getElementById('vEndBtn').onclick=()=>vPublishEditor(cyc, vDefaultMd(cyc,ranked));
+}
+
+function vDefaultMd(cyc,ranked){
+  let s='🗳 '+vIpName(cyc.ip_id)+'　'+cyc.week+' 票選結果\n\n得票排行：\n';
+  ranked.forEach((r,i)=>{ s+=(i+1)+'. '+(r.p.role_zh||r.p.title)+' · '+r.p.member_id+' — '+r.voters.length+' 讚\n'; });
+  s+='\n下週改進方向：\n- （請填寫）\n';
+  return s;
+}
+
+function vPublishEditor(cyc, initialText){
+  const box=document.getElementById('voteCycleBox');
+  box.innerHTML='<h3 style="font-size:14px;margin-bottom:8px"><span data-ic="square-pen" data-sz="14"></span> 發布內容（票選結果＋下週改進方向）</h3>'
+    +'<textarea id="vPubText" style="width:100%;min-height:220px;background:#20242c;border:1px solid rgba(255,255,255,.14);border-radius:9px;color:#e8e6e0;font-family:inherit;font-size:13px;line-height:1.7;padding:11px"></textarea>'
+    +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">'
+    +'<button class="act-btn" id="vPubSave"><span data-ic="rocket" data-sz="13"></span> 儲存並發布</button>'
+    +'<button class="act-btn ghost" id="vPubSlack"><span data-ic="mail" data-sz="13"></span> 推到 Slack</button>'
+    +'<button class="act-btn ghost" id="vPubCancel">取消</button></div>';
+  if(window.fillIcons) fillIcons(box);
+  document.getElementById('vPubText').value=initialText||'';
+  document.getElementById('vPubSave').onclick=()=>vPublish(cyc);
+  document.getElementById('vPubSlack').onclick=()=>openModal({title:'推票選結果到 Slack',sub:'發到下方「邀請發送」的 Slack Webhook 頻道，內容可編輯',text:document.getElementById('vPubText').value});
+  document.getElementById('vPubCancel').onclick=()=>renderVoteTab();
+}
+
+async function vPublish(cyc){
+  const md=document.getElementById('vPubText').value.trim();
+  if(!md){ alert('發布內容是空的。'); return; }
+  if(!confirm('發布後成員就看得到結果，並進入「已發布」階段。確定？')) return;
+  const by=(window.MXIPAuth&&MXIPAuth.currentEmail())?MXIPAuth.currentEmail().split('@')[0]:'';
+  try{
+    await sbFetch('vote_cycles?id=eq.'+encodeURIComponent(cyc.id),{method:'PATCH',body:JSON.stringify({phase:'published',published_md:md,published_at:new Date().toISOString(),published_by:by})});
+    renderVoteTab();
+  }catch(e){ alert('發布失敗：'+(e.message||e)); }
+}
+
+function vRenderPublished(box,cyc){
+  const meta='發布於 '+(cyc.published_at?new Date(cyc.published_at).toLocaleString('zh-TW'):'—')+(cyc.published_by?'　·　'+cyc.published_by:'');
+  box.innerHTML='<div class="gov-principle" style="margin-bottom:12px"><strong>目前：已發布</strong>　'+esc(meta)+'　成員已可在 vote.html 看到結果。</div>'
+    +'<div style="background:#161618;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:16px 18px;font-size:13.5px;line-height:1.8;white-space:pre-wrap">'+esc(cyc.published_md||'（無內容）')+'</div>'
+    +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">'
+    +'<button class="act-btn ghost" id="vReopenBtn"><span data-ic="square-pen" data-sz="13"></span> 重新編輯發布</button>'
+    +'<button class="act-btn ghost" id="vRepushBtn"><span data-ic="mail" data-sz="13"></span> 再推一次 Slack</button></div>';
+  if(window.fillIcons) fillIcons(box);
+  document.getElementById('vReopenBtn').onclick=()=>vPublishEditor(cyc, cyc.published_md||'');
+  document.getElementById('vRepushBtn').onclick=()=>openModal({title:'推票選結果到 Slack',sub:'發到下方「邀請發送」的 Slack Webhook 頻道，內容可編輯',text:cyc.published_md||''});
+}
+
+// ── 兩張完成度量表 → Slack（重用邀請發送的 Slack Modal）──
+function vBar(pct){ const fill=Math.max(0,Math.min(10,Math.round(pct/10))); return '█'.repeat(fill)+'░'.repeat(10-fill); }
+function vGaugeGroup(){ return (document.getElementById('gaugeGroup')||{}).value || 'all'; }
+function vGaugeSub(){ const g=vGaugeGroup(); if(g==='all') return '發到下方「邀請發送」的 Slack Webhook 頻道，內容可編輯。'; const f=flowByKey(g); return '建議貼 '+chSuggest(f)+' 的 webhook 後發送，內容可編輯。'; }
+async function vGaugeFlow(){
+  const grp=vGaugeGroup();
+  const flows = grp==='all' ? ROLE_DATA.flows : ROLE_DATA.flows.filter(f=>f.key===grp);
+  let runs=[]; try{ runs=(await sbFetch('skill_runs?ip_id=eq.'+encodeURIComponent(currentIpId)+'&select=member_id,skill_id,coverage:responses->__coverage'))||[]; }catch(e){}
+  const rmap={}; runs.forEach(r=>{ const rid=vRid(r.skill_id); if(rid==null) return; rmap[r.member_id+'|'+rid]=Array.isArray(r.coverage)?r.coverage:[]; });
+  let txt='📊 '+vIpName(currentIpId)+(grp==='all'?'':('　'+groupLabel(grp)))+'　流程完成度量表（'+vIsoWeek(new Date())+'）\n\n';
+  flows.forEach(f=>{
+    const items=vFlowDeliv(f); const total=items.length; const members=assignments[f.repId]||[];
+    let sum=0; items.forEach((d,i)=>{ let best=0; members.forEach(m=>{ const cov=rmap[m+'|'+f.repId]; if(cov&&cov[i]){ if(cov[i].status==='covered') best=Math.max(best,1); else if(cov[i].status==='partial') best=Math.max(best,0.5); } }); sum+=best; });
+    const pct=total?Math.round(sum/total*100):0;
+    let tag=''; if(!members.length) tag='　← 還沒人參與'; else if(pct<34) tag='　← 需要人手';
+    txt+=f.emoji+' '+f.zh+'　'+vBar(pct)+' '+pct+'%'+tag+'\n';
+  });
+  txt+='\n有空的話，歡迎認領完成度較低的流程一起補。';
+  openModal({title:'流程完成度量表 → Slack',sub:vGaugeSub(),text:txt});
+}
+async function vGaugeChar(){
+  let rows=[]; try{ rows=(await sbFetch('skill_runs?ip_id=eq.'+encodeURIComponent(currentIpId)+'&skill_id=like.brand-core*&select=roster:responses->__roster,refs:responses->__refassets'))||[]; }catch(e){}
+  let roster=null,refs=[];
+  rows.forEach(row=>{ if(!roster&&Array.isArray(row.roster)&&row.roster.length) roster=row.roster; if(!refs.length&&Array.isArray(row.refs)&&row.refs.length) refs=row.refs; });
+  if(!roster||!roster.length){ alert('這個 IP 還沒有人物名冊（需先在「品牌核心」流程產出角色 DNA）。'); return; }
+  const cnt={}; refs.forEach(a=>{ const c=a.character||''; if(c) cnt[c]=(cnt[c]||0)+1; });
+  let txt='🎭 '+vIpName(currentIpId)+'　IP 人物進度量表（'+vIsoWeek(new Date())+'）\n\n';
+  roster.forEach(ch=>{ const nm=ch.name||'（未命名）'; const n=cnt[nm]||0; const pct=Math.min(100, n*15+(ch.dna?15:0));
+    let tag=''; if(n===0) tag='　← 待發展'; else if(pct<40) tag='　← 發展中';
+    txt+=nm+'　'+vBar(pct)+' '+pct+'%（素材 '+n+' 張）'+tag+'\n'; });
+  txt+='\n＊以參考素材數估算，僅供找出冷門人物參考。大家初期常集中發展主角，歡迎認領「待發展」的人物。';
+  openModal({title:'IP 人物進度量表 → Slack',sub:vGaugeSub(),text:txt});
+}
+// 填入頻道群組下拉（全部 + 4 流程）＋ 即時提示對應頻道
+function vPopulateGaugeGroup(){
+  const sel=document.getElementById('gaugeGroup'); if(!sel) return;
+  const keep=sel.value||'all';
+  sel.innerHTML='<option value="all">全部（整個 IP）</option>'+ROLE_DATA.flows.map(f=>'<option value="'+f.key+'">'+esc(f.emoji+' '+f.zh)+'</option>').join('');
+  sel.value=[...sel.options].some(o=>o.value===keep)?keep:'all';
+  vGaugeGroupHint();
+}
+function vGaugeGroupHint(){
+  const el=document.getElementById('gaugeGroupHint'); if(!el) return;
+  const g=vGaugeGroup();
+  if(g==='all'){ el.textContent='發給整個 IP（量表含 4 大流程）。'; return; }
+  const f=flowByKey(g); const n=(assignments[f.repId]||[]).length;
+  el.textContent='只發給【'+f.zh+'】頻道：'+n+' 位參與成員，建議貼 '+chSuggest(f)+' 的 webhook。';
+}
+var _gg=document.getElementById('gaugeGroup'); if(_gg) _gg.addEventListener('change', vGaugeGroupHint);
+var _gf=document.getElementById('gaugeFlowBtn'); if(_gf) _gf.addEventListener('click', vGaugeFlow);
+var _gc=document.getElementById('gaugeCharBtn'); if(_gc) _gc.addEventListener('click', vGaugeChar);
 
 async function init() {
   // 未登入：交給置中登入浮層（gate:'overlay'），先別跑角色門檻，否則 hasAnyRole 回空

@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>本週提案票選｜MX IP STUDIO</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+.ic{display:inline-block;vertical-align:-.18em}
+:root{
+  --bg:#0d0d0f;--surface:#161618;--surface2:#1e1e22;--border:#2a2a30;
+  --text:#e8e6e0;--muted:#a3a097;--dim:#86837c;
+  --accent-1:#c5a46b;--accent-2:#5ba89e;--accent-3:#c96b5a;--accent-4:#8b7ec8;--ok:#5ba89e;
+}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;font-weight:300;min-height:100vh;line-height:1.55;overflow-x:hidden;}
+
+.breadcrumb{display:flex;align-items:center;gap:10px;padding:14px 60px;font-size:12px;font-family:'DM Mono',monospace;letter-spacing:.05em;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02);}
+.breadcrumb a{color:var(--accent-1);text-decoration:none;font-weight:500;}
+.breadcrumb a:hover{opacity:.7;}
+.breadcrumb .sep{color:var(--muted);font-size:14px;}
+.breadcrumb .current{color:var(--text);}
+
+header.top{padding:42px 60px 26px;border-bottom:1px solid var(--border);position:relative;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;}
+header.top::after{content:'';position:absolute;bottom:-1px;left:60px;width:60px;height:2px;background:var(--accent-1);}
+header.top h1{font-family:'DM Mono',monospace;font-size:clamp(20px,3vw,28px);font-weight:500;letter-spacing:.04em;line-height:1.2;}
+header.top h1 span{color:var(--accent-1);}
+header.top p{margin-top:8px;font-size:13px;color:var(--muted);letter-spacing:.02em;max-width:640px;}
+.ip-picker{display:flex;align-items:center;gap:8px;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);}
+.ip-picker select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;padding:8px 11px;}
+
+.wrap{padding:30px 60px 90px;max-width:920px;margin:0 auto;}
+
+/* 階段步驟條 */
+.steps{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;}
+.step{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--dim);position:relative;}
+.step b{display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:2px;}
+.step.on{border-color:var(--accent-1);background:linear-gradient(140deg,rgba(197,164,107,.14),rgba(197,164,107,.04));}
+.step.on b{color:var(--accent-1);}
+.step.done{border-color:rgba(91,168,158,.4);}
+.step.done b{color:var(--ok);}
+
+.note{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent-1);border-radius:10px;padding:14px 18px;margin-bottom:22px;font-size:13px;color:var(--muted);line-height:1.7;}
+.note strong{color:var(--text);font-weight:500;}
+
+.cards{display:flex;flex-direction:column;gap:14px;}
+.pcard{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;}
+.pcard .phead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.pcard .prole{font-size:15px;font-weight:700;}
+.pcard .pmember{font-size:12px;color:var(--dim);}
+.pcard .ppct{margin-left:auto;font-size:12px;color:var(--dim);font-family:'DM Mono',monospace;}
+.pcard .pexcerpt{font-size:13.5px;color:var(--text);line-height:1.75;white-space:pre-wrap;}
+.pcard .pfoot{display:flex;align-items:center;justify-content:flex-end;gap:10px;}
+.likebtn{display:inline-flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:999px;font-family:inherit;font-weight:700;font-size:13px;padding:8px 16px;cursor:pointer;transition:.15s;}
+.likebtn:hover{border-color:var(--accent-1);color:var(--text);}
+.likebtn.liked{background:rgba(197,164,107,.16);border-color:var(--accent-1);color:var(--accent-1);}
+.likebtn:focus-visible{outline:2px solid var(--accent-1);outline-offset:2px;}
+
+.empty{color:var(--dim);font-style:italic;font-size:13px;padding:26px 4px;text-align:center;}
+.published{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;font-size:14px;line-height:1.85;}
+.published h2,.published h3{font-family:'Noto Sans TC';color:var(--accent-1);font-size:16px;margin:14px 0 6px;font-weight:700;}
+.published strong{color:var(--text);font-weight:700;}
+.published .pmeta{font-size:12px;color:var(--dim);font-family:'DM Mono',monospace;margin-bottom:14px;}
+
+@media(max-width:640px){
+  .breadcrumb{padding:12px 20px;}
+  header.top{padding:28px 20px 20px;}
+  header.top::after{left:20px;}
+  .wrap{padding:22px 20px 70px;}
+}
+</style>
+</head>
+<body>
+<nav class="breadcrumb">
+  <a href="index.html">MX IP STUDIO</a><span class="sep">›</span><span class="current">本週提案票選</span>
+</nav>
+
+<header class="top">
+  <div>
+    <h1>本週<span>提案票選</span></h1>
+    <p id="topSub">每週成員上繳核心流程的提案 → 大家匿名票選 → 主控者彙整結果與下週方向。你的選擇只有你自己看得到。</p>
+  </div>
+  <div class="ip-picker">
+    <label for="ipSelect">IP</label>
+    <select id="ipSelect"></select>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="steps" id="steps"></div>
+  <div id="content"><div class="empty">載入中…</div></div>
+</div>
+
+<script src="members.js"></script>
+<script src="ips.js"></script>
+<script src="roles-data.js?v=2"></script>
+<script src="icons.js?v=2"></script>
+<script src="vendor/supabase.js"></script>
+<script src="auth.js?v=11"></script>
+<script>
+const SB = (window.MXIPAuth && MXIPAuth.SB_URL) || '';
+const $ = id => document.getElementById(id);
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function md(s){ return esc(s)
+  .replace(/^### (.*)$/gm,'<h3>$1</h3>').replace(/^## (.*)$/gm,'<h2>$1</h2>').replace(/^# (.*)$/gm,'<h2>$1</h2>')
+  .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+  .replace(/\n/g,'<br>'); }
+function ipName(id){ const m=(typeof IPS!=='undefined'?IPS:[]).find(x=>x.id===id); return m?m.name:id; }
+
+// 週次：weekStart（週一 00:00，與 skill-runner 一致）；isoWeek 當人類可讀鍵（與 meeting 一致）
+function weekStart(ts){ const d=new Date(ts); d.setHours(0,0,0,0); const dow=(d.getDay()+6)%7; d.setDate(d.getDate()-dow); return d.getTime(); }
+function isoWeek(d){ d=new Date(d); d.setHours(0,0,0,0); d.setDate(d.getDate()+3-((d.getDay()+6)%7));
+  const w1=new Date(d.getFullYear(),0,4); const n=1+Math.round(((d-w1)/864e5-3+((w1.getDay()+6)%7))/7);
+  return d.getFullYear()+'-W'+String(n).padStart(2,'0'); }
+
+// roleId(rid)：skill_runs.skill_id 形如 "brand-core#1" / "storyboard-workflow#10"
+function ridOf(skill_id){ return (skill_id && skill_id.indexOf('#')>=0) ? +skill_id.split('#')[1] : null; }
+function roleLabel(skill_id){ const f=ROLE_DATA.flowByRep[ridOf(skill_id)]; return f ? (f.emoji+' '+f.zh) : (skill_id||'流程'); }
+function flowDeliverables(f){ const seen=new Set(),out=[]; ((f&&f.collaborators)||[]).forEach(id=>{ const r=ROLE_DATA.roles.find(x=>x.id===id); (r?r.deliverables:[]).forEach(d=>{ if(!seen.has(d)){seen.add(d);out.push(d);} }); }); return out; }
+
+// 把當週 skill_runs 轉成提案物件（提交期顯示用；console 開始票選時也用同一套快照）
+function proposalsFromRuns(runs){
+  const ws=weekStart(Date.now());
+  return runs.map(run=>{
+    const resp=run.responses||{};
+    const chat=(resp.__chat||[]).filter(m=>!m.kickoff);
+    const deliv=resp.__deliverable&&resp.__deliverable.text ? resp.__deliverable.text : '';
+    const rid=ridOf(run.skill_id);
+    const items=rid&&ROLE_DATA.flowByRep[rid]?flowDeliverables(ROLE_DATA.flowByRep[rid]):[];
+    const cov=resp.__coverage||[];
+    const covered=items.filter((d,i)=>cov[i]&&cov[i].status==='covered').length;
+    const pct=items.length?Math.round(covered/items.length*100):0;
+    let excerpt=deliv;
+    if(!excerpt && chat.length){ const last=[...chat].reverse().find(m=>m.role==='user')||chat[chat.length-1]; excerpt=last?last.content:''; }
+    excerpt=String(excerpt||'').slice(0,260);
+    const upMs=run.updated_at?new Date(run.updated_at).getTime():0;
+    return { key:run.id, member_id:run.member_id, skill_id:run.skill_id, role_zh:roleLabel(run.skill_id),
+             title:roleLabel(run.skill_id), excerpt:excerpt, pct:pct, thisWeek:upMs>=ws,
+             hasContent:(chat.length>0||!!deliv) };
+  }).filter(x=>x.thisWeek && x.hasContent);
+}
+
+let ME='', CUR='', CYCLE=null, MYVOTES=new Set();
+
+async function fetchRuns(ip){
+  try{ const r=await fetch(SB+'/rest/v1/skill_runs?ip_id=eq.'+encodeURIComponent(ip)+'&select=id,member_id,skill_id,status,updated_at,responses&order=updated_at.desc&limit=80',{headers:MXIPAuth.authHeaders()});
+    if(r.ok) return await r.json(); }catch(e){}
+  return [];
+}
+async function fetchCycle(ip){
+  try{ const wk=isoWeek(new Date());
+    const r=await fetch(SB+'/rest/v1/vote_cycles?ip_id=eq.'+encodeURIComponent(ip)+'&week=eq.'+encodeURIComponent(wk)+'&select=*&limit=1',{headers:MXIPAuth.authHeaders()});
+    if(r.ok){ const rows=await r.json(); return rows[0]||null; } }catch(e){}
+  return null;
+}
+async function fetchMyVotes(cycleId){
+  const s=new Set();
+  if(!cycleId) return s;
+  try{ const r=await fetch(SB+'/rest/v1/proposal_votes?cycle_id=eq.'+encodeURIComponent(cycleId)+'&voter_member_id=eq.'+encodeURIComponent(ME)+'&select=proposal_key',{headers:MXIPAuth.authHeaders()});
+    if(r.ok){ (await r.json()).forEach(v=>s.add(v.proposal_key)); } }catch(e){}
+  return s;
+}
+
+function renderSteps(phase){
+  const st=[['submission','提交期','上繳本週核心流程提案'],['voting','票選期','匿名為提案按讚'],['published','已發布','看結果與下週方向']];
+  const order={submission:0,voting:1,published:2};
+  const cur=order[phase]==null?-1:order[phase];
+  $('steps').innerHTML=st.map((s,i)=>'<div class="step'+(i===cur?' on':(i<cur?' done':''))+'"><b>'+(i+1)+'. '+s[1]+'</b>'+s[2]+'</div>').join('');
+}
+
+function pcardHTML(p, votable){
+  const liked=MYVOTES.has(p.key);
+  const foot = votable
+    ? '<div class="pfoot"><button class="likebtn'+(liked?' liked':'')+'" data-key="'+esc(p.key)+'">'+ic('thumbs-up',15)+(liked?' 已讚（你）':' 讚')+'</button></div>'
+    : '';
+  return '<div class="pcard"><div class="phead"><span class="prole">'+esc(p.role_zh||p.title||'提案')+'</span>'
+    +'<span class="pmember">'+esc(p.member_id)+'</span>'
+    +(p.pct!=null?'<span class="ppct">覆蓋 '+p.pct+'%</span>':'')+'</div>'
+    +'<div class="pexcerpt">'+(p.excerpt?esc(p.excerpt):'<span style="color:var(--dim)">（這份提案沒有可預覽的文字摘要，點 Skill Runner 看完整內容）</span>')+'</div>'
+    +foot+'</div>';
+}
+
+async function renderContent(){
+  const el=$('content');
+  const phase=CYCLE?CYCLE.phase:'submission';
+  renderSteps(phase);
+
+  if(phase==='published'){
+    const meta='發布於 '+esc(CYCLE.published_at?new Date(CYCLE.published_at).toLocaleString('zh-TW'):'—')+(CYCLE.published_by?'　·　'+esc(CYCLE.published_by):'');
+    el.innerHTML='<div class="published"><div class="pmeta">'+ic('vote',13)+' '+esc(ipName(CUR))+'　'+esc(CYCLE.week)+'　'+meta+'</div>'
+      +(CYCLE.published_md?md(CYCLE.published_md):'<span class="empty">主控者尚未填寫發布內容。</span>')+'</div>';
+    return;
+  }
+
+  if(phase==='voting'){
+    const props=Array.isArray(CYCLE.proposals)?CYCLE.proposals:[];
+    let html='<div class="note"><strong>票選進行中。</strong>為你認同的提案按讚，可以投給多個。'
+      +'你的選擇<strong>只有你自己看得到</strong>，不會顯示給其他人或出現任何票數——放心投，沒有壓力。</div>';
+    if(!props.length){ el.innerHTML=html+'<div class="empty">這一輪沒有快照到任何提案。</div>'; return; }
+    html+='<div class="cards">'+props.map(p=>pcardHTML(p,true)).join('')+'</div>';
+    el.innerHTML=html;
+    el.querySelectorAll('.likebtn').forEach(b=> b.addEventListener('click', ()=>toggleVote(b.dataset.key, b)));
+    return;
+  }
+
+  // submission：唯讀列出當週提案（live，從 skill_runs 撈）
+  const runs=await fetchRuns(CUR);
+  const props=proposalsFromRuns(runs);
+  let html='<div class="note"><strong>提交期。</strong>請在截止前到 <a href="skill-runner.html" style="color:var(--accent-1)">Skill Runner</a> 完成本週核心流程；下面是目前已上繳的提案。票選會由主控者在截止後開放。</div>';
+  if(!props.length){ el.innerHTML=html+'<div class="empty">本週還沒有人上繳提案。</div>'; return; }
+  html+='<div class="cards">'+props.map(p=>pcardHTML(p,false)).join('')+'</div>';
+  el.innerHTML=html;
+}
+
+async function toggleVote(key, btn){
+  if(!CYCLE){ return; }
+  const liked=MYVOTES.has(key);
+  btn.disabled=true;
+  try{
+    if(liked){
+      const r=await fetch(SB+'/rest/v1/proposal_votes?cycle_id=eq.'+encodeURIComponent(CYCLE.id)+'&proposal_key=eq.'+encodeURIComponent(key)+'&voter_member_id=eq.'+encodeURIComponent(ME),
+        {method:'DELETE',headers:MXIPAuth.authHeaders()});
+      if(!r.ok) throw new Error(r.status);
+      MYVOTES.delete(key);
+    }else{
+      const r=await fetch(SB+'/rest/v1/proposal_votes',
+        {method:'POST',headers:MXIPAuth.authHeaders({Prefer:'resolution=ignore-duplicates,return=minimal'}),
+         body:JSON.stringify({cycle_id:CYCLE.id, proposal_key:key, voter_member_id:ME})});
+      if(!r.ok && r.status!==409) throw new Error(r.status);
+      MYVOTES.add(key);
+    }
+    const now=MYVOTES.has(key);
+    btn.classList.toggle('liked',now);
+    btn.innerHTML=ic('thumbs-up',15)+(now?' 已讚（你）':' 讚');
+  }catch(e){ alert('投票失敗：'+(e.message||e)); }
+  finally{ btn.disabled=false; }
+}
+
+function renderPicker(){
+  const sel=$('ipSelect');
+  const order={active:1,paused:2,archived:3};
+  const sorted=[...IPS].sort((a,b)=>(order[a.status]||9)-(order[b.status]||9)||(a.order_no||0)-(b.order_no||0));
+  sel.innerHTML=sorted.map(ip=>'<option value="'+esc(ip.id)+'"'+(ip.id===CUR?' selected':'')+'>'+esc(ip.name)+'</option>').join('');
+  sel.onchange=async ()=>{ CUR=sel.value; try{localStorage.setItem('mxip_vote_ip',CUR);}catch(e){} await loadAndRender(); };
+}
+
+async function loadAndRender(){
+  $('content').innerHTML='<div class="empty">載入中…</div>';
+  CYCLE=await fetchCycle(CUR);
+  MYVOTES=await fetchMyVotes(CYCLE&&CYCLE.id);
+  await renderContent();
+}
+
+async function boot(){
+  if(window.MXIPAuth && !MXIPAuth.currentUser()) return;   // 未登入：交給置中登入浮層
+  ME=(MXIPAuth.currentEmail()||'').split('@')[0];
+  await loadIPs();
+  const params=new URLSearchParams(location.search);
+  let want=(params.get('ip')||localStorage.getItem('mxip_vote_ip')||'');
+  CUR = IPS.some(i=>i.id===want) ? want : ((IPS.find(i=>i.status==='active')||IPS[0]||{}).id||'');
+  renderPicker();
+  await loadAndRender();
+}
+(window.MXIPAuth ? MXIPAuth.init({ gate:'overlay' }) : Promise.resolve()).then(boot);
+if(window.MXIPAuth && MXIPAuth.onChange) MXIPAuth.onChange(()=>{ boot(); });
+</script>
+</body>
+</html>
