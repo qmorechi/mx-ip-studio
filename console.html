@@ -369,6 +369,7 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
     <div class="slack-settings">
       <label>Slack Webhook <span id="slackWhGroup" style="color:#c5a46b;font-weight:400"></span></label>
       <input type="text" id="slackWebhook" placeholder="https://hooks.slack.com/services/T.../B.../...">
+      <button type="button" id="whLockBtn" class="act-btn ghost">🔓 點此鎖定</button>
       <span class="status" id="slackStatus"></span>
     </div>
     <p class="config-hint" style="margin-bottom:6px">依參與的流程篩選收件人——不同流程＝不同 Slack 頻道。選一個群組,只發給那個頻道的成員。</p>
@@ -859,6 +860,23 @@ slackInput.addEventListener('input', () => {
   if (v) localStorage.setItem(whKey(INVITE_GROUP), v); else localStorage.removeItem(whKey(INVITE_GROUP));
   updateSlackStatus();
 });
+// 🔒 webhook 鎖定：鎖定後欄位唯讀、避免誤改；切頻道仍會自動帶入正確 webhook，要改先解鎖。
+const WHLOCK_KEY = 'mxip_wh_locked';
+function setWhLock(on){
+  localStorage.setItem(WHLOCK_KEY, on ? '1' : '');
+  if (slackInput) { slackInput.readOnly = on; slackInput.style.opacity = on ? '.6' : ''; }
+  const btn = document.getElementById('whLockBtn');
+  if (btn) { btn.textContent = on ? '🔒 已鎖定 · 點此解鎖' : '🔓 點此鎖定'; }
+}
+(function(){
+  const btn = document.getElementById('whLockBtn');
+  if (btn) btn.addEventListener('click', () => {
+    const now = localStorage.getItem(WHLOCK_KEY) === '1';
+    if (!now && !confirm('鎖定後 Slack Webhook 欄位不能編輯（避免誤改）。切換頻道仍會自動帶入正確 webhook；要修改再按一次解鎖。確定鎖定？')) return;
+    setWhLock(!now);
+  });
+  setWhLock(localStorage.getItem(WHLOCK_KEY) === '1');
+})();
 updateSlackStatus();
 
 function openModal({title, sub, text}) {
