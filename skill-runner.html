@@ -941,7 +941,7 @@ function wire(){
   if($('backBtn')) $('backBtn').onclick=()=>{ setFlowRoute(null); renderHome(); };   // 永遠可回（renderHome 會作廢在途請求、解除 busy）
   if($('fileInput')) $('fileInput').onchange=(e)=>{ addFiles(e.target.files); e.target.value=''; };
   if($('docBtn')) $('docBtn').onclick=async ()=>{
-    const u=(prompt('貼上 Google Doc / Drive 連結，把裡面的文字讀進來當素材：')||'').trim();
+    const u=(prompt('貼上 Google Doc / Drive 連結（檔案＝讀內容；資料夾＝自動展開，一次讀進整個資料夾的檔案與結構）：')||'').trim();
     if(!u) return;
     if(!/^https?:\/\//i.test(u) && !/^[a-zA-Z0-9_-]{20,}$/.test(u)){ alert('請貼有效的 Google Doc / Drive 連結'); return; }
     const inp=$('input'); const old=inp?inp.placeholder:''; const btn=$('docBtn');
