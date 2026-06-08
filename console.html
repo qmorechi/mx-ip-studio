@@ -350,7 +350,7 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
 
   <section class="block">
     <h2><span data-ic="target" data-sz="17"></span> 流程 × 成員矩陣
-      <button id="matrixEditBtn" class="act-btn ghost" type="button"><span data-ic="square-pen" data-sz="13"></span> 編輯指派</button>
+      <button id="matrixEditBtn" class="act-btn ghost gov-only" type="button"><span data-ic="square-pen" data-sz="13"></span> 編輯指派</button>
     </h2>
     <p class="lead" id="matrixLead">唯讀檢視中——點右上「編輯指派」才能切換格子,避免誤觸。同色直欄代表同一階段。</p>
     <div class="matrix-wrap">
@@ -426,7 +426,7 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
       <p class="lead">只有「<b style="color:#71d1c2">上線中</b>」的 IP 會進 <a href="meeting.html" style="color:#c5a46b">本週開會包</a> 議程；「暫停」的 IP 大家仍可在 Skill Runner 持續充實內容，養好再上線、再拿出來討論。</p>
       <div id="ipTiles" style="margin-top:12px"></div>
     </section>
-    <section class="block">
+    <section class="block gov-only">
       <h2><span data-ic="plus" data-sz="17"></span> 新增專案</h2>
       <p class="lead">新案預設「暫停」，先在背景養內容，準備好再上線。</p>
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px">
@@ -445,7 +445,7 @@ table.mapping thead th{background:#0d0d0f;font-size:11px;color:#a3a097;font-weig
       <p class="lead">每週「提交 → 票選 → 發布」非同步流程,取代實體週會。階段由你手動推進;個人投票對同儕保密,只有這裡看得到完整票數明細。</p>
       <div id="voteCycleBox"><p class="lead">載入中…</p></div>
     </section>
-    <section class="block">
+    <section class="block vote-only">
       <h2><span data-ic="bar-chart" data-sz="17"></span> 完成度量表（推 Slack）</h2>
       <p class="lead">推一張純文字量表到 Slack,凸顯發展較低、需要人手的部分。先選「發送頻道群組」鎖定對象與頻道,發送前在下方「邀請發送」的 Slack Webhook 欄貼該頻道 webhook（每次可不同）。</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
@@ -533,7 +533,7 @@ let currentIpId = localStorage.getItem('console_current_ip') || (IPS.find(i=>i.s
 let assignments = {};  // role_id → [member_id, member_id...]
 // 角色分流：同一頁依登入者顯示不同按鈕。qmore=admin（把關：升級穩定版/部署/回調）；
 // Ray=backend（發布：上傳新版 Skill/引擎）。互看不到對方的按鈕。
-let MYROLE = { admin: false, backend: false };
+let MYROLE = { admin: false, backend: false, voteMgr: false };
 
 // ── 載入指派 ──
 async function loadAssignments() {
@@ -1317,6 +1317,7 @@ document.getElementById('hubFrame').addEventListener('load', function(){
 // ── IP 專案管理（磚塊：上線/暫停切換 + 新增專案，寫 ip_projects）──
 function renderProjects(){
   const wrap = document.getElementById('ipTiles'); if(!wrap) return;
+  const canGov = MYROLE.admin || MYROLE.backend;   // 只有治理者能切上線/暫停
   const active = IPS.filter(i => i.status === 'active');
   const paused = IPS.filter(i => i.status !== 'active');
   const grid = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px';
@@ -1328,7 +1329,7 @@ function renderProjects(){
       + '<div style="font-size:11.5px;color:#a3a097;margin:3px 0 11px">'+esc(ip.id)+(ip.tier?' · '+esc(ip.tier):'')+'</div>'
       + '<div style="display:flex;align-items:center;justify-content:space-between">'
         + '<span style="font-size:12px;font-weight:700">'+pill+'</span>'
-        + '<button data-ip="'+esc(ip.id)+'" data-to="'+(on?'paused':'active')+'" class="ipToggle" style="background:'+(on?'transparent':'#71d1c2')+';color:'+(on?'#f8d66d':'#111318')+';border:1px solid '+(on?'rgba(248,214,109,.5)':'#71d1c2')+';border-radius:7px;font-family:inherit;font-weight:800;font-size:12px;padding:6px 13px;cursor:pointer">'+(on?'暫停':'上線')+'</button>'
+        + (canGov ? '<button data-ip="'+esc(ip.id)+'" data-to="'+(on?'paused':'active')+'" class="ipToggle" style="background:'+(on?'transparent':'#71d1c2')+';color:'+(on?'#f8d66d':'#111318')+';border:1px solid '+(on?'rgba(248,214,109,.5)':'#71d1c2')+';border-radius:7px;font-family:inherit;font-weight:800;font-size:12px;padding:6px 13px;cursor:pointer">'+(on?'暫停':'上線')+'</button>' : '')
       + '</div></div>';
   };
   const pausedLabel = (open) => (open?'▾':'▸')+' 暫停中（'+paused.length+'）· 仍可在 Skill Runner 充實，不進會議';
@@ -1379,9 +1380,14 @@ var _np = document.getElementById('npBtn'); if(_np) _np.addEventListener('click'
 // 依角色顯示/隱藏靜態按鈕：.ray-only 只給 backend（Ray 發布）、.admin-only 只給 admin（qmore 把關）。
 // （動態 render 的升級/部署按鈕另在 render 時用 MYROLE.admin 判斷。）
 function applyRoleVisibility(){
+  const canGov  = MYROLE.admin || MYROLE.backend;                     // 治理：skill/引擎/專案/矩陣
+  const canVote = MYROLE.admin || MYROLE.backend || MYROLE.voteMgr;   // 票選發布：含 vote_manager（Maruo）
   document.querySelectorAll('.ray-only').forEach(el => el.style.display = MYROLE.backend ? '' : 'none');
   document.querySelectorAll('.admin-only').forEach(el => el.style.display = MYROLE.admin ? '' : 'none');
+  document.querySelectorAll('.gov-only').forEach(el => el.style.display = canGov ? '' : 'none');
+  document.querySelectorAll('.vote-only').forEach(el => el.style.display = canVote ? '' : 'none');
 }
+function canVoteManage(){ return MYROLE.admin || MYROLE.backend || MYROLE.voteMgr; }
 
 // ════════════════ 票選發布分頁（admin 主控者）════════════════
 // 週期狀態機：submission（無 cycle 列＝預設）→ voting（凍結提案快照）→ published。
@@ -1425,9 +1431,20 @@ async function renderVoteTab(){
   try{ const rows=await sbFetch('vote_cycles?ip_id=eq.'+encodeURIComponent(currentIpId)+'&week=eq.'+encodeURIComponent(wk)+'&select=*&limit=1'); cyc=(rows&&rows[0])||null; }catch(e){}
   VOTE_CYCLE=cyc;
   const phase=cyc?cyc.phase:'submission';
+  if(!canVoteManage()) return vRenderReadonly(box, cyc, phase);   // viewer（如 Kevin）：唯讀
   if(phase==='voting') return vRenderVoting(box,cyc);
   if(phase==='published') return vRenderPublished(box,cyc);
   return vRenderSubmission(box,wk);
+}
+// 唯讀視圖：只看得到目前階段與已發布結果，沒有推進/發布/票數明細
+function vRenderReadonly(box, cyc, phase){
+  if(phase==='published' && cyc){
+    box.innerHTML='<div class="gov-principle" style="margin-bottom:12px"><strong>本週票選已發布</strong></div>'
+      +'<div style="background:#161618;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:16px 18px;font-size:13.5px;line-height:1.8;white-space:pre-wrap">'+esc(cyc.published_md||'（無內容）')+'</div>';
+    return;
+  }
+  const map={submission:'提交期（成員上繳提案中）', voting:'票選期（成員投票中）'};
+  box.innerHTML='<div class="gov-principle">目前：'+esc(map[phase]||phase)+'。票選的推進與發布由負責人操作，你目前為唯讀檢視。</div>';
 }
 
 async function vRenderSubmission(box,wk){
@@ -1573,14 +1590,15 @@ async function init() {
   // 未登入：交給置中登入浮層（gate:'overlay'），先別跑角色門檻，否則 hasAnyRole 回空
   // 會誤觸 showForbidden 把整頁（含浮層）蓋掉。登入後 OAuth 整頁重載會再進來。
   if (window.MXIPAuth && !MXIPAuth.currentUser()) return;
-  // 主控台僅限管理員與後台（qmore / Ray）：一般成員（如 echo）擋在門外。
-  if (window.MXIPAuth && !(await MXIPAuth.hasAnyRole(['admin', 'backend']))) {
-    MXIPAuth.showForbidden('主控台僅限管理員與後台');
+  // 主控台開放：admin / backend / vote_manager（票選負責人）/ viewer（唯讀）。其餘擋在門外。
+  if (window.MXIPAuth && !(await MXIPAuth.hasAnyRole(['admin', 'backend', 'vote_manager', 'viewer']))) {
+    MXIPAuth.showForbidden('主控台僅限管理員、後台與受邀檢視者');
     return;
   }
-  // 判定本人角色 → 按鈕分流（admin 看把關、backend 看發布）。無 MXIPAuth 時（本地）全顯示。
-  MYROLE.admin   = window.MXIPAuth ? await MXIPAuth.hasAnyRole(['admin'])   : true;
-  MYROLE.backend = window.MXIPAuth ? await MXIPAuth.hasAnyRole(['backend']) : true;
+  // 判定本人角色 → 按鈕分流（admin 把關、backend 發布、vote_manager 管票選）。無 MXIPAuth 時（本地）全顯示。
+  MYROLE.admin   = window.MXIPAuth ? await MXIPAuth.hasAnyRole(['admin'])        : true;
+  MYROLE.backend = window.MXIPAuth ? await MXIPAuth.hasAnyRole(['backend'])      : true;
+  MYROLE.voteMgr = window.MXIPAuth ? await MXIPAuth.hasAnyRole(['vote_manager']) : true;
   applyRoleVisibility();
   await loadIPs();                 // 從 ip_projects 載入最新 IP 清單+狀態（含新增的）
   if(!IPS.some(i=>i.id===currentIpId) && IPS[0]) currentIpId = IPS[0].id;
