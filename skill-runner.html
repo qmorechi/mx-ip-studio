@@ -163,6 +163,12 @@
   .gstep .n { width:18px; height:18px; border-radius:50%; border:1px solid var(--line); flex:0 0 auto;
               display:flex; align-items:center; justify-content:center; font-size:10px; }
   .gstep .cmd { font-family:monospace; font-size:10px; opacity:.55; }
+  .gdiv { margin:13px 6px 5px; padding-top:9px; border-top:1px dashed var(--line); font-size:11px; font-weight:700; letter-spacing:.03em; line-height:1.5; }
+  .gdiv.motion { color:#f8d66d; }
+  .gdiv.social { color:var(--dim); }
+  .gdiv .sub { display:block; font-size:10px; font-weight:500; opacity:.72; margin-top:2px; }
+  .gstep.locked { opacity:.55; }
+  .gstep.locked .n { border-style:dashed; }
   .chat { display:flex; flex-direction:column; min-height:0; }
   .msgs { flex:1 1 auto; overflow:auto; padding:6px 4px; display:flex; flex-direction:column; gap:12px; }
   /* Threads 式全寬好讀：不用對話外框，整則完整顯示、行距寬、用「名字標籤＋分隔線」分辨誰說的（不靠窄泡泡）。 */
@@ -774,7 +780,7 @@ function markSaved(t){ const s=t+'　'+new Date().toLocaleTimeString('zh-TW',{ho
 function buildBrief(){
   const f=SKILL_FLOWS[T.skill];
   return { id:T.skill, label:f.label, summary:f.summary, outputs:f.outputs,
-    stages:f.stages.map(s=>({ cmd:s.cmd, title:s.title, intro:s.intro||'', optional:!!s.optional, repeatable:!!s.repeatable, fields:s.fields.map(fl=>fl.label+(fl.required?'*':'')) })) };
+    stages:f.stages.map(s=>({ cmd:s.cmd, title:s.title, intro:s.intro||'', optional:!!s.optional, gate:s.gate||null, repeatable:!!s.repeatable, fields:s.fields.map(fl=>fl.label+(fl.required?'*':'')) })) };
 }
 // ── 流程為單位（T.roleId 是流程的「代表 roleId」把手）──
 function flowDeliverables(f){ const seen=new Set(),out=[]; ((f&&f.collaborators)||[]).forEach(id=>{ const r=roleById(id); (r?r.deliverables:[]).forEach(d=>{ if(!seen.has(d)){seen.add(d);out.push(d);} }); }); return out; }
@@ -863,8 +869,17 @@ function renderPrompts(){
 function renderGuide(){
   const f=SKILL_FLOWS[T.skill];
   const focus = T.roleId ? ('★ 你參與的流程：'+esc(curName())+'　顧問會以這條流程的「專家小組」帶你一次做完整條流程、產出整合成果') : '';
-  return '<div class="guide">'+renderDeliverable()+renderPrompts()+renderCovBox()+renderLinks()+'<h3>流程全貌（'+f.stages.length+' 階段）</h3>'+(focus?'<div class="focus">'+focus+'</div>':'')
-    + f.stages.map((s,i)=>'<div class="gstep"><span class="n">'+(i+1)+'</span><span><div>'+esc(s.title)+'</div><div class="cmd">'+esc(s.cmd)+'</div></span></div>').join('')+'</div>';
+  let motionShown=false, socialShown=false;
+  const steps=f.stages.map((s,i)=>{
+    let div='';
+    if(s.gate==='motion' && !motionShown){ motionShown=true;
+      div='<div class="gdiv motion">🔒 Phase 2 · 動態統一產出<span class="sub">需全部劇本鎖定＋每個相關 IP 角色聖經審核通過才解鎖</span></div>'; }
+    else if(s.branch==='social' && !socialShown){ socialShown=true;
+      div='<div class="gdiv social">社群 / 商業分支<span class="sub">可選，依專案需要</span></div>'; }
+    const cls='gstep'+(s.gate==='motion'?' locked':'');
+    return div+'<div class="'+cls+'"><span class="n">'+(i+1)+'</span><span><div>'+esc(s.title)+'</div><div class="cmd">'+esc(s.cmd)+'</div></span></div>';
+  }).join('');
+  return '<div class="guide">'+renderDeliverable()+renderPrompts()+renderCovBox()+renderLinks()+'<h3>流程全貌（'+f.stages.length+' 階段）</h3>'+(focus?'<div class="focus">'+focus+'</div>':'')+steps+'</div>';
 }
 // 本週優化重點卡：直接讀最新會議命題（下週重點/待解問題），釘在對話最上方，每週自動更新。
 function renderPremiseCard(){

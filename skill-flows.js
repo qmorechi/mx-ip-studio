@@ -327,7 +327,7 @@
           ],
         },
         {
-          cmd: '/timing', title: '內部動作節奏 — Timing', optional: true,
+          cmd: '/timing', title: '內部動作節奏 — Timing', optional: true, gate: 'motion',
           intro: '🔒 Phase 2（動態統一產出）入口，受動態 Gate 管制：要等全部劇本鎖定＋每個被劇本引用的 IP 角色聖經審核通過後才開始；多 IP 只要一個聖經未完備就整批維持鎖定。把每顆非 integrated 鏡頭拆成 timecode 節拍，節拍留在鏡頭內、不另生圖。',
           note: '動態 Gate：要等全部劇本鎖定＋每個被劇本引用的 IP 角色聖經審核通過後，才統一批次進行。多 IP 只要有一個聖經未完備，整批維持鎖定。',
           fields: [
@@ -336,7 +336,7 @@
           ],
         },
         {
-          cmd: '/asset-map', title: 'Kling 資產控制 — Asset Map', optional: true,
+          cmd: '/asset-map', title: 'Kling 資產控制 — Asset Map', optional: true, gate: 'motion',
           intro: '🔒 Phase 2（動態 Gate 須開啟：全劇本鎖定＋相關 IP 角色聖經完備）。預設一鏡＝一首禎；只有主 payoff / 明確轉變 / 結束態需精確時才用首+尾禎。',
           note: '動態 Gate 須開啟（全劇本鎖定＋相關 IP 角色聖經完備）才進行。',
           fields: [
@@ -344,7 +344,7 @@
           ],
         },
         {
-          cmd: '/prompts', title: 'GPT 影像 prompt', optional: true,
+          cmd: '/prompts', title: 'GPT 影像 prompt', optional: true, gate: 'motion',
           intro: '🔒 Phase 2（動態 Gate 須開啟）。影像 prompt 的角色鎖定需要完成的角色聖經，未完備前不要產。每個影像資產一組 prompt（非每個節拍），繼承 /look-dev；有角色資產時每個 prompt 要加角色鎖定段。',
           note: '動態 Gate 須開啟：影像 prompt 的角色鎖定需要完成的角色聖經，未完備前不要產。此階段產出的是 prompt 文字；實際生圖請搭配 GPT Image / Midjourney / Nano Banana 等工具。',
           fields: [
@@ -353,7 +353,7 @@
           ],
         },
         {
-          cmd: '/kling', title: 'Kling 動態 prompt', optional: true,
+          cmd: '/kling', title: 'Kling 動態 prompt', optional: true, gate: 'motion',
           intro: '🔒 Phase 2（動態統一產出，動態 Gate 須開啟：全劇本鎖定＋每個相關 IP 角色聖經審核通過）。每個非 integrated 鏡頭一組，含 Action/Camera/Performance/Acting constraints/Timing/Micro-movements/Continuity/Avoid；有聲音指南時加 Voice/Sound 欄。',
           note: '動態 Gate 須開啟（全劇本鎖定＋每個相關 IP 角色聖經審核通過）才進行。此階段產出 prompt 文字；實際生影請用 Kling I2V（首禎鎖定）或 Seedance 2。',
           fields: [
@@ -362,7 +362,7 @@
           ],
         },
         {
-          cmd: '/export', title: '互動 HTML 匯出', optional: true,
+          cmd: '/export', title: '互動 HTML 匯出', optional: true, gate: 'motion',
           intro: '🔒 Phase 2 收尾。用 build_storyboard_html.py 產出功能性互動 HTML（非純文字）。每個完整專案必含 Board A/B/C + 互動 HTML。',
           fields: [
             { key: 'export_notes', label: '匯出檢查 / 缺口', type: 'textarea', hint: '確認含 Board A/B/C、shot cards、asset legend、GPT 首/尾禎 tab、Kling tab、copy 按鈕、completion checkbox、localStorage 進度。' },
@@ -370,7 +370,7 @@
         },
         // ── 社群 / 商業分支（可選，依專案需要）──
         {
-          cmd: '/endorsement', title: '商業代言適配 — Commercial Partnership Strategist',
+          cmd: '/endorsement', title: '商業代言適配 — Commercial Partnership Strategist', branch: 'social',
           intro: '含業配/品牌合作/sponsor 時用。適配未通過前不進 boards/prompts/social-posts。建議 /critic endorsement。',
           optional: true,
           fields: [
@@ -382,7 +382,7 @@
           ],
         },
         {
-          cmd: '/social-strategy', title: '社群內容企劃 — Social Content Strategist',
+          cmd: '/social-strategy', title: '社群內容企劃 — Social Content Strategist', branch: 'social',
           intro: '寫 caption 前先過策略：目標、受眾關係、平台角色、內容支柱、語氣、互動、節奏。',
           optional: true,
           fields: [
@@ -394,7 +394,7 @@
           ],
         },
         {
-          cmd: '/social-posts', title: 'IG / FB 社群包 — Social Content Editor',
+          cmd: '/social-posts', title: 'IG / FB 社群包 — Social Content Editor', branch: 'social',
           intro: '把素材轉成平台貼文。發佈不可逆，建議 /redteam social-posts。',
           optional: true,
           fields: [
@@ -406,7 +406,7 @@
           ],
         },
         {
-          cmd: '/media-plan', title: '付費投放規劃 — Media Buying Strategist',
+          cmd: '/media-plan', title: '付費投放規劃 — Media Buying Strategist', branch: 'social',
           intro: '只有明確要投放/廣告/A-B test 時才完整跑。不要捏造成效預測。投放前建議 /redteam media-plan（最高風險）。',
           optional: true,
           fields: [
