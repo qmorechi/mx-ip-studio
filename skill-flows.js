@@ -316,52 +316,54 @@
           fields: [
             { key: 'board_a', label: 'Board A — 角色/世界/道具', type: 'textarea', required: true, hint: '身份、視角、色盤、服裝規則、必備道具、不可變規則、爆款公式卡。' },
             { key: 'board_b', label: 'Board B — 場景轉換/空間策略', type: 'textarea', hint: '環境旅程、空間邏輯、成功/失敗路徑、動作策略圖。' },
-            { key: 'board_c', label: 'Board C — 分鏡/節奏/Kling 資產板', type: 'textarea', hint: '9:16 分鏡格、時長、機位、情緒節拍、timing mini-bar、視覺焦點、資產需求、prompt 狀態。' },
+            { key: 'board_c', label: 'Board C — 分鏡/節奏/Kling 資產板', type: 'textarea', hint: '9:16 分鏡格、時長、機位、情緒節拍、視覺焦點、資產需求。Phase 1 只定鏡頭結構；timing mini-bar 與 prompt 狀態留白或標「待動態階段」，動態細節等 Phase 2 再填。' },
           ],
         },
         {
           cmd: '/shots', title: '受控鏡頭表 — Shot List',
-          intro: '別因為一個動作有多個內部節拍就加鏡頭——那些放 /timing。',
+          intro: '別因為一個動作有多個內部節拍就加鏡頭——那些放 /timing。✅ 此階段＝Phase 1（故事企劃／分鏡）收尾：劇本通過＋三板＋鏡頭表鎖定即算階段完成，不需在此產出 timing/asset/prompt/kling，那些是 Phase 2 動態統一產出。',
           fields: [
             { key: 'shot_list', label: '鏡頭表', type: 'textarea', required: true, hint: '每顆：編號+名稱 / 時長 / function(hook|setup|payoff|release|transition|integrated) / 視覺描述 / 機位移動 / 情緒 / 視覺焦點 / 連戲道具 / 資產型態(first|first_end|integrated)。' },
           ],
         },
         {
-          cmd: '/timing', title: '內部動作節奏 — Timing',
-          intro: '把每顆非 integrated 鏡頭拆成 timecode 節拍。節拍留在鏡頭內，不另生圖。',
+          cmd: '/timing', title: '內部動作節奏 — Timing', optional: true,
+          intro: '🔒 Phase 2（動態統一產出）入口，受動態 Gate 管制：要等全部劇本鎖定＋每個被劇本引用的 IP 角色聖經審核通過後才開始；多 IP 只要一個聖經未完備就整批維持鎖定。把每顆非 integrated 鏡頭拆成 timecode 節拍，節拍留在鏡頭內、不另生圖。',
+          note: '動態 Gate：要等全部劇本鎖定＋每個被劇本引用的 IP 角色聖經審核通過後，才統一批次進行。多 IP 只要有一個聖經未完備，整批維持鎖定。',
           fields: [
             { key: 'timing_beats', label: '逐鏡 timing 節拍', type: 'textarea', required: true, hint: '例：Shot04 0.0-1.2 第一次伸手差5cm；1.2-2.2 差1cm…；Asset remains: first+end only。' },
             { key: 'performance_intent', label: '重點鏡頭表演意圖', type: 'textarea' },
           ],
         },
         {
-          cmd: '/asset-map', title: 'Kling 資產控制 — Asset Map',
-          intro: '預設一鏡＝一首禎。只有主 payoff / 明確轉變 / 結束態需精確時才用首+尾禎。',
+          cmd: '/asset-map', title: 'Kling 資產控制 — Asset Map', optional: true,
+          intro: '🔒 Phase 2（動態 Gate 須開啟：全劇本鎖定＋相關 IP 角色聖經完備）。預設一鏡＝一首禎；只有主 payoff / 明確轉變 / 結束態需精確時才用首+尾禎。',
+          note: '動態 Gate 須開啟（全劇本鎖定＋相關 IP 角色聖經完備）才進行。',
           fields: [
             { key: 'asset_table', label: '資產對照表', type: 'textarea', required: true, hint: 'Shot | GPT asset | Kling input | Needs end frame | Reason。integrated 鏡頭不產資產。' },
           ],
         },
         {
-          cmd: '/prompts', title: 'GPT 影像 prompt',
-          intro: '每個影像資產一組 prompt（非每個節拍）。繼承 /look-dev。有角色資產時每個 prompt 要加角色鎖定段。',
-          note: '此階段產出的是 prompt 文字；實際生圖請搭配 GPT Image / Midjourney / Nano Banana 等工具。',
+          cmd: '/prompts', title: 'GPT 影像 prompt', optional: true,
+          intro: '🔒 Phase 2（動態 Gate 須開啟）。影像 prompt 的角色鎖定需要完成的角色聖經，未完備前不要產。每個影像資產一組 prompt（非每個節拍），繼承 /look-dev；有角色資產時每個 prompt 要加角色鎖定段。',
+          note: '動態 Gate 須開啟：影像 prompt 的角色鎖定需要完成的角色聖經，未完備前不要產。此階段產出的是 prompt 文字；實際生圖請搭配 GPT Image / Midjourney / Nano Banana 等工具。',
           fields: [
             { key: 'gpt_prompts', label: 'GPT prompts（分層）', type: 'textarea', required: true, hint: '用分層段落：LOOK DEVELOPMENT / DIRECTOR / CHARACTER / CAMERA / LIGHTING / ART DIRECTION / SCENE / CONTINUITY。' },
             { key: 'critic_note', label: '（建議）/critic prompts 自審', type: 'textarea', hint: '送生圖前指定角色挑至少 3 個失敗點 + 會在哪爆 + 最低修正門檻。' },
           ],
         },
         {
-          cmd: '/kling', title: 'Kling 動態 prompt',
-          intro: '每個非 integrated 鏡頭一組。含 Action/Camera/Performance/Acting constraints/Timing/Micro-movements/Continuity/Avoid。有聲音指南時加 Voice/Sound 欄。',
-          note: '此階段產出 prompt 文字；實際生影請用 Kling I2V（首禎鎖定）或 Seedance 2。',
+          cmd: '/kling', title: 'Kling 動態 prompt', optional: true,
+          intro: '🔒 Phase 2（動態統一產出，動態 Gate 須開啟：全劇本鎖定＋每個相關 IP 角色聖經審核通過）。每個非 integrated 鏡頭一組，含 Action/Camera/Performance/Acting constraints/Timing/Micro-movements/Continuity/Avoid；有聲音指南時加 Voice/Sound 欄。',
+          note: '動態 Gate 須開啟（全劇本鎖定＋每個相關 IP 角色聖經審核通過）才進行。此階段產出 prompt 文字；實際生影請用 Kling I2V（首禎鎖定）或 Seedance 2。',
           fields: [
             { key: 'kling_prompts', label: 'Kling prompts', type: 'textarea', required: true, hint: '逐鏡：用首禎當錨點，有尾禎則自然過渡。含動作/機位/表演/約束/節奏/微動作/連戲/避免項；說話鏡頭加台詞觸發嘴型 + 嘴型控制約束 + 情緒殘留 + 微動作鏈。' },
             { key: 'redteam_note', label: '（建議）/redteam kling 自審', type: 'textarea', hint: '消耗 Kling 額度前，假設會失敗、列至少 5 個攻擊角度 + 最糟情況 + 改變判斷的條件。' },
           ],
         },
         {
-          cmd: '/export', title: '互動 HTML 匯出',
-          intro: '用 build_storyboard_html.py 產出功能性互動 HTML（非純文字）。每個完整專案必含 Board A/B/C + 互動 HTML。',
+          cmd: '/export', title: '互動 HTML 匯出', optional: true,
+          intro: '🔒 Phase 2 收尾。用 build_storyboard_html.py 產出功能性互動 HTML（非純文字）。每個完整專案必含 Board A/B/C + 互動 HTML。',
           fields: [
             { key: 'export_notes', label: '匯出檢查 / 缺口', type: 'textarea', hint: '確認含 Board A/B/C、shot cards、asset legend、GPT 首/尾禎 tab、Kling tab、copy 按鈕、completion checkbox、localStorage 進度。' },
           ],
